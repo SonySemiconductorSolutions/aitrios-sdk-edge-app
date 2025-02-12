@@ -1,0 +1,1 @@
+To be written as a PyPi-friendly README.

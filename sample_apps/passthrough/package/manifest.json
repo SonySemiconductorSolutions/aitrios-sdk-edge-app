@@ -1,0 +1,12 @@
+{
+  "manifest_version": "1.0.0",
+  "edge_app": {
+    "app_name": "edge_app_passthrough",
+    "file_name": "edge_app_passthrough.wasm",
+    "version": "1.0.0",
+    "app_dtdl_file": "edge_app_passthrough_interface.json",
+    "referred_dtdl_files": [],
+    "compiled_flg": false,
+    "schema_info": ""
+  }
+}

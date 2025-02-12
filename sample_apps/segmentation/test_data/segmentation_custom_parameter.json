@@ -1,0 +1,16 @@
+{
+    "res_info": {
+        "res_id": "GENERATED_STRING-tzmks",
+        "code": 7,
+        "detail_msg": "GENERATED_STRING-jfgfb"
+    },
+    "ai_models": {
+        "segmentation": {
+            "ai_model_bundle_id": "GENERATED_STRING-cvyee",
+            "parameters": {
+                "input_width": 4,
+                "input_height": 4
+            }
+        }
+    }
+}

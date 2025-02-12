@@ -1,0 +1,21 @@
+{
+    "res_info": {
+        "res_id": "GENERATED_STRING-tzmks",
+        "code": 7,
+        "detail_msg": "GENERATED_STRING-jfgfb"
+    },
+    "ai_models": {
+        "detection": {
+            "ai_model_bundle_id": "GENERATED_STRING-cvyee",
+            "parameters": {
+                "max_detections": 2,
+                "threshold": 0.3,
+                "input_width": 300,
+                "input_height": 300
+            }
+        }
+    },
+    "metadata_settings": {
+        "format": 0
+    }
+}

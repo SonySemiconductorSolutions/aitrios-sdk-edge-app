@@ -1,0 +1,28 @@
+**/build
+**/*.wasm
+**/*.o
+**/*.info
+
+################################
+# Python .gitignore: https://github.com/github/gitignore/blob/main/Python.gitignore
+################################
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Distribution / packaging
+dist/
+*.egg-info/
+
+# Unit test / coverage reports
+.coverage
+.pytest_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/

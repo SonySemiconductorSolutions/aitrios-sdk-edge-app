@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools >= 64", "setuptools-scm >= 8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edgeapplib"
+dynamic = ["version"]
+description = "The picamera2-based Edge App Python Library"
+authors = [{name = "Edge App SDK team"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+	    "Natural Language :: English",
+    "Operationg System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.9",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "flatbuffers==24.3.25",
+    "opencv-python==4.10.0.84",
+    "paho-mqtt==2.1.0"
+]
+
+[project.urls]
+homepage = "https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app-dev"
+
+[tool.setuptools.dynamic]
+version = {file = ["VERSION"]}
+
+[tool.setuptools]
+license-files = ["*LICENSE"]

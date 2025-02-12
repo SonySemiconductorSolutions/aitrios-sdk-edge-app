@@ -1,0 +1,42 @@
+exclude: "(third_party)"
+repos:
+ - repo: local
+   hooks:
+    - id: custom-script-file
+      name: custom-script-file
+      language: script
+      entry: tools/check_license.sh
+      files: (.*\.(c|cpp|h|hpp|fbs|sh|py)|Dockerfile|cmake|txt|Makefile)$
+      exclude: "sample_apps/classification/python/imx500_classification_local_console_demo.py|sample_apps/detection/python/imx500_object_detection_local_console_demo.py"
+    - id: clang-format
+      name: clang-format
+      description: Format files with ClangFormat.
+      entry: clang-format-14
+      language: system
+      types_or: [c, c++]
+      exclude: "(parson|schemas)"
+      args: ["-i", "--style=file"]
+
+ - repo: https://github.com/pre-commit/pre-commit-hooks
+   rev: v4.4.0
+   hooks:
+    - id: trailing-whitespace
+      exclude_types: [markdown, yaml, json]
+      exclude: |
+        (?x)^(
+          .github/workflows/get-build-artifacts.yml|
+          LICENSE|
+          .devcontainer/devcontainer.json|
+          .devcontainer/initializeCommand.cmd|
+          .devcontainer/initializeCommand.sh
+        )$
+    - id: end-of-file-fixer
+      exclude_types: [markdown, yaml, json]
+      exclude: |
+        (?x)^(
+          .github/workflows/get-build-artifacts.yml|
+          LICENSE|
+          .devcontainer/devcontainer.json|
+          .devcontainer/initializeCommand.cmd|
+          .devcontainer/initializeCommand.sh
+        )$

@@ -1,0 +1,87 @@
+/****************************************************************************
+ * Copyright 2024 Sony Semiconductor Solutions Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ****************************************************************************/
+
+#include "classification_utils.hpp"
+
+#include "classification_generated.h"
+#include "data_processor_api.hpp"
+#include "data_processor_utils.hpp"
+#include "flatbuffers/flatbuffers.h"
+#include "log.h"
+#include "parson.h"
+
+DataProcessorResultCode ExtractMaxPredictions(
+    JSON_Object *json, DataProcessorCustomParam *cls_param_pr) {
+  double aux = 0;
+  if (GetValueNumber(json, "max_predictions", &aux) == 0) {
+    uint16_t max_predictions = (uint16_t)aux;
+    cls_param_pr->maxPredictions = max_predictions;
+    return kDataProcessorOk;
+  }
+  LOG_INFO(
+      "DataProcessorConfigure: default value of 'max_predictions' parameter "
+      "is %d",
+      DEFAULT_MAX_PREDICTIONS);
+  cls_param_pr->maxPredictions = DEFAULT_MAX_PREDICTIONS;
+  json_object_set_number(json, "max_predictions", DEFAULT_MAX_PREDICTIONS);
+  return kDataProcessorInvalidParam;
+}
+
+int CreateClassificationFlatbuffer(float *out_data_pr, int num_elements,
+                                   flatbuffers::FlatBufferBuilder *builder,
+                                   DataProcessorCustomParam cls_param) {
+  LOG_DBG("Creating flatbuffer from array of floats");
+
+  if (out_data_pr == NULL) {
+    LOG_ERR("No data to create the flatbuffer");
+    return -1;
+  }
+
+  std::vector<ClassificationItem> class_data(num_elements);
+
+  for (int i = 0; i < num_elements; i++) {
+    class_data[i] = {i, out_data_pr[i]};
+  }
+
+  if (class_data.size() > 0) {
+    std::stable_sort(
+        class_data.begin(), class_data.end(),
+        [](const ClassificationItem &left, const ClassificationItem &right) {
+          return left.score > right.score;
+        });
+  }
+
+  if (num_elements > cls_param.maxPredictions) {
+    num_elements = cls_param.maxPredictions;
+    LOG_DBG("Maximum number of predictions to send %d", num_elements);
+  }
+
+  std::vector<flatbuffers::Offset<SmartCamera::GeneralClassification>>
+      gdata_vector;
+
+  for (int i = 0; i < num_elements; i++) {
+    LOG_DBG("class = %d, score = %f", class_data[i].index, class_data[i].score);
+    auto general_data = SmartCamera::CreateGeneralClassification(
+        *builder, class_data[i].index, class_data[i].score);
+    gdata_vector.push_back(general_data);
+  }
+
+  auto v_bbox = builder->CreateVector(gdata_vector);
+  auto class_data_fb = SmartCamera::CreateClassificationData(*builder, v_bbox);
+  auto out_data = SmartCamera::CreateClassificationTop(*builder, class_data_fb);
+  builder->Finish(out_data);
+  return 0;
+}

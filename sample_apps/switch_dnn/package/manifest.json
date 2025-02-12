@@ -1,0 +1,12 @@
+{
+  "manifest_version": "1.0.0",
+  "edge_app": {
+    "app_name": "edge_app_switch_dnn",
+    "file_name": "edge_app_switch_dnn.wasm",
+    "version": "1.0.0",
+    "app_dtdl_file": "edge_app_switch_dnn_interface.json",
+    "referred_dtdl_files": [],
+    "compiled_flg": false,
+    "schema_info": ""
+  }
+}

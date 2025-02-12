@@ -1,0 +1,12 @@
+{
+    "res_info": {
+        "res_id": "GENERATED_STRING-tzmks",
+        "code": 7,
+        "detail_msg": "GENERATED_STRING-jfgfb"
+    },
+    "ai_models": {
+        "passthrough": {
+            "ai_model_bundle_id": "GENERATED_STRING-cvyee"
+        }
+    }
+}

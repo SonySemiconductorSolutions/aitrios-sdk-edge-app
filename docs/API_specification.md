@@ -1,0 +1,143 @@
+# API Walk-through
+
+## Overview
+The Aitrios API provides tools for capturing, managing, and exporting sensor data for analysis or integration. It is particularly useful in applications needing efficient real-time data capture and transmission. The API is organized into two main sections:
+
+- **[API for Sensor Data Acquisition](#api-for-sensor-data-aquisition)**: This section offers functions to initialize, start, manage, and configure sensor streams, allowing robust control over data capture.
+
+- **[API for Exporting Data](#api-for-exporting-the-data)**: This section supports asynchronous data export, enabling seamless data transmission to external systems. It includes methods for sending data, managing responses, and configuring network settings.
+
+These APIs streamline sensor data management, from acquisition to export, making them suitable for applications involving IoT, edge processing, and data analytics.
+
+---
+
+## API for Sensor Data Acquisition
+
+The EdgeAppLib Sensor API provides functions for controlling sensor streams and handling sensor data. This includes managing sensor channels, accessing raw data, and configuring stream and channel properties.
+
+### Key Functionalities
+- **Stream Management**:
+  - Open and close streams with `AitriosSensorCoreOpenStream` and `AitriosSensorCoreCloseStream`.
+  - Start and stop streams with `AitriosSensorStart` and `AitriosSensorStop`.
+  - Retrieve and release frames using `AitriosSensorGetFrame` and `AitriosSensorReleaseFrame`.
+
+- **Channel and Data Access**:
+  - Access channels with `AitriosSensorFrameGetChannelFromChannelId`.
+  - Retrieve raw data using `AitriosSensorChannelGetRawData`.
+
+- **Stream and Channel Properties**:
+  - Get or set stream properties via `AitriosSensorStreamGetProperty` and `AitriosSensorStreamSetProperty`.
+  - Configure channel properties using `SensorChannelGetProperty`.
+
+These functionalities ensure developers have comprehensive control over sensor data streams.
+
+### API List
+
+| Function                               | Description                             |
+| -------------------------------------- | --------------------------------------- |
+| `SensorCoreOpenStream`          | Opens the sensor stream                 |
+| `SensorCoreCloseStream`         | Closes the sensor stream                |
+| `SensorStart`                   | Starts the sensor stream                |
+| `SensorStop`                    | Stops the sensor stream                 |
+| `SensorGetFrame`                | Gets the current frame from the stream  |
+| `SensorReleaseFrame`            | Releases the frame                      |
+| `SensorFrameGetChannelFromChannelId` | Gets the channel by ID             |
+| `SensorChannelGetRawData`       | Gets raw data from the channel          |
+| `SensorStreamGetProperty`       | Gets stream properties                  |
+| `SensorStreamSetProperty`       | Sets stream properties                  |
+| `SensorChannelGetProperty`      | Gets channel properties                 |
+| `SensorGetLastErrorLevel`       | Gets the last error level               |
+| `SensorGetLastErrorCause`       | Gets the cause of the last error        |
+| `SensorGetLastErrorString`      | Gets error description                  |
+
+### Usage Example
+
+```cpp
+using EdgeAppLib;
+
+EdgeAppLibSensorCore core = 0;
+EdgeAppLibSensorStream stream = 0;
+int32_t ret = -1;
+
+// Initialize core
+if ((ret = SensorCoreInit(&core)) < 0) return ret;
+
+// Open the sensor stream
+const char *stream_key = "your key";
+if ((ret = SensorCoreOpenStream(core, stream_key, &stream)) < 0) return ret;
+
+// Start streaming
+if ((ret = SensorStart(stream)) < 0) return ret;
+
+// Retrieve and process frames
+for (int i = 0; i < 10; i++) {
+    EdgeAppLibSensorFrame frame;
+    if ((ret = SensorGetFrame(stream, &frame, -1)) < 0) return ret;
+
+    EdgeAppLibSensorChannel channel;
+    if ((ret = SensorFrameGetChannelFromChannelId(frame, _SENSOR_CHANNEL_ID_INFERENCE_OUTPUT, &channel)) < 0) return ret;
+
+    EdgeAppLibSensorRawData data = {0};
+    if ((ret = SensorChannelGetRawData(channel, &data)) < 0) return ret;
+    // Access data via data.address, data.size
+}
+
+// Streaming Stop
+if ((ret = SensorStop(stream)) < 0) return ret;
+
+// Close Sensor
+if ((ret = SensorCoreCloseStream(core, stream)) < 0) return ret;
+
+// Exit from Sensor Core
+if ((ret = SensorCoreExit(core)) < 0) return ret;
+
+```
+
+## API for Exporting the data
+
+The  Data Export provides an interface for managing network communications and asynchronous operations. It facilitates tasks such as sending data, handling asynchronous responses, and managing the state of network operations.
+
+### API lists
+
+| Function                              | Description                                                   |
+| -------------------------------------- | ------------------------------------------------------------- |
+| `DataExportAwait`               | Waits for the completion of an asynchronous operation.         |
+| `DataExportCleanup`             | Cleans up resources associated with the provided future.       |
+| `DataExportSendData`            | Sends serialized data to  asynchronously.              |
+| `DataExportSendState`           | Sends state data asynchronously.                              |
+| `DataExportStopSelf`            | Notifies the state machine to transition to 'Idle' state.      |
+| `DataExportIsEnabled`           | Checks whether sending data of the specified type is enabled.  |
+| `DataExportGetPortSettings`     | Gets the current port settings in a JSON object.               |
+
+
+
+## Usage Example
+
+The following C++ code snippet demonstrates a basic usage scenario of the EdgeAppLib Data Export. It shows how to send data asynchronously, wait for the operation to complete, and then clean up resources. This example assumes that the EdgeAppLib Data Export system has been properly initialized and configured.
+
+
+```cpp
+int onIterate() {
+    // Duplicate strings for sending data
+    char *portname = strdup("metadata");
+    char *data = strdup("{\"mykey\":\"myvalue\"}");
+
+    // Get the timestamp for the data
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime.time_since_epoch());
+    uint64_t timestamp = duration.count();
+
+    // Initiating an asynchronous send operation
+    EdgeAppLibDataExportFuture *future = DataExportSendData(portname, EdgeAppLibDataExportMetadata, data, strlen(data), timestamp);
+
+    // Optional: Perform additional tasks or computations here
+    while (DataExportAwait(future, 1000) == EdgeAppLibDataExportResultEnqueued) {
+        // heavy computation
+    }
+
+    // Cleaning up the resources associated with the future
+    res = DataExportCleanup(future);
+    assert(res == EdgeAppLibDataExportResultSuccess);
+    free(portname);
+}
+```

@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": 1,
+  "title": "Edge App Manifest Schema",
+  "description": "This json schema defines the manifest file to upload Edge App to the console.",
+  "type": "object",
+  "required": [
+    "edge_app"
+  ],
+  "properties": {
+    "manifest_version": {
+      "type": "string",
+      "description": "The version of the manifest file."
+    },
+    "edge_app": {
+      "type": "object",
+      "description": "Information about the edge application.",
+      "required": [
+        "app_name",
+        "file_name",
+        "version",
+        "app_dtdl_file",
+        "compiled_flg",
+        "schema_info"
+      ],
+      "properties": {
+        "app_name": {
+          "type": "string",
+          "description": "The name of the edge application."
+        },
+        "file_name": {
+          "type": "string",
+          "description": "The file name of the WASM application or AoT file."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the edge application."
+        },
+        "app_dtdl_file": {
+          "type": "string",
+          "description": "The file name of the DTDL schema for the app."
+        },
+        "referred_dtdl_files": {
+          "type": "array",
+          "description": "List of referenced DTDL files.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "compiled_flg": {
+          "type": "boolean",
+          "description": "Flag indicating whether the Edge App is compiled to AoT file."
+        },
+        "schema_info": {
+          "type": "string",
+          "description": "Additional schema information."
+        }
+      }
+    }
+  }
+}

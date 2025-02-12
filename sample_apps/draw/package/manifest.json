@@ -1,0 +1,12 @@
+{
+  "manifest_version": "1.0.0",
+  "edge_app": {
+    "app_name": "edge_app_draw",
+    "file_name": "edge_app_draw.wasm",
+    "version": "1.0.0",
+    "app_dtdl_file": "edge_app_draw_interface.json",
+    "referred_dtdl_files": [],
+    "compiled_flg": false,
+    "schema_info": ""
+  }
+}
