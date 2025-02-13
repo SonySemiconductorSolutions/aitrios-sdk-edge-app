@@ -1,0 +1,105 @@
+{
+    "edge_app": {
+        "req_info": {
+            "req_id": "perfbench_sample"
+        },
+        "common_settings": {
+            "process_state": 1,
+            "log_level": 2,
+            "inference_settings": {
+                "number_of_iterations": 0
+            },
+            "pq_settings": {
+                "camera_image_size": {
+                    "width": 2028,
+                    "height": 1520,
+                    "scaling_policy": 1
+                },
+                "frame_rate": {
+                    "num": 2997,
+                    "denom": 100
+                },
+                "digital_zoom": 1.0,
+                "camera_image_flip": {
+                    "flip_horizontal": 0,
+                    "flip_vertical": 0
+                },
+                "exposure_mode": 0,
+                "auto_exposure": {
+                    "max_exposure_time": 10000,
+                    "min_exposure_time": 0,
+                    "max_gain": 69.0,
+                    "convergence_speed": 30
+                },
+                "auto_exposure_metering": {
+                    "metering_mode": 0,
+                    "top": 0,
+                    "left": 0,
+                    "bottom": 0,
+                    "right": 0
+                },
+                "ev_compensation": 0,
+                "ae_anti_flicker_mode": 0,
+                "manual_exposure": {
+                    "exposure_time": 16667,
+                    "gain": 0.0
+                },
+                "white_balance_mode": 0,
+                "auto_white_balance": {
+                    "convergence_speed": 30
+                },
+                "manual_white_balance_preset": {
+                    "color_temperature": 0
+                },
+                "image_cropping": {
+                    "left": 0,
+                    "top": 0,
+                    "width": 2028,
+                    "height": 1520
+                },
+                "image_rotation": 0,
+                "register_access": [
+                    {
+                        "bit_length": 0,
+                        "id": 0,
+                        "address": "AB54A98CEB1F0AD2",
+                        "data": "123"
+                    },
+                    {
+                        "bit_length": 1,
+                        "id": 0,
+                        "address": "AB54A98EEE391EEA",
+                        "data": "12345"
+                    }
+                ]
+            },
+            "port_settings": {
+                "metadata": {
+                    "method": 0,
+                    "storage_name": "",
+                    "endpoint": "",
+                    "path": "",
+                    "enabled": true
+                },
+                "input_tensor": {
+                    "method": 1,
+                    "storage_name": "",
+                    "endpoint": "",
+                    "path": "",
+                    "enabled": true
+                }
+            },
+            "codec_settings": {
+                "format": 1
+            },
+            "number_of_inference_per_message": 1
+        },
+        "custom_settings": {
+            "ai_models": {
+                "perfbench": {
+                    "ai_model_bundle_id": "000002"
+                }
+            }
+        }
+    }
+}

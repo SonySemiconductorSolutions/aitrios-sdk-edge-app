@@ -1,0 +1,12 @@
+{
+    "manifest_version": "1.0.0",
+    "edge_app": {
+        "app_name": "full_test",
+        "file_name": "full_test.wasm",
+        "version": "1.0.0",
+        "app_dtdl_file": "edge_app_full_test_interface.json",
+        "referred_dtdl_files": [],
+        "compiled_flg": false,
+        "schema_info": ""
+    }
+}

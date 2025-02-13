@@ -1,0 +1,118 @@
+{
+    "req_info": {
+        "req_id": "GENERATED_STRING-mynbi"
+    },
+    "common_settings": {
+        "process_state": 1,
+        "log_level": 1,
+        "inference_settings": {
+            "number_of_iterations": 5
+        },
+        "pq_settings": {
+            "camera_image_size": {
+                "width": 9,
+                "height": 4,
+                "scaling_policy": 2
+            },
+            "camera_image_flip": {
+                "flip_horizontal": 1,
+                "flip_vertical": 1
+            },
+            "digital_zoom": 0.25,
+            "exposure_mode": 3,
+            "auto_exposure": {
+                "max_exposure_time": 8,
+                "min_exposure_time": 7,
+                "max_gain": 0.125,
+                "convergence_speed": 5
+            },
+            "auto_exposure_metering": {
+                "metering_mode": 1,
+                "top": 160,
+                "left": 120,
+                "bottom": 480,
+                "right": 360
+            },
+            "ev_compensation": 0.125,
+            "ae_anti_flicker_mode": 2,
+            "manual_exposure": {
+                "exposure_time": 9,
+                "gain": 0.25
+            },
+            "frame_rate": {
+                "num": 9,
+                "denom": 2
+            },
+            "white_balance_mode": 1,
+            "auto_white_balance": {
+                "convergence_speed": 5000
+            },
+            "manual_white_balance_preset": {
+                "color_temperature": 2
+            },
+            "image_cropping": {
+                "left": 0,
+                "top": 1,
+                "width": 6,
+                "height": 10
+            },
+            "image_rotation": 0,
+            "register_access": [
+                {
+                    "bit_length": 0,
+                    "id": 0,
+                    "address": "AB54A98CEB1F0AD2",
+                    "data": "123"
+                },
+                {
+                    "bit_length": 1,
+                    "id": 0,
+                    "address": "AB54A98EEE391EEA",
+                    "data": "12345"
+                },
+                {
+                    "bit_length": 2,
+                    "id": 0,
+                    "address": "9A3298AFB5AC71C7",
+                    "data": "123456789"
+                },
+                {
+                    "bit_length": 3,
+                    "id": 0,
+                    "address": "8AC7230489E80000",
+                    "data": "12345678901234567890"
+                }
+            ]
+        },
+        "port_settings": {
+            "metadata": {
+                "method": 2,
+                "storage_name": "GENERATED_STRING-pkhxk",
+                "endpoint": "GENERATED_STRING-wcgsh",
+                "path": "GENERATED_STRING-hzezr",
+                "enabled": true
+            },
+            "input_tensor": {
+                "method": 0,
+                "storage_name": "GENERATED_STRING-kqpdj",
+                "endpoint": "GENERATED_STRING-rjwdr",
+                "path": "GENERATED_STRING-krgzt",
+                "enabled": false
+            }
+        },
+        "codec_settings": {
+            "format": 1
+        },
+        "number_of_inference_per_message": 1
+    },
+    "custom_settings": {
+        "ai_models": {
+            "classification": {
+                "ai_model_bundle_id": "GENERATED_STRING-cvyee",
+                "parameters": {
+                    "max_predictions": 3
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,98 @@
+{
+    "req_info": {
+        "req_id": "GENERATED_STRING-mynbi"
+    },
+    "res_info": {
+        "res_id": "GENERATED_STRING-qpmzj",
+        "code": 15,
+        "detail_msg": "GENERATED_STRING-lsgqe"
+    },
+    "common_settings": {
+        "process_state": 2,
+        "log_level": 1,
+        "inference_settings": {
+            "number_of_iterations": 1
+        },
+        "pq_settings": {
+            "camera_image_size": {
+                "width": 9,
+                "height": 4,
+                "scaling_policy": 2
+            },
+            "frame_rate": {
+                "num": 9,
+                "denom": 2
+            },
+            "digital_zoom": 0.25,
+            "camera_image_flip": {
+                "flip_horizontal": 1,
+                "flip_vertical": 1
+            },
+            "exposure_mode": 2,
+            "auto_exposure": {
+                "max_exposure_time": 7,
+                "min_exposure_time": 8,
+                "max_gain": 0.125,
+                "convergence_speed": 5
+            },
+            "ev_compensation": 0.125,
+            "ae_anti_flicker_mode": 2,
+            "manual_exposure": {
+                "exposure_time": 9,
+                "gain": 0.2
+            },
+            "white_balance_mode": 3,
+            "auto_white_balance": {
+                "convergence_speed": 7
+            },
+            "manual_white_balance_preset": {
+                "color_temperature": 2
+            },
+            "image_cropping": {
+                "left": 0,
+                "top": 1,
+                "width": 6,
+                "height": 10
+            },
+            "image_rotation": 0
+        },
+        "port_settings": {
+            "metadata": {
+                "method": 2,
+                "storage_name": "GENERATED_STRING-pkhxk",
+                "endpoint": "GENERATED_STRING-wcgsh",
+                "path": "GENERATED_STRING-hzezr",
+                "enabled": true
+            },
+            "input_tensor": {
+                "method": 0,
+                "storage_name": "GENERATED_STRING-kqpdj",
+                "endpoint": "GENERATED_STRING-rjwdr",
+                "path": "GENERATED_STRING-krgzt",
+                "enabled": false
+            }
+        },
+        "codec_settings": {
+            "format": 1
+        },
+        "number_of_inference_per_message": 7
+    },
+    "custom_settings": {
+        "res_info": {
+            "res_id": "GENERATED_STRING-tzmks",
+            "code": 7,
+            "detail_msg": "GENERATED_STRING-jfgfb"
+        },
+        "ai_models": {
+            "GENERATED_STRING-tvipc": {
+                "ai_model_bundle_id": "GENERATED_STRING-cvyee",
+                "parameters": {
+                    "max_detections": 8,
+                    "threshold": 0.125,
+                    "input_width": 8,
+                    "input_height": 4
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,4 @@
+BasedOnStyle: Google
+# Force pointer alignment to right
+DerivePointerAlignment: false
+PointerAlignment: Right

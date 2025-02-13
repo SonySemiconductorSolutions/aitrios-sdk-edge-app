@@ -1,0 +1,9 @@
+[submodule "libs/third_party/flatbuffers"]
+	path = libs/third_party/flatbuffers
+	url = https://github.com/google/flatbuffers.git
+[submodule "libs/third_party/parson"]
+	path = libs/third_party/parson
+	url = https://github.com/kgabis/parson.git
+[submodule "libs/third_party/base64.c"]
+	path = libs/third_party/base64.c
+	url = https://github.com/joedf/base64.c
