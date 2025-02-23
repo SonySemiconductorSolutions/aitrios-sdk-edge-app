@@ -33,8 +33,7 @@ pip install -e ./libs/python
 
 #### Run Sample Edge Application Python
 ```python
-python3 sample_apps/classification/python/imx500_classification_local_console_demo.py --model /usr/share/
-imx500-models/imx500_network_efficientnet_bo.rpk --softmax --mqtt_host=localhost --mqtt_port=1883
+python3 sample_apps/classification/python/imx500_classification_local_console_demo.py --model /usr/share/imx500-models/imx500_network_efficientnet_bo.rpk --softmax --mqtt_host=localhost --mqtt_port=1883
 ```
 
 ### Sample Application for C/C++
