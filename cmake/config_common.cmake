@@ -16,12 +16,8 @@
 # https://github.com/WebAssembly/wasi-sdk/issues/372
 set(WASI_SDK_RECVER "18.1.2")
 
-if(NOT DEFINED WASI_SDK_DIR)
-  set(WASI_SDK_DIR        "/opt/wasi-sdk")
-endif()
-
 execute_process(
-    COMMAND ${WASI_SDK_DIR}/bin/clang --version
+    COMMAND ${CMAKE_C_COMPILER} --version
     COMMAND awk "/version/{print \$3}"
     OUTPUT_VARIABLE WASI_SDK_VER
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -29,14 +25,6 @@ execute_process(
 if (NOT ${WASI_SDK_VER} STREQUAL ${WASI_SDK_RECVER})
   message(WARNING "Use recommended version of wasi-sdk: 22")
 endif()
-
-set(CMAKE_C_COMPILER      "${WASI_SDK_DIR}/bin/clang")
-set(CMAKE_CXX_COMPILER    "${WASI_SDK_DIR}/bin/clang++")
-set(CMAKE_LINKER          "${WASI_SDK_DIR}/bin/wasm-ld")
-set(CMAKE_AR              "${WASI_SDK_DIR}/bin/llvm-ar")
-set(CMAKE_NM              "${WASI_SDK_DIR}/bin/llvm-nm")
-set(CMAKE_OBJDUMP         "${WASI_SDK_DIR}/bin/llvm-dwarfdump")
-set(CMAKE_RANLIB          "${WASI_SDK_DIR}/bin/llvm-ranlib")
 
 set(MAX_MEMORY 10485760)
 set(INITIAL_MEMORY 2097152)
@@ -67,7 +55,7 @@ if (DEFINED INITIAL_MEMORY)
 endif()
 
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Oz -flto -Xclang -fmerge-functions --target=wasm32-wasi-threads")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -flto -Xclang -fmerge-functions")
 
 # -fno-exceptions
 #   For our target (wasm), C++ exceptions are not available in general.
@@ -83,10 +71,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 # -Wl,--export=__heap_base,--export=__data_end
 #   To help WAMR to detect the C stack.
 #
-# -Wl,--import-memory,--export-memory
-#   wasi requires modules to export memory.
-#   wasi-threads requires modules to import memory.
-#
 # -Wl,--export-table
 #   wasi requires modules to export the function table.
 #   it's necessary especially when we use callback-based host APIs
@@ -95,12 +79,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 #   look at the export properly, it's better to avoid
 #   relying on the bug.
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-  --target=wasm32-wasi-threads \
   -Wl,--allow-undefined \
   -Wl,--export=malloc,--export=free \
   -Wl,--export=__heap_base,--export=__data_end \
   -Wl,--export=__main_argc_argv \
-  -Wl,--import-memory,--export-memory \
   -Wl,--export-table \
   -Wl,--max-memory=${MAX_MEMORY} \
   ${ADDITIONAL_FLAGS} \

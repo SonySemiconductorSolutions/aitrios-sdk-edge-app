@@ -51,3 +51,10 @@ TEST(CodecSettings, EmptyJson) {
   obj.Apply(json_object(value));
   json_value_free(value);
 }
+
+TEST(CodecSettings, DefaultValue) {
+  CodecSettings obj;
+  JSON_Object *jsonObj = obj.GetJsonObject();
+  int format = json_object_get_number(jsonObj, "format");
+  ASSERT_EQ(format, 1);
+}

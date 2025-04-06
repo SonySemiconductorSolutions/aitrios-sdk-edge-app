@@ -50,19 +50,19 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 
 | NAME_OF_APP      | Description   |
 |------------------|------------|
-| [dummy]          | A minimal application to confirm the behavior of each event|
 | [passthrough]    | Outputs Input tensors and Output tensors obtained from Edge Devices without any processing.|
 | [classification] | Outputs encoded inference results into FlatBuffers after post-processing for classification task on IMX500.|
 | [detection]      | Outputs encoded inference results into FlatBuffers after post-processing for objectdetection task on IMX500.|
+| [posenet] | Outputs encoded inference results into FlatBuffers after post-processing for posenet task on IMX500.|
 | [segmentation]   | Outputs encoded inference results into FlatBuffers after post-processing for segmentation task on IMX500.|
 | [switch_dnn]     | Sample application for switching between multiple DNNs on IMX500.|
 | [draw]           | Sample application for drawing bounding box on input tensor from IMX500.|
 | [perfbench]      | Sample Application for measuring performance with Debug Code.|
 
-[dummy]: sample_apps/dummy
 [passthrough]: sample_apps/passthrough
 [classification]: sample_apps/classification
 [detection]: sample_apps/detection
+[posenet]: sample_apps/posenet
 [segmentation]: sample_apps/segmentation
 [switch_dnn]: sample_apps/switch_dnn
 [draw]: sample_apps/draw
@@ -73,13 +73,13 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 
 ## See also
 - ["**Console for AITRIOS**"](https://console.aitrios.sony-semicon.com/)
-- ["**Console Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-user-manual/)
+- ["**Console Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/console-user-manual/)
 - ["**Cloud SDK Visualization Tutorial**"](https://github.com/SonySemiconductorSolutions/aitrios-sdk-visualization-ts/tree/main/docs/development-docs/)
 - ["**Developer Site**"](https://developer.aitrios.sony-semicon.com/en/)
 - ["**AI Camera**"](https://www.raspberrypi.com/documentation/accessories/ai-camera.html)
 
 ## Trademark
-- [Read This First](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/read-this-first/)
+- [Read This First](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/read-this-first/)
 
 ## Security
 Before using Codespaces, please read the Site Policy of GitHub and understand the usage conditions. 

@@ -34,6 +34,7 @@ add_library(log
   ${LOGS_API_SRC_DIR}/log_internal.cpp
   ${LOGS_API_SRC_DIR}/log_private.cpp
   ${LOGS_API_SRC_DIR}/log.cpp
+  ${LOGS_API_SRC_DIR}/log_common.cpp
 )
 add_executable(test_logapi
   ut_logapi.cpp
@@ -48,6 +49,7 @@ add_library(log_logdisable
   ${LOGS_API_SRC_DIR}/log_internal.cpp
   ${LOGS_API_SRC_DIR}/log_private.cpp
   ${LOGS_API_SRC_DIR}/log.cpp
+  ${LOGS_API_SRC_DIR}/log_common.cpp
 )
 target_compile_definitions(log_logdisable PUBLIC LOGDISABLE)
 add_executable(test_logapi_logdisable

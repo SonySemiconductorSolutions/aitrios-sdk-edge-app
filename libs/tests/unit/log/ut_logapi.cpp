@@ -45,6 +45,7 @@ class LogAPIUnitTest
   static std::unique_ptr<LogAPIUnitTestMock> _mock;
 
   void CheckEqual(std::string expect_log, std::string output);
+  void CheckEqualCommon(std::string expect_log, std::string output);
 };
 
 class TestLogTrace : public LogAPIUnitTest {};
@@ -53,6 +54,13 @@ class TestLogInfo : public LogAPIUnitTest {};
 class TestLogWarn : public LogAPIUnitTest {};
 class TestLogError : public LogAPIUnitTest {};
 class TestLogCritical : public LogAPIUnitTest {};
+
+class TestLogTraceCommon : public LogAPIUnitTest {};
+class TestLogDebugCommon : public LogAPIUnitTest {};
+class TestLogInfoCommon : public LogAPIUnitTest {};
+class TestLogWarnCommon : public LogAPIUnitTest {};
+class TestLogErrorCommon : public LogAPIUnitTest {};
+class TestLogCriticalCommon : public LogAPIUnitTest {};
 
 const char *context = "testcontext";
 const char *message = "testmessage";
@@ -78,6 +86,27 @@ void LogAPIUnitTest::CheckEqual(std::string expect_log, std::string output) {
 
     std::string result_str = output.substr(24);
     EXPECT_STREQ(expect_str.c_str(), result_str.c_str());
+  }
+}
+
+void LogAPIUnitTest::CheckEqualCommon(std::string expect_log,
+                                      std::string output) {
+  if (expect_log == "") {
+    EXPECT_STREQ(expect_log.c_str(), output.c_str());
+  } else {
+    std::string expect_str_1 = expect_log;
+    std::string expect_str_2 = std::string("") + message + "\n";
+    std::string result_timestamp = output.substr(0, 23);
+    EXPECT_THAT(result_timestamp.c_str(),
+                ::testing::MatchesRegex(
+                    "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01]["
+                    "0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9].[0-9]{3}"));
+
+    std::string result_str = output.substr(24);
+    EXPECT_EQ(0, result_str.find(expect_str_1));
+
+    EXPECT_EQ(result_str.length() - expect_str_2.length(),
+              result_str.rfind(expect_str_2));
   }
 }
 
@@ -240,6 +269,158 @@ TEST_P(TestLogCritical, CheckLogCritical) {
 
 INSTANTIATE_TEST_CASE_P(
     InstantiateCheckLogCritical, TestLogCritical,
+    ::testing::Values(::std::make_tuple(LogLevel::kTraceLevel, "[CRITICAL]"),
+                      ::std::make_tuple(LogLevel::kDebugLevel, "[CRITICAL]"),
+                      ::std::make_tuple(LogLevel::kInfoLevel, "[CRITICAL]"),
+                      ::std::make_tuple(LogLevel::kWarnLevel, "[CRITICAL]"),
+                      ::std::make_tuple(LogLevel::kErrorLevel, "[CRITICAL]"),
+                      ::std::make_tuple(LogLevel::kCriticalLevel,
+                                        "[CRITICAL]")));
+
+TEST_F(LogAPIUnitTest, LogFunctionWrongLevel) {
+  testing::internal::CaptureStdout();
+  testing::internal::CaptureStderr();
+
+  log_function((LogLevel)-1, __FILE__, __LINE__, message);
+
+  std::string error_log = testing::internal::GetCapturedStderr().c_str();
+  EXPECT_STREQ("", error_log.c_str());
+
+  std::string output = testing::internal::GetCapturedStdout().c_str();
+  EXPECT_STREQ("", error_log.c_str());
+}
+
+TEST_P(TestLogTraceCommon, CheckLogTraceCommon) {
+  ::std::tuple<LogLevel, std::string> param = GetParam();
+  LogLevel settingLevel = ::std::get<0>(param);
+  std::string expect_str = ::std::get<1>(param);
+
+  SetLogLevel(settingLevel);
+
+  testing::internal::CaptureStdout();
+  LOG_TRACE(message);
+  std::string output = testing::internal::GetCapturedStdout();
+
+  CheckEqualCommon(expect_str, output);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    InstantiateCheckLogTraceCommon, TestLogTraceCommon,
+    ::testing::Values(::std::make_tuple(LogLevel::kTraceLevel, "[TRACE]   "),
+                      ::std::make_tuple(LogLevel::kDebugLevel, ""),
+                      ::std::make_tuple(LogLevel::kInfoLevel, ""),
+                      ::std::make_tuple(LogLevel::kWarnLevel, ""),
+                      ::std::make_tuple(LogLevel::kErrorLevel, ""),
+                      ::std::make_tuple(LogLevel::kCriticalLevel, "")));
+
+TEST_P(TestLogDebugCommon, CheckLogDebugCommon) {
+  ::std::tuple<LogLevel, std::string> param = GetParam();
+  LogLevel settingLevel = ::std::get<0>(param);
+  std::string expect_str = ::std::get<1>(param);
+
+  SetLogLevel(settingLevel);
+
+  testing::internal::CaptureStdout();
+  LOG_DBG(message);
+  std::string output = testing::internal::GetCapturedStdout();
+
+  CheckEqualCommon(expect_str, output);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    InstantiateCheckLogDebugCommon, TestLogDebugCommon,
+    ::testing::Values(::std::make_tuple(LogLevel::kTraceLevel, "[DEBUG]   "),
+                      ::std::make_tuple(LogLevel::kDebugLevel, "[DEBUG]   "),
+                      ::std::make_tuple(LogLevel::kInfoLevel, ""),
+                      ::std::make_tuple(LogLevel::kWarnLevel, ""),
+                      ::std::make_tuple(LogLevel::kErrorLevel, ""),
+                      ::std::make_tuple(LogLevel::kCriticalLevel, "")));
+
+TEST_P(TestLogInfoCommon, CheckLogInfoCommon) {
+  ::std::tuple<LogLevel, std::string> param = GetParam();
+  LogLevel settingLevel = ::std::get<0>(param);
+  std::string expect_str = ::std::get<1>(param);
+
+  SetLogLevel(settingLevel);
+
+  testing::internal::CaptureStdout();
+  LOG_INFO(message);
+  std::string output = testing::internal::GetCapturedStdout();
+
+  CheckEqualCommon(expect_str, output);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    InstantiateCheckLogInfoCommon, TestLogInfoCommon,
+    ::testing::Values(::std::make_tuple(LogLevel::kTraceLevel, "[INFO]    "),
+                      ::std::make_tuple(LogLevel::kDebugLevel, "[INFO]    "),
+                      ::std::make_tuple(LogLevel::kInfoLevel, "[INFO]    "),
+                      ::std::make_tuple(LogLevel::kWarnLevel, ""),
+                      ::std::make_tuple(LogLevel::kErrorLevel, ""),
+                      ::std::make_tuple(LogLevel::kCriticalLevel, "")));
+
+TEST_P(TestLogWarnCommon, CheckLogWarnCommon) {
+  ::std::tuple<LogLevel, std::string> param = GetParam();
+  LogLevel settingLevel = ::std::get<0>(param);
+  std::string expect_str = ::std::get<1>(param);
+
+  SetLogLevel(settingLevel);
+
+  testing::internal::CaptureStdout();
+  LOG_WARN(message);
+  std::string output = testing::internal::GetCapturedStdout();
+
+  CheckEqualCommon(expect_str, output);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    InstantiateCheckLogWarnCommon, TestLogWarnCommon,
+    ::testing::Values(::std::make_tuple(LogLevel::kTraceLevel, "[WARN]    "),
+                      ::std::make_tuple(LogLevel::kDebugLevel, "[WARN]    "),
+                      ::std::make_tuple(LogLevel::kInfoLevel, "[WARN]    "),
+                      ::std::make_tuple(LogLevel::kWarnLevel, "[WARN]    "),
+                      ::std::make_tuple(LogLevel::kErrorLevel, ""),
+                      ::std::make_tuple(LogLevel::kCriticalLevel, "")));
+
+TEST_P(TestLogErrorCommon, CheckLogErrorCommon) {
+  ::std::tuple<LogLevel, std::string> param = GetParam();
+  LogLevel settingLevel = ::std::get<0>(param);
+  std::string expect_str = ::std::get<1>(param);
+
+  SetLogLevel(settingLevel);
+
+  testing::internal::CaptureStdout();
+  LOG_ERR(message);
+  std::string output = testing::internal::GetCapturedStdout();
+
+  CheckEqualCommon(expect_str, output);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    InstantiateCheckLogErrorCommon, TestLogErrorCommon,
+    ::testing::Values(::std::make_tuple(LogLevel::kTraceLevel, "[ERROR]   "),
+                      ::std::make_tuple(LogLevel::kDebugLevel, "[ERROR]   "),
+                      ::std::make_tuple(LogLevel::kInfoLevel, "[ERROR]   "),
+                      ::std::make_tuple(LogLevel::kWarnLevel, "[ERROR]   "),
+                      ::std::make_tuple(LogLevel::kErrorLevel, "[ERROR]   "),
+                      ::std::make_tuple(LogLevel::kCriticalLevel, "")));
+
+TEST_P(TestLogCriticalCommon, CheckLogCritical) {
+  ::std::tuple<LogLevel, std::string> param = GetParam();
+  LogLevel settingLevel = ::std::get<0>(param);
+  std::string expect_str = ::std::get<1>(param);
+
+  SetLogLevel(settingLevel);
+
+  testing::internal::CaptureStdout();
+  LOG_CRITICAL(message);
+  std::string output = testing::internal::GetCapturedStdout();
+
+  CheckEqualCommon(expect_str, output);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    InstantiateCheckLogCriticalCommon, TestLogCriticalCommon,
     ::testing::Values(::std::make_tuple(LogLevel::kTraceLevel, "[CRITICAL]"),
                       ::std::make_tuple(LogLevel::kDebugLevel, "[CRITICAL]"),
                       ::std::make_tuple(LogLevel::kInfoLevel, "[CRITICAL]"),

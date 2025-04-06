@@ -27,6 +27,7 @@ DataProcessorResultCode ExtractMaxPredictions(
     JSON_Object *json, DataProcessorCustomParam *cls_param_pr) {
   double aux = 0;
   if (GetValueNumber(json, "max_predictions", &aux) == 0) {
+    if (aux < 0) return kDataProcessorOutOfRange;
     uint16_t max_predictions = (uint16_t)aux;
     cls_param_pr->maxPredictions = max_predictions;
     return kDataProcessorOk;
@@ -38,6 +39,43 @@ DataProcessorResultCode ExtractMaxPredictions(
   cls_param_pr->maxPredictions = DEFAULT_MAX_PREDICTIONS;
   json_object_set_number(json, "max_predictions", DEFAULT_MAX_PREDICTIONS);
   return kDataProcessorInvalidParam;
+}
+
+JSON_Value *CreateClsOutputJson(float *out_data_pr, uint16_t num_elements,
+                                DataProcessorCustomParam cls_param) {
+  LOG_DBG("Creating JSON from array of floats.");
+
+  std::vector<ClassificationItem> class_data(num_elements);
+
+  for (int i = 0; i < num_elements; i++) {
+    class_data[i] = {i, out_data_pr[i]};
+  }
+
+  if (class_data.size() > 0) {
+    std::stable_sort(
+        class_data.begin(), class_data.end(),
+        [](const ClassificationItem &left, const ClassificationItem &right) {
+          return left.score > right.score;
+        });
+  }
+
+  JSON_Value *classifications_value = json_value_init_array();
+  JSON_Array *classifications = json_array(classifications_value);
+
+  if (num_elements > cls_param.maxPredictions) {
+    num_elements = cls_param.maxPredictions;
+    LOG_DBG("Maximum number of predictions to send %d.", num_elements);
+  }
+
+  for (int i = 0; i < num_elements; i++) {
+    LOG_DBG("class = %d, score = %f", class_data[i].index, class_data[i].score);
+    JSON_Value *classification_value = json_value_init_object();
+    JSON_Object *classification = json_object(classification_value);
+    json_object_set_number(classification, "class_id", class_data[i].index);
+    json_object_set_number(classification, "score", class_data[i].score);
+    json_array_append_value(classifications, classification_value);
+  }
+  return classifications_value;
 }
 
 int CreateClassificationFlatbuffer(float *out_data_pr, int num_elements,

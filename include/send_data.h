@@ -28,8 +28,9 @@
 
 #define MAX_NUMBER_OF_INFERENCE_QUEUE 100
 
+#include <stdint.h>
+
 #include "send_data_types.h"
-#include "stdint.h"
 
 namespace EdgeAppLib {
 #ifdef __cplusplus

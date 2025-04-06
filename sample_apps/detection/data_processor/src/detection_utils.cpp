@@ -35,6 +35,7 @@ DataProcessorResultCode ExtractMaxDetections(
     JSON_Object *json, DataProcessorCustomParam *ssd_param_pr) {
   double aux = 0;
   if (GetValueNumber(json, "max_detections", &aux) == 0) {
+    if (aux < 0) return kDataProcessorOutOfRange;
     ssd_param_pr->max_detections = (uint16_t)aux;
     return kDataProcessorOk;
   }
@@ -51,6 +52,10 @@ DataProcessorResultCode ExtractThreshold(
     JSON_Object *json, DataProcessorCustomParam *ssd_param_pr) {
   double aux = 0;
   if (GetValueNumber(json, "threshold", &aux) == 0) {
+    if (aux < 0.0 || aux > 1.0) {
+      LOG_INFO("DataProcessorConfigure: threshold value out of range");
+      return kDataProcessorOutOfRange;
+    }
     ssd_param_pr->threshold = (float)aux;
     return kDataProcessorOk;
   }
@@ -67,6 +72,7 @@ DataProcessorResultCode ExtractInputHeight(
     JSON_Object *json, DataProcessorCustomParam *ssd_param_pr) {
   double aux = 0;
   if (GetValueNumber(json, "input_height", &aux) == 0) {
+    if (aux < 0) return kDataProcessorOutOfRange;
     ssd_param_pr->input_height = (uint16_t)aux;
     return kDataProcessorOk;
   }
@@ -94,6 +100,7 @@ DataProcessorResultCode ExtractInputWidth(
     JSON_Object *json, DataProcessorCustomParam *ssd_param_pr) {
   double aux = 0;
   if (GetValueNumber(json, "input_width", &aux) == 0) {
+    if (aux < 0) return kDataProcessorOutOfRange;
     ssd_param_pr->input_width = (uint16_t)aux;
     return kDataProcessorOk;
   }
@@ -106,8 +113,11 @@ DataProcessorResultCode ExtractInputWidth(
   return kDataProcessorInvalidParam;
 }
 
-int ExtractNumberOfDetections(int num_elements) {
-  int detections_in_tensor = (num_elements - 1) / 6;
+uint16_t ExtractNumberOfDetections(uint32_t num_elements) {
+  if (num_elements < 7) {
+    return 0;
+  }
+  uint16_t detections_in_tensor = (num_elements - 1) / 6;
   return detections_in_tensor;
 }
 
@@ -140,14 +150,14 @@ static JSON_Value *ExtractBboxToJson(float *out_data_pr, int index,
 }
 
 static JSON_Value *ExtractDetectionsToJson(float *out_data_pr,
-                                           int num_of_detections,
+                                           uint16_t num_of_detections,
                                            DataProcessorCustomParam ssd_param) {
   JSON_Value *detections_value = json_value_init_array();
   JSON_Array *detections = json_array(detections_value);
 
-  uint8_t detections_above_threshold = 0;
+  uint16_t detections_above_threshold = 0;
 
-  for (uint8_t i = 0; i < num_of_detections; i++) {
+  for (uint16_t i = 0; i < num_of_detections; i++) {
     /* Extract score */
     float score;
     score = out_data_pr[(num_of_detections * 5) + i];
@@ -186,18 +196,18 @@ static JSON_Value *ExtractDetectionsToJson(float *out_data_pr,
   return detections_value;
 }
 
-JSON_Value *CreateSSDOutputJson(float *out_data_pr, int num_elements,
+JSON_Value *CreateSSDOutputJson(float *out_data_pr, uint32_t num_elements,
                                 DataProcessorCustomParam ssd_param) {
   LOG_DBG("Creating JSON from array of floats");
 
   /* Extract number of detections */
-  int num_of_detections = ExtractNumberOfDetections(num_elements);
+  uint16_t num_of_detections = ExtractNumberOfDetections(num_elements);
 
   return ExtractDetectionsToJson(out_data_pr, num_of_detections, ssd_param);
 }
 
 void ExtractBboxToFlatbuffer(
-    float *out_data_pr, int index, int num_of_detections,
+    float *out_data_pr, int index, uint16_t num_of_detections,
     flatbuffers::FlatBufferBuilder *builder,
     flatbuffers::Offset<SmartCamera::BoundingBox2d> *bbox_data,
     DataProcessorCustomParam ssd_param) {
@@ -224,11 +234,11 @@ void ExtractBboxToFlatbuffer(
 void ExtractDetectionsToFlatbufferObject(
     float *out_data_pr,
     std::vector<flatbuffers::Offset<SmartCamera::GeneralObject> > *gdata_vector,
-    flatbuffers::FlatBufferBuilder *builder, int num_of_detections,
+    flatbuffers::FlatBufferBuilder *builder, uint16_t num_of_detections,
     DataProcessorCustomParam ssd_param) {
-  uint8_t detections_above_threshold = 0;
+  uint16_t detections_above_threshold = 0;
 
-  for (uint8_t i = 0; i < num_of_detections; i++) {
+  for (uint16_t i = 0; i < num_of_detections; i++) {
     /* Extract score */
     float score;
     score = out_data_pr[(num_of_detections * 5) + i];
@@ -264,14 +274,14 @@ void ExtractDetectionsToFlatbufferObject(
   }
 }
 
-int CreateSSDOutputFlatbuffer(float *out_data_pr, int num_elements,
+int CreateSSDOutputFlatbuffer(float *out_data_pr, uint32_t num_elements,
                               flatbuffers::FlatBufferBuilder *builder,
                               DataProcessorCustomParam ssd_param) {
   std::vector<flatbuffers::Offset<SmartCamera::GeneralObject> > gdata_vector;
   LOG_DBG("Creating flatbuffer from array of floats");
 
   /* Extract number of detections */
-  int num_of_detections = ExtractNumberOfDetections(num_elements);
+  uint16_t num_of_detections = ExtractNumberOfDetections(num_elements);
 
   ExtractDetectionsToFlatbufferObject(out_data_pr, &gdata_vector, builder,
                                       num_of_detections, ssd_param);

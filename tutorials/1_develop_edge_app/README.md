@@ -105,7 +105,7 @@ Here the content of **`custom_settings`** field is decided by the developers.
 
 > **NOTE**
 > 
-> **`ai_model_bundle_id`** specifies which AI model on a Edge AI Device to use, and is only used in **`switch_dnn`** in the sample apps provided with "**Edge Application SDK**". The code to read and set **`ai_model_bundle_id`** in **`onConfigure(char *topic, void *value, int valuelen)`** is included in other sample codes, but please refer to the **`switch_dnn`** sample code.
+> **`ai_model_bundle_id`** specifies which AI model on a Edge AI Device to use. The code to read and set **`ai_model_bundle_id`** in **`onConfigure(char *topic, void *value, int valuelen)`** is included in sample code.
 
 ## 2. Define DTDL for Custom Parameters
 
@@ -139,7 +139,14 @@ Each sample app provides DTDL and a sample of Configuration that is sent from th
 
 
 
-## 3. Output serialization with a FlatBuffers schema
+## 3. Output post-processing result
+
+The "**Edge Application**" provides two format of sending post-processing result.
+
+- Output serialization with a FlatBuffers schema
+- Output json text
+
+### 3.1. Output serialization with a FlatBuffers schema
 
 The "**Edge Application**" is expected to provide an output serialized by [FlatBuffers](https://google.github.io/flatbuffers/index.html) and send it as a telemetry. To this end, a developer needs to define the FlatBuffers schema file (`.fbs` extension) for its "**Edge Application**" output.
 
@@ -171,6 +178,34 @@ Each sample app provides an example of the sample FlatBuffers schema file and a 
 >
 > For detailed options of the schema compiler, **`flatc`**, utilized in [compile_fbs.sh](../../tools/compile_fbs.sh) please check [its official doccumentation](https://google.github.io/flatbuffers/flatbuffers_guide_using_schema_compiler.html).
 
+### 3.2. Output json text
+
+The "**Edge Application**" is also expected to provide an output as text.
+
+Object detection sample app provides an example of output json text format.
+
+Object detection sample app also provides an example of a binary output serialized by FlatBuffers. The output formats can be specified by `custom_settings` - `metadata_settings` - `format` in configuration json.
+
+In [**`detection_data_processor.cpp`**](../../sample_apps/detection/data_processor/src/detection_data_processor.cpp), `DataProcessorAnalyze` makes serialized json string.
+
+```detection_data_processor.cpp
+    case EdgeAppLibSendDataJson: {
+      JSON_Value *tensor_output =
+          CreateSSDOutputJson(in_data, in_size / sizeof(float), analyze_params);
+      *out_data = json_serialize_to_string(tensor_output);
+      *out_size = json_serialization_size(tensor_output);
+      json_value_free(tensor_output);
+      return kDataProcessorOk;
+    }
+```
+
+In [**`sm.cpp`**](../../sample_apps/detection/src/sm.cpp), `sendMetadata` calls `SendDataSyncMeta` API with data format as `EdgeAppLibSendDataJson` returned from `DataProcessorGetDataType()`.
+
+```sm.cpp
+  EdgeAppLibSendDataResult result =
+      SendDataSyncMeta(metadata, metadata_size, DataProcessorGetDataType(),
+                       data.timestamp, DATA_EXPORT_AWAIT_TIMEOUT);
+```
 
 ## 4. Implement event functions for the "**Edge Application**"
 
@@ -208,7 +243,7 @@ In the sample apps these event functions are defined in **`sm.cpp`** file using 
 Here, the files [**`classification.fbs`**](../../sample_apps/classification/schemas/classification.fbs) and [**`classification_generated.h`**](../../sample_apps/classification//include/schemas/classification_generated.h) are related to the Flatbuffer schema coming from the previous step. [**`classification_utils.hpp`**](../../sample_apps/classification/data_processor/src/classification_utils.hpp) and [**`classification_utils.cpp`**](../../sample_apps/classification/data_processor/src/classification_utils.cpp) files contain different methods that a developer can find useful for parsing configuration files or for transforming data between intermediate format. Note that the code that captures how to postprocess the model is collected in the [**`classification_data_processor.cpp`**](../../sample_apps/classification/data_processor/src/classification_data_processor.cpp) and follows the Data Processor API, [**`data_processor_api.hpp`**](../../sample_apps/include/data_processor_api.hpp). While it is not a mandatory API to use, we find it to simplify the testing of the app.
 
 The implemented code should rely on the following interfaces:
-1. "**AITRIOS Data Export API**" declared in [**`data_export.h`**](../../include/data_export.h)<br>
+1. "**AITRIOS Data Export API**" declared in [**`send_data.h`**](../../include/send_data.h) and [**`data_export.h`**](../../include/data_export.h)<br>
 2. "**AITRIOS Sensor**" declared in [**`sensor.h`**](../../include/sensor.h)<br>
 3. "**Data Processor API**" (Optional) declared in [**`data_processor_api.hpp`**](../../sample_apps/include/data_processor_api.hpp)</br>
 
@@ -223,7 +258,7 @@ In addition, we are using some utils provided in [**`sample_apps/include`**](../
 Keep in mind the following restrictions when implementing an "**Edge Application**".
 - The "**Edge Application**" is compiled to Wasm file. Features that are in [**wasi-libc**](https://github.com/WebAssembly/wasi-libc) can be used without any extra steps, but features that are not in `wasi-libc` require the libraries to be statically linked.
 - Functions that require access to the Native side from WASM cannot be used. This includes, for example, OS functions, GPIO and network systems.
-- Large libraries cannot be included due to a limit on the file size that can be deployed to the device. Find more information on the "**Edge Application**" memory and implementation restrictions in the [implementation requirements](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/vision-and-sensing-application-implementation-requirements).
+- Large libraries cannot be included due to a limit on the file size that can be deployed to the device. Find more information on the "**Edge Application**" memory and implementation restrictions in the [implementation requirements](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/edge-application-implementation-requirements).
 - Users are responsible for the combination of AI model and "**Edge Application**", and the system does not check beforehand.
 
 We now invite the reader to look at the sample implementations in the [sample_apps](../../sample_apps/) folder.
@@ -262,20 +297,23 @@ Then, under the **`sample_apps/your_app_name/data_processor/src`** folder you ca
 add_library(data_processor_api 
 ${SAMPLE_APP_DIR}/classification/data_processor/src/classification_data_processor.cpp
 ${SAMPLE_APP_DIR}/classification/data_processor/src/classification_utils.cpp
-${SAMPLE_APP_DIR}/utils/data_processor_utils.cpp
+${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
+${SAMPLE_APP_DIR}/utils/src/data_processor_utils.cpp
 ${LIBS_DIR}/third_party/parson/parson.c
+${LIBS_DIR}/third_party/base64.c/base64.c
 )
 ```
 -  Provide the folders with the necessary headers to **`target_include_directories()`**. Example:
 ```CMakeLists.txt
 target_include_directories(data_processor_api PUBLIC
-  ${SAMPLE_APP_DIR}/include
-  ${SAMPLE_APP_DIR}/include/schemas
+  ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/classification/include/schemas
   ${SAMPLE_APP_DIR}/classification/data_processor/src
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/flatbuffers/include
+  ${LIBS_DIR}/third_party/base64.c
+  ${LIBS_DIR}/depend/edge_app
 )
 ```
 
@@ -286,7 +324,7 @@ target_link_libraries(data_processor_api log)
 
 Now you can update the top-level [**`CMakeLists.txt`**](../../CMakeLists.txt) to work with your app by extending the **`APPS_LIST`** variable:
 ```CMakeLists.txt
-set(APPS_LIST "classification" "detection" "zonedetection" "segmentation" "switch_dnn" "dummy" "your_app_name")
+set(APPS_LIST "classification" "detection" "zonedetection" "segmentation" "switch_dnn" "your_app_name")
 ```
 
 > **NOTE**<br>
@@ -304,12 +342,12 @@ To build the sample applications open the Terminal and run the following command
 make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 ```
 where **`NAME_OF_APP`** can take one of the following values:
-- **`dummy`**: build the dummy sample (event functions defined in [here](../,./sample_apps/dummy/src/sm.cpp) of the event functions).<br>
+- **`passthrough`**: build the passthrough sample (event functions defined in [here](../../sample_apps/passthrough/src/sm.cpp) of the event functions).<br>
 - **`classification`** : builds the image classification sample<br>
 - **`detection`** : builds the object detection sample<br>
 - **`segmentation`** : builds the semantic segmentation sample<br>
 - **`switch_dnn`** : builds the switch dnn sample<br>
-If the flag is not specified, the app will be compiled with a dummy implementation. 
+If the flag is not specified, the app will be compiled with a passthrough implementation. 
 
 Then, the files **`edge_app.wasm`** is generated in **`bin`** folder. Note that the output file name is independent of the application name, so the **`.wasm`**  file of the next build would overwrite the previous one.
  
@@ -366,7 +404,7 @@ $ make cleanall
 
 We provide a setup to debug WASM on Edge AI Devices.
 
-You can retrieve logs of Wasm running on a Edge AI Device. For that purpose we provide a Log API among the libraries available to a developer. For detailed information about logs, see [implementation requirements](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/vision-and-sensing-application-implementation-requirements). The ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-user-manual/) covers how to enable Wasm logging and retrieve logs.
+You can retrieve logs of Wasm running on a Edge AI Device. For that purpose we provide a Log API among the libraries available to a developer. For detailed information about logs, see [implementation requirements](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/edge-application-implementation-requirements). The ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/console-user-manual/) covers how to enable Wasm logging and retrieve logs.
 
 > **NOTE**
 > 

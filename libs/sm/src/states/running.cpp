@@ -25,6 +25,7 @@
 #include "sm.h"
 #include "sm_context.hpp"
 #include "states/state_defs.h"
+#include "utils.hpp"
 
 using EdgeAppLib::DataExportHasPendingOperations;
 
@@ -34,7 +35,13 @@ Running::Running(RunningThread *running_thread) {
   int res = 0;
   this->running_thread = running_thread;
   if ((res = onStart()) != 0) {
-    EventHandleError(ON_START, res, context, STATE_IDLE);
+    is_failed_on_start = true;
+    // onStart failure might be an error of sensor start.
+    // Set the sensor error info to res_info.
+    CODE code = CODE_FAILED_PRECONDITION;
+    EdgeAppLibSensorErrorCause cause = SmUtilsPrintSensorError();
+    CodeFromSensorErrorCause(cause, &code);
+    EventHandleError(ON_START, res, context, STATE_IDLE, true, code);
     return;
   }
   context->SendState();
@@ -47,8 +54,11 @@ Running::~Running() {
   running_thread->ThreadStop();
   delete running_thread; /* LCOV_EXCL_EXCEPTION_BR_LINE: object delete */
   int res = 0;
-  if ((res = onStop()) != 0)
-    EventHandleError(ON_STOP, res, context, STATE_IDLE);
+  if ((res = onStop()) != 0) {
+    // onStop failure info after onStart failure is not set to res_info.
+    // Because res_info is already set by onStart failure.
+    EventHandleError(ON_STOP, res, context, STATE_IDLE, !is_failed_on_start);
+  }
   LOG_DBG("Destroyed.");
 }
 
@@ -57,7 +67,7 @@ IterateStatus Running::Iterate() {
       EVP_processEvent(context->evp_client, EVP_PROCESSEVENT_TIMEOUT_MS);
 
   if (result == EVP_SHOULDEXIT) {
-    LOG_DBG("Exiting the main loop due to EVP_SHOULDEXIT");
+    LOG_INFO("Exiting the main loop due to EVP_SHOULDEXIT");
     context->SetNextState(STATE_DESTROYING);
     return IterateStatus::Ok;
   }

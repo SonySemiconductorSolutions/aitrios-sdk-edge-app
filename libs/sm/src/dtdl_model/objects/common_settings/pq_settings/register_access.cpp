@@ -16,6 +16,7 @@
 #include "dtdl_model/objects/common_settings/pq_settings/register_access.hpp"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include "dtdl_model/properties.h"
@@ -200,11 +201,11 @@ void RegisterAccess::StoreValue(uint32_t id, uint64_t address, uint64_t data,
   json_object_set_number(json_obj, ID, id);
 
   char address_str[17] = {};
-  snprintf(address_str, 17, "%016llX", address);
+  snprintf(address_str, 17, "%016" PRIX64, address);
   json_object_set_string(json_obj, ADDRESS, address_str);
 
   char data_str[21] = {};
-  snprintf(data_str, 21, "%llu", data);
+  snprintf(data_str, 21, "%" PRIu64, data);
   json_object_set_string(json_obj, DATA, data_str);
 
   switch (bit_length) {

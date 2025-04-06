@@ -28,7 +28,7 @@ using EdgeAppLib::SensorCoreExit;
 using EdgeAppLib::SensorStreamGetProperty;
 EdgeAppLibSensorStream s_stream = 0;
 #define EPSILON 1e-4
-#define MODEL_VERSION_ID "model_version_id"
+#define MODEL_ID "model_id"
 #define DEVICE_ID "device_id"
 #define BUF_IMAGE "image"
 #define BUF_TIME "T"
@@ -140,7 +140,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, StreamSetPropertyFail) {
   char *output = NULL;
   DataProcessorResultCode res = DataProcessorConfigure((char *)config, &output);
   printf("config: %s\n", config);
-  EXPECT_EQ(res, -1);
+  EXPECT_EQ(res, kDataProcessorInvalidParamSetError);
   JSON_Value *out_value = json_parse_string(output);
   EXPECT_FALSE(out_value == NULL);
   json_value_free(out_value);

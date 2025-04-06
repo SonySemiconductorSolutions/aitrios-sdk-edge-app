@@ -31,7 +31,7 @@ all: docker_build
 	  -v $(MAKEFILE_DIR):$(ROOTDIR) \
 	  $(IMAGE_NAME) \
 	  	/bin/sh -c \
-		"mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && cmake $(CMAKE_FLAGS) ..  && make && $(WASM_OPT) -Oz -o $(TARGET) $(BUILDDIR)/$(MODULE_NAME)"
+		"mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && cmake -DCMAKE_TOOLCHAIN_FILE=/opt/wasi-sdk/share/cmake/wasi-sdk-pthread.cmake $(CMAKE_FLAGS) ..  && make && $(WASM_OPT) -Oz -o $(TARGET) $(BUILDDIR)/$(MODULE_NAME)"
 
 .PHONY: clean
 clean:

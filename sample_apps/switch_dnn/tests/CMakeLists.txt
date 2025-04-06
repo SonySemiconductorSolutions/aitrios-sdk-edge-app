@@ -42,14 +42,14 @@ add_executable(test_switch_dnn
   ${APP_DIR}/tests/test_switch_dnn.cpp
   ${APP_DIR}/src/sm.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
-  ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
   ${LIBS_DIR}/tests/mocks/sensor/testing_utils.cpp
 )
 
 target_include_directories (test_switch_dnn PUBLIC
   ${ROOT_DIR}/include
   ${APP_DIR}/include/schemas
-  ${SAMPLE_APP_DIR}/include
+  ${SAMPLE_APP_DIR}/utils/include
   ${APP_DIR}/data_processor/include
   ${LIBS_DIR}/send_data/src/data_export/include
   ${LIBS_DIR}/third_party/parson
@@ -68,7 +68,7 @@ target_include_directories (test_analyzer PUBLIC
   ${APP_DIR}/data_processor/include
   ${LIBS_DIR}/log/include
   ${LIBS_DIR}/third_party/parson
-  ${SAMPLE_APP_DIR}/include
+  ${SAMPLE_APP_DIR}/utils/include
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${LIBS_DIR}/third_party/flatbuffers/include
 )

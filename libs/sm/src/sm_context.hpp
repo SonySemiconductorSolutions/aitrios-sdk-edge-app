@@ -56,7 +56,7 @@ class StateMachineContext : public Context {
   EdgeAppLibSensorCore core = 0;
   EdgeAppLibSensorStream stream = 0;
   void *pending_configuration = nullptr;
-  int pending_configuration_len = 0;
+  size_t pending_configuration_len = 0;
 };
 
 #endif /* AITRIOS_SM_CONTEXT_HPP */

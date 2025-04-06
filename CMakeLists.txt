@@ -15,22 +15,26 @@
 cmake_minimum_required(VERSION 3.14)
 project(edge_app)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
+set(TESTS_DIR ${ROOT_DIR}/tests)
 set(LIBS_DIR ${ROOT_DIR}/libs)
 
 # Define a list of possible apps
-set(APPS_LIST "passthrough" "classification" "detection" "segmentation" "switch_dnn" "draw" "perfbench" "apitest" "dummy")
+set(APPS_LIST "passthrough" "classification" "detection" "posenet" "segmentation" "switch_dnn" "draw" "perfbench" "apitest")
 
 if(NOT DEFINED APPS_SELECTION)
-  set(APPS_SELECTION "dummy")
+  set(APPS_SELECTION "passthrough")
 endif()
 
 if (APPS_SELECTION IN_LIST APPS_LIST)
   message(STATUS "App selected: ${APPS_SELECTION}")
 else()
   message(FATAL_ERROR
-    "Please if you are defining the `APPS_SELECTION` flag select one of the following: passthrough, classification, detection, segmentation, switch_dnn, draw, perfbench, apitest or dummy"
+    "Please if you are defining the `APPS_SELECTION` flag select one of the following: passthrough, classification, detection, posenet, segmentation, switch_dnn, draw, perfbench or apitest"
   )
 endif()
 
@@ -38,26 +42,31 @@ if(NOT DEFINED ELF)
   include(${ROOT_DIR}/cmake/config_common.cmake)
 endif()
 
-if(DEFINED LOG_LEVEL_ENABLED)
-  add_compile_definitions(LOG_LEVEL_ENABLED=${LOG_LEVEL_ENABLED})
-endif()
-
 add_subdirectory(${LIBS_DIR})
 
 # Add the appropriate subdirectory based on the parameter
-set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-  ${SAMPLE_APP_DIR}/${APPS_SELECTION}/src/sm.cpp
-)
-
-if(NOT APPS_SELECTION STREQUAL "dummy" AND NOT APPS_SELECTION STREQUAL "draw")
-  add_subdirectory(${SAMPLE_APP_DIR}/${APPS_SELECTION}/data_processor/src)
-  if(NOT APPS_SELECTION STREQUAL "switch_dnn")
-    set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-      ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
-    )
-  endif()
-  set(TARGET_LIBS data_processor_api)
+if(NOT APPS_SELECTION STREQUAL "apitest")
+  set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
+    ${SAMPLE_APP_DIR}/${APPS_SELECTION}/src/sm.cpp
+  )
+else()
+  set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
+    ${TESTS_DIR}/${APPS_SELECTION}/src/sm.cpp
+  )
 endif()
+
+
+if(NOT APPS_SELECTION STREQUAL "apitest")
+  add_subdirectory(${SAMPLE_APP_DIR}/${APPS_SELECTION}/data_processor/src)
+else()
+  add_subdirectory(${TESTS_DIR}/${APPS_SELECTION}/data_processor/src)
+endif()
+if(NOT APPS_SELECTION STREQUAL "switch_dnn")
+set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
+)
+endif()
+set(TARGET_LIBS data_processor_api)
 
 add_executable(edge_app ${EXECUTABLE_FILES})
 target_link_libraries(edge_app ${TARGET_LIBS} edge_app_lib)

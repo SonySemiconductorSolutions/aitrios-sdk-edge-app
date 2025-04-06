@@ -69,11 +69,11 @@ TEST_F(CustomSettingsTest, Parse) {
       json_serialize_to_string(json_object_get_wrapping_value(json_obj));
   ASSERT_STREQ((char *)OnConfigureInput(), str);
 
-  // verify not called if input the same
+  // verify called even if input the same
   json_object_remove(json_obj, "res_info");
   resetOnConfigure();
   custom_settings->Apply(json_obj);
-  ASSERT_FALSE(wasOnConfigureCalled());
+  ASSERT_TRUE(wasOnConfigureCalled());
 
   json_free_serialized_string(str);
   resetOnConfigure();

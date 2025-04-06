@@ -129,7 +129,7 @@ TEST(AutoExposureMetering, VerifyFailTop) {
   json_object_set_number(obj1, TOP, -1);
   ASSERT_EQ(obj.Verify(obj1), -1);
   ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
-               "top not 0 <= top < bottom");
+               "top not >= 0.000000");
   ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
             CODE_INVALID_ARGUMENT);
 
@@ -137,7 +137,7 @@ TEST(AutoExposureMetering, VerifyFailTop) {
   json_object_set_number(obj1, BOTTOM, 100);
   ASSERT_EQ(obj.Verify(obj1), -1);
   ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
-               "top not 0 <= top < bottom");
+               "top not top < bottom");
   ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
             CODE_INVALID_ARGUMENT);
 
@@ -145,7 +145,7 @@ TEST(AutoExposureMetering, VerifyFailTop) {
   json_object_set_number(obj1, BOTTOM, 320);
   ASSERT_EQ(obj.Verify(obj1), -1);
   ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
-               "top not 0 <= top < bottom");
+               "top not top < bottom");
   ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
             CODE_INVALID_ARGUMENT);
 
@@ -181,7 +181,7 @@ TEST(AutoExposureMetering, VerifyFailLeft) {
   json_object_set_number(obj1, LEFT, -1);
   ASSERT_EQ(obj.Verify(obj1), -1);
   ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
-               "left not 0 <= left < right");
+               "left not >= 0.000000");
   ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
             CODE_INVALID_ARGUMENT);
 
@@ -189,7 +189,7 @@ TEST(AutoExposureMetering, VerifyFailLeft) {
   json_object_set_number(obj1, RIGHT, 100);
   ASSERT_EQ(obj.Verify(obj1), -1);
   ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
-               "left not 0 <= left < right");
+               "left not left < right");
   ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
             CODE_INVALID_ARGUMENT);
 
@@ -197,7 +197,45 @@ TEST(AutoExposureMetering, VerifyFailLeft) {
   json_object_set_number(obj1, RIGHT, 120);
   ASSERT_EQ(obj.Verify(obj1), -1);
   ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
-               "left not 0 <= left < right");
+               "left not left < right");
+  ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
+            CODE_INVALID_ARGUMENT);
+
+  obj.Delete();
+  json_value_free(value);
+}
+
+TEST(AutoExposureMetering, VerifyFailRight) {
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+
+  AutoExposureMetering obj;
+  JSON_Value *value = json_parse_string(TEST_INPUT);
+  JSON_Object *obj1 = json_object(value);
+
+  json_object_set_number(obj1, MODE, 1);
+  json_object_set_number(obj1, RIGHT, -1);
+  ASSERT_EQ(obj.Verify(obj1), -1);
+  ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
+               "right not >= 0.000000");
+  ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
+            CODE_INVALID_ARGUMENT);
+
+  obj.Delete();
+  json_value_free(value);
+}
+
+TEST(AutoExposureMetering, VerifyFailBottom) {
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+
+  AutoExposureMetering obj;
+  JSON_Value *value = json_parse_string(TEST_INPUT);
+  JSON_Object *obj1 = json_object(value);
+
+  json_object_set_number(obj1, MODE, 1);
+  json_object_set_number(obj1, BOTTOM, -1);
+  ASSERT_EQ(obj.Verify(obj1), -1);
+  ASSERT_STREQ(context->GetDtdlModel()->GetResInfo()->GetDetailMsg(),
+               "bottom not >= 0.000000");
   ASSERT_EQ(context->GetDtdlModel()->GetResInfo()->GetCode(),
             CODE_INVALID_ARGUMENT);
 

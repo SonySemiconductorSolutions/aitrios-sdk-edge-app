@@ -38,36 +38,30 @@ int CustomSettings::Apply(JSON_Object *obj) {
 
   json_object_remove(json_obj, "res_info");
   JSON_Value *value_tmp = json_object_get_wrapping_value(obj);
-  if (json_value_equals(json_object_get_wrapping_value(json_obj), value_tmp) !=
-      1) {
-    value_tmp = json_value_deep_copy(value_tmp);
-    json_obj = json_object(value_tmp);
+  value_tmp = json_value_deep_copy(value_tmp);
+  json_obj = json_object(value_tmp);
 
-    // value_tmp is set as a custom setting in the JSON object of DtdlModel
-    // It is deallocated in DtdlModel's destructor via json_value_free, managed
-    // by json_obj.
-    json_object_set_value(context->GetDtdlModel()->GetJsonObject(),
-                          CUSTOM_SETTINGS, value_tmp);
-    ReqInfo *req_info =
-        StateMachineContext::GetInstance(nullptr)->GetDtdlModel()->GetReqInfo();
-    // fill res_info with default values
-    json_object_dotset_number(json_obj, "res_info.code", 0);
-    json_object_dotset_string(json_obj, "res_info.res_id",
-                              req_info->GetReqId());
-    json_object_dotset_string(json_obj, "res_info.detail_msg", "");
+  // value_tmp is set as a custom setting in the JSON object of DtdlModel
+  // It is deallocated in DtdlModel's destructor via json_value_free, managed
+  // by json_obj.
+  json_object_set_value(context->GetDtdlModel()->GetJsonObject(),
+                        CUSTOM_SETTINGS, value_tmp);
+  ReqInfo *req_info =
+      StateMachineContext::GetInstance(nullptr)->GetDtdlModel()->GetReqInfo();
+  // fill res_info with default values
+  json_object_dotset_number(json_obj, "res_info.code", 0);
+  json_object_dotset_string(json_obj, "res_info.res_id", req_info->GetReqId());
+  json_object_dotset_string(json_obj, "res_info.detail_msg", "");
 
-    char *custom_settings =
-        json_serialize_to_string(json_object_get_wrapping_value(json_obj));
-    int res = onConfigure((char *)CUSTOM_SETTINGS, custom_settings,
-                          strlen(custom_settings));
-    if (res != 0) {
-      ret = res;
-      EventHandleError(ON_CONFIGURE, res, context, STATE_IDLE);
-    }
-    context->EnableNotification();
-  } else {
-    LOG_INFO("Custom setting remains the same");
+  char *custom_settings =
+      json_serialize_to_string(json_object_get_wrapping_value(json_obj));
+  int res = onConfigure((char *)CUSTOM_SETTINGS, custom_settings,
+                        strlen(custom_settings));
+  if (res != 0) {
+    ret = res;
+    EventHandleError(ON_CONFIGURE, res, context, STATE_IDLE);
   }
+  context->EnableNotification();
   return ret;
 }
 

@@ -1,0 +1,1196 @@
+{
+    "@context": "dtmi:dtdl:context;3",
+    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:posenet;2",
+    "@type": "Interface",
+    "displayName": "Edge App Example",
+    "contents": [
+        {
+            "@type": "Property",
+            "name": "edge_app",
+            "writable": true,
+            "displayName": {
+                "en": "Edge App"
+            },
+            "description": {
+                "en": "."
+            },
+            "schema": {
+                "@type": "Object",
+                "fields": [
+                    {
+                        "name": "req_info",
+                        "displayName": "Request Information",
+                        "schema": {
+                            "@type": "Object",
+                            "fields": [
+                                {
+                                    "name": "req_id",
+                                    "displayName": "Request ID",
+                                    "schema": "string"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "res_info",
+                        "displayName": "Response Information",
+                        "schema": {
+                            "@type": "Object",
+                            "fields": [
+                                {
+                                    "name": "res_id",
+                                    "displayName": "Response ID",
+                                    "schema": "string"
+                                },
+                                {
+                                    "name": "code",
+                                    "displayName": "Response Code",
+                                    "schema": {
+                                        "@type": "Enum",
+                                        "valueSchema": "integer",
+                                        "enumValues": [
+                                            {
+                                                "name": "ok",
+                                                "displayName": "OK",
+                                                "description": "The operation complete successfully.",
+                                                "enumValue": 0
+                                            },
+                                            {
+                                                "name": "cancelled",
+                                                "displayName": "CANCELLED",
+                                                "description": "The operation was cancelled.",
+                                                "enumValue": 1
+                                            },
+                                            {
+                                                "name": "unknown",
+                                                "displayName": "UNKNOWN",
+                                                "description": "An unknown error occurred.",
+                                                "enumValue": 2
+                                            },
+                                            {
+                                                "name": "invalid_argument",
+                                                "displayName": "INVALID_ARGUMENT",
+                                                "description": "An invalid argument was specified.",
+                                                "enumValue": 3
+                                            },
+                                            {
+                                                "name": "deadline_exceeded",
+                                                "displayName": "DEADLINE_EXCEEDED",
+                                                "description": "The deadline expired before the operation could complete.",
+                                                "enumValue": 4
+                                            },
+                                            {
+                                                "name": "not_found",
+                                                "displayName": "NOT_FOUND",
+                                                "description": "Some requested entity was not found.",
+                                                "enumValue": 5
+                                            },
+                                            {
+                                                "name": "already_exists",
+                                                "displayName": "ALREADY_EXISTS",
+                                                "description": "The entity that a user attempted to create already exists.",
+                                                "enumValue": 6
+                                            },
+                                            {
+                                                "name": "permission_denied",
+                                                "displayName": "PERMISSION_DENIED",
+                                                "description": "You do not have permission to execute the specified operation.",
+                                                "enumValue": 7
+                                            },
+                                            {
+                                                "name": "resource_exhausted",
+                                                "displayName": "RESOURCE_EXHAUSTED",
+                                                "description": "Some resources have been exhausted.",
+                                                "enumValue": 8
+                                            },
+                                            {
+                                                "name": "failed_precondition",
+                                                "displayName": "FAILED_PRECONDITION",
+                                                "description": "The operation was rejected because the device or the app is not in a state required for the operation's execution.",
+                                                "enumValue": 9
+                                            },
+                                            {
+                                                "name": "aborted",
+                                                "displayName": "ABORTED",
+                                                "description": "The operation was aborted, typically due to a concurrency issue such as a sequencer check failure or transaction abort.",
+                                                "enumValue": 10
+                                            },
+                                            {
+                                                "name": "out_of_range",
+                                                "displayName": "OUT_OF_RANGE",
+                                                "description": "The operation was attempted past the valid range.",
+                                                "enumValue": 11
+                                            },
+                                            {
+                                                "name": "unimplemented",
+                                                "displayName": "UNIMPLEMENTED",
+                                                "description": "The operation is not implemented or is not supported/enabled in the device or the app.",
+                                                "enumValue": 12
+                                            },
+                                            {
+                                                "name": "internal",
+                                                "displayName": "INTERNAL",
+                                                "description": "Internal errors. Some invariants expected by the underlying system have been broken.",
+                                                "enumValue": 13
+                                            },
+                                            {
+                                                "name": "unavailable",
+                                                "displayName": "UNAVAILABLE",
+                                                "description": "The operation is currently unavailable. This is most likely a transient condition, which can be resolved by retrying with a backoff.",
+                                                "enumValue": 14
+                                            },
+                                            {
+                                                "name": "data_loss",
+                                                "displayName": "DATA_LOSS",
+                                                "description": "Unrecoverable data loss or corruption occurred.",
+                                                "enumValue": 15
+                                            },
+                                            {
+                                                "name": "unauthenticated",
+                                                "displayName": "UNAUTHENTICATED",
+                                                "description": "The request does not have valid authentication credentials for the operation.",
+                                                "enumValue": 16
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "detail_msg",
+                                    "displayName": "Detail Message",
+                                    "schema": "string"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "common_settings",
+                        "displayName": "Common Settings",
+                        "schema": {
+                            "@type": "Object",
+                            "fields": [
+                                {
+                                    "name": "process_state",
+                                    "displayName": "Process State",
+                                    "schema": {
+                                        "@type": "Enum",
+                                        "valueSchema": "integer",
+                                        "enumValues": [
+                                            {
+                                                "name": "stopped",
+                                                "displayName": "Stopped",
+                                                "enumValue": 1
+                                            },
+                                            {
+                                                "name": "running",
+                                                "displayName": "Running",
+                                                "enumValue": 2
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "log_level",
+                                    "displayName": "Log Level",
+                                    "schema": {
+                                        "@type": "Enum",
+                                        "valueSchema": "integer",
+                                        "enumValues": [
+                                            {
+                                                "name": "critical",
+                                                "displayName": "Critical",
+                                                "description": "Use this level to prompt the user to take the immediate action. The Edge App might be entering an unrecoverable state. (However, I believe you currently have no cases that require this level.)",
+                                                "enumValue": 0
+                                            },
+                                            {
+                                                "name": "error",
+                                                "displayName": "Error",
+                                                "description": "Use this level to prompt the user to take action to restore the Edge App to its normal state. Otherwise, the app may repeat the same error. e.g., The request for an access token has been rejected by the Token Provider.",
+                                                "enumValue": 1
+                                            },
+                                            {
+                                                "name": "warn",
+                                                "displayName": "Warn",
+                                                "description": "Use this level to inform the user that an error has occurred, but the Edge App has returned to its normal state. The user should assess whether the error is acceptable and may need to take an action. e.g., A frame drop has occurred.",
+                                                "enumValue": 2
+                                            },
+                                            {
+                                                "name": "info",
+                                                "displayName": "Info",
+                                                "description": "Use this level to inform the user about the Edge App’s behavior. Provide only essential details to avoid confusing them.",
+                                                "enumValue": 3
+                                            },
+                                            {
+                                                "name": "debug",
+                                                "displayName": "Debug",
+                                                "description": "Use this level to provide developers with insights into the Edge App's behavior. Ensure not to include any confidential information.",
+                                                "enumValue": 4
+                                            },
+                                            {
+                                                "name": "trace",
+                                                "displayName": "Trace",
+                                                "description": "Use this level to mark the entry and exit points of functions, regions of processes, or branches. Be aware that this will significantly increase the size of the log. Ensure not to include any confidential information.",
+                                                "enumValue": 5
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "inference_settings",
+                                    "displayName": "Inference Settings",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "number_of_iterations",
+                                                "displayName": "Number of Iterations",
+                                                "description": "Number of executing onIterate(). Like as NumberOfImages. Default:0 = unlimited, continuous.",
+                                                "schema": "integer"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "pq_settings",
+                                    "displayName": "PQ Settings",
+                                    "description": "pqSetting to set from cloud and to use in device.",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "camera_image_size",
+                                                "displayName": "Camera Image Size",
+                                                "description": "The size of the camera images, which is also used as the coodinate for transformation operations.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "width",
+                                                            "displayName": "Width",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "height",
+                                                            "displayName": "Height",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "scaling_policy",
+                                                            "displayName": "Scaling Policy",
+                                                            "description": "This determines which factor is prioritized when scaling is necessary to achive the desired image size.",
+                                                            "schema": {
+                                                                "@type": "Enum",
+                                                                "valueSchema": "integer",
+                                                                "enumValues": [
+                                                                    {
+                                                                        "name": "sensitivity",
+                                                                        "displayName": "Prioritize Sensitivity",
+                                                                        "enumValue": 1
+                                                                    },
+                                                                    {
+                                                                        "name": "resolution",
+                                                                        "displayName": "Prioritize Resolution",
+                                                                        "enumValue": 2
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "frame_rate",
+                                                "displayName": "Frame Rate",
+                                                "description": "The frame rate at which the sensor outputs images.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "num",
+                                                            "displayName": "Numerator",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "denom",
+                                                            "displayName": "Denomerator",
+                                                            "schema": "integer"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "digital_zoom",
+                                                "displayName": "Digital Zoom Magnification",
+                                                "description": "The magnification value for digital zooming, which affects the output images.",
+                                                "schema": "float"
+                                            },
+                                            {
+                                                "name": "camera_image_flip",
+                                                "displayName": "Camera Image Flip",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "flip_horizontal",
+                                                            "displayName": "Horizontal",
+                                                            "schema": {
+                                                                "@type": "Enum",
+                                                                "valueSchema": "integer",
+                                                                "enumValues": [
+                                                                    {
+                                                                        "name": "normal",
+                                                                        "displayName": "Normal",
+                                                                        "enumValue": 0
+                                                                    },
+                                                                    {
+                                                                        "name": "flip",
+                                                                        "displayName": "Flip",
+                                                                        "enumValue": 1
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "flip_vertical",
+                                                            "displayName": "Vertical",
+                                                            "schema": {
+                                                                "@type": "Enum",
+                                                                "valueSchema": "integer",
+                                                                "enumValues": [
+                                                                    {
+                                                                        "name": "normal",
+                                                                        "displayName": "Normal",
+                                                                        "enumValue": 0
+                                                                    },
+                                                                    {
+                                                                        "name": "flip",
+                                                                        "displayName": "Flip",
+                                                                        "enumValue": 1
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "exposure_mode",
+                                                "displayName": "Exposure Mode",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "auto",
+                                                            "displayName": "Auto",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "manual",
+                                                            "displayName": "Manual",
+                                                            "enumValue": 3
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "auto_exposure",
+                                                "displayName": "Auto Exposure Settings",
+                                                "description": "Those values are interpreted only when the 'exposureMode' is set to 'auto'.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "max_exposure_time",
+                                                            "displayName": "Maximum Exposure Time",
+                                                            "description": "The maximum time in microseconds that the auto exposure keeps the shutter open, up to the period based on the 'frameRate'.",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "min_exposure_time",
+                                                            "displayName": "Minimum Exposure Time",
+                                                            "description": "The minimum time in microseconds that the auto exposure keeps the shutter open. This must be less than or equal to the 'max_exposure_time'.",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "max_gain",
+                                                            "displayName": "Maximum Gain",
+                                                            "description": "The maminimum gain value in dB that the auto exposure sets.",
+                                                            "schema": "float"
+                                                        },
+                                                        {
+                                                            "name": "convergence_speed",
+                                                            "displayName": "Convergence Speed",
+                                                            "description": "The convergence frame number for 6dB change in brightness.",
+                                                            "schema": "integer"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "auto_exposure_metering",
+                                                "displayName": "Auto Exposure Metering",
+                                                "description": "Specify the mode of the auto exposure metering setting and the metering area.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "metering_mode",
+                                                            "displayName": "Metering Mode",
+                                                            "description": "Specify the metering mode.",
+                                                            "schema": {
+                                                                "@type": "Enum",
+                                                                "valueSchema": "integer",
+                                                                "enumValues": [
+                                                                    {
+                                                                        "name": "full_screen",
+                                                                        "displayName": "Full Screen",
+                                                                        "description": "Meter averaging over the entire camera image.",
+                                                                        "enumValue": 0
+                                                                    },
+                                                                    {
+                                                                        "name": "user_window",
+                                                                        "displayName": "User Window",
+                                                                        "description": "Meter within the range specified by parameter.",
+                                                                        "enumValue": 1
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "top",
+                                                            "displayName": "Top",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "left",
+                                                            "displayName": "Left",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "bottom",
+                                                            "displayName": "Bottom",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "right",
+                                                            "displayName": "Right",
+                                                            "schema": "integer"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "ev_compensation",
+                                                "displayName": "Ev Compensation",
+                                                "description": "The exposure compensation value. This value is interpreted only when the 'exposureMode' is set to 'auto'.",
+                                                "schema": "float"
+                                            },
+                                            {
+                                                "name": "ae_anti_flicker_mode",
+                                                "displayName": "Auto Exposure Anti-flickering Mode",
+                                                "description": "This enables the anti-flikering functionality of the auto exposure.",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "off",
+                                                            "displayName": "Off",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "auto",
+                                                            "displayName": "Auto",
+                                                            "enumValue": 1
+                                                        },
+                                                        {
+                                                            "name": "freq_50hz",
+                                                            "displayName": "Frequency of 50Hz",
+                                                            "description": "Choose this option when the light source operates at a frequency of 50Hz.",
+                                                            "enumValue": 2
+                                                        },
+                                                        {
+                                                            "name": "freq_60hz",
+                                                            "displayName": "Frequency of 60Hz",
+                                                            "description": "Choose this option when the light source operates at a frequency of 60Hz.",
+                                                            "enumValue": 3
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "manual_exposure",
+                                                "displayName": "Manual Exposure Settings",
+                                                "description": "Those values are interpreted only when the 'exposureMode' is set to 'manual'.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "exposure_time",
+                                                            "displayName": "Exposure Time",
+                                                            "description": "The time in microseconds the shutter is kept open.",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "gain",
+                                                            "displayName": "Exposure Gain",
+                                                            "description": "The exposure gain value in dB.",
+                                                            "schema": "float"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "white_balance_mode",
+                                                "displayName": "White Balance Mode",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "auto",
+                                                            "displayName": "Auto",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "manual_preset",
+                                                            "displayName": "Manual Preset",
+                                                            "enumValue": 1
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "auto_white_balance",
+                                                "displayName": "Auto White Balance Settings",
+                                                "description": "This values is interpreted only when the 'whiteBalanceMode' is set to 'auto'.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "convergence_speed",
+                                                            "displayName": "Convergence Speed",
+                                                            "description": "The convergence frame number for changing from 4300K to 5600K.",
+                                                            "schema": "integer"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "manual_white_balance_preset",
+                                                "displayName": "Manual White Balance Preset",
+                                                "description": "This values is interpreted only when the 'whiteBalanceMode' is set to 'preset'.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "color_temperature",
+                                                            "displayName": "Color Temperature",
+                                                            "schema": {
+                                                                "@type": "Enum",
+                                                                "valueSchema": "integer",
+                                                                "enumValues": [
+                                                                    {
+                                                                        "name": "temp_3200k",
+                                                                        "displayName": "Temperature of 3200K",
+                                                                        "enumValue": 0
+                                                                    },
+                                                                    {
+                                                                        "name": "temp_4300k",
+                                                                        "displayName": "Temperature of 4300K",
+                                                                        "enumValue": 1
+                                                                    },
+                                                                    {
+                                                                        "name": "temp_5600k",
+                                                                        "displayName": "Temperature of 5600K",
+                                                                        "enumValue": 2
+                                                                    },
+                                                                    {
+                                                                        "name": "temp_6500k",
+                                                                        "displayName": "Temperature of 5600K",
+                                                                        "enumValue": 3
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "image_cropping",
+                                                "displayName": "Image Cropping",
+                                                "description": "The cropping boundary used to generate input tensor images for the IMX500 DNN processor. The coordinate is based on the 'imageSize'.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "left",
+                                                            "displayName": "Left",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "top",
+                                                            "displayName": "Top",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "width",
+                                                            "displayName": "Width",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "height",
+                                                            "displayName": "Height",
+                                                            "schema": "integer"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "image_rotation",
+                                                "displayName": "Image Rotation",
+                                                "description": "The rotation angle of the input tensor images for the IMX500 DNN processor.",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "none",
+                                                            "displayName": "None",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "clockwise_90",
+                                                            "displayName": "90 Degrees Clockwise",
+                                                            "enumValue": 1
+                                                        },
+                                                        {
+                                                            "name": "clockwise_180",
+                                                            "displayName": "180 Degrees",
+                                                            "enumValue": 2
+                                                        },
+                                                        {
+                                                            "name": "clockwise_270",
+                                                            "displayName": "270 Degrees Clockwise",
+                                                            "enumValue": 3
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "register_access",
+                                                "displayName": "Register Access",
+                                                "description": "This property directly accesses the registers which a stream supports.",
+                                                "schema": {
+                                                    "@type": "Array",
+                                                    "elementSchema": {
+                                                        "@type": "Object",
+                                                        "fields": [
+                                                            {
+                                                                "name": "bit_length",
+                                                                "displayName": "Bit Length",
+                                                                "schema": {
+                                                                    "@type": "Enum",
+                                                                    "valueSchema": "integer",
+                                                                    "enumValues": [
+                                                                        {
+                                                                            "name": "by_8bit",
+                                                                            "displayName": "8 bit",
+                                                                            "description": "Access to the register by 8 bit.",
+                                                                            "enumValue": 0
+                                                                        },
+                                                                        {
+                                                                            "name": "by_16bit",
+                                                                            "displayName": "16 bit",
+                                                                            "description": "Access to the register by 16 bit.",
+                                                                            "enumValue": 1
+                                                                        },
+                                                                        {
+                                                                            "name": "by_32bit",
+                                                                            "displayName": "32 bit",
+                                                                            "description": "Access to the register by 32 bit.",
+                                                                            "enumValue": 2
+                                                                        },
+                                                                        {
+                                                                            "name": "by_64bit",
+                                                                            "displayName": "64 bit",
+                                                                            "description": "Access to the register by 64 bit.",
+                                                                            "enumValue": 3
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "name": "id",
+                                                                "displayName": "Id",
+                                                                "description": "An ID of the register to access. A stream defines the target to which the register ID points.",
+                                                                "schema": "integer"
+                                                            },
+                                                            {
+                                                                "name": "address",
+                                                                "displayName": "Address",
+                                                                "description": "Please enter in hexadecimal without 0x.",
+                                                                "schema": "string"
+                                                            },
+                                                            {
+                                                                "name": "data",
+                                                                "displayName": "Data",
+                                                                "description": "Please enter in decimal.",
+                                                                "schema": "string"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "port_settings",
+                                    "displayName": "Port Settings",
+                                    "description": "transport settings defined by Edge App Developer.",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "displayName": "Port Settings",
+                                        "description": "If you want to upload inference result, 'metadata' field should be included in the fields. If you want to upload inference image, 'input_tensor' field should be included in the fields.",
+                                        "fields": [
+                                            {
+                                                "name": "metadata",
+                                                "displayName": "Interface for Sending Metadata",
+                                                "description": "For port setting of inference result, 'name' parameter should be set 'metadata'.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "description": "If you want to upload inference result, 'metadata' field should be included in fields of port_settings. If you want to upload inference image, 'input_tensor' field should be included in fields of port_settings. If you want to upload inference result and inference image, 'metadata' and 'input_tensor' field should be included in fields of port_settings.",
+                                                    "fields": [
+                                                        {
+                                                            "name": "method",
+                                                            "displayName": "Method",
+                                                            "schema": {
+                                                                "@type": "Enum",
+                                                                "valueSchema": "integer",
+                                                                "enumValues": [
+                                                                    {
+                                                                        "name": "evp_telemetry",
+                                                                        "displayName": "EVP Telemetry",
+                                                                        "description": "MQTT.",
+                                                                        "enumValue": 0
+                                                                    },
+                                                                    {
+                                                                        "name": "blob_storage",
+                                                                        "displayName": "Blob Storage",
+                                                                        "enumValue": 1
+                                                                    },
+                                                                    {
+                                                                        "name": "http_storage",
+                                                                        "displayName": "Http Storage",
+                                                                        "enumValue": 2
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "storage_name",
+                                                            "displayName": "Storage Name",
+                                                            "description": "This is used when the 'method' is set to 'blob_storage'.",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "endpoint",
+                                                            "displayName": "Endpoint",
+                                                            "description": "This is required when the 'method' is set to 'http_storage'.",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "path",
+                                                            "displayName": "Directory Path",
+                                                            "description": "This is required when the 'method' is set to 'http_storage'. This is used when the 'method' is set to 'blob_storage'.",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "enabled",
+                                                            "displayName": "Enabled",
+                                                            "schema": "boolean"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "input_tensor",
+                                                "displayName": "Interface for Sending Input Tensors",
+                                                "description": "For port setting of inference image, 'name' parameter should be set 'input_tensor'.",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "description": "If you want to upload inference result, 'metadata' field should be included in fields of port_settings. If you want to upload inference image, 'input_tensor' field should be included in fields of port_settings. If you want to upload inference result and inference image, 'metadata' and 'input_tensor' field should be included in fields of port_settings.",
+                                                    "fields": [
+                                                        {
+                                                            "name": "method",
+                                                            "displayName": "Method",
+                                                            "schema": {
+                                                                "@type": "Enum",
+                                                                "valueSchema": "integer",
+                                                                "enumValues": [
+                                                                    {
+                                                                        "name": "evp_telemetry",
+                                                                        "displayName": "EVP Telemetry",
+                                                                        "description": "MQTT.",
+                                                                        "enumValue": 0
+                                                                    },
+                                                                    {
+                                                                        "name": "blob_storage",
+                                                                        "displayName": "Blob Storage",
+                                                                        "enumValue": 1
+                                                                    },
+                                                                    {
+                                                                        "name": "http_storage",
+                                                                        "displayName": "Http Storage",
+                                                                        "enumValue": 2
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "storage_name",
+                                                            "displayName": "Storage Name",
+                                                            "description": "This is used when the 'method' is set to 'blob_storage'.",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "endpoint",
+                                                            "displayName": "Endpoint",
+                                                            "description": "This is required when the 'method' is set to 'http_storage'.",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "path",
+                                                            "displayName": "Directory Path",
+                                                            "description": "This is required when the 'method' is set to 'http_storage'. This is used when the 'method' is set to 'blob_storage'.",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "enabled",
+                                                            "displayName": "Enabled",
+                                                            "schema": "boolean"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "codec_settings",
+                                    "displayName": "Codec Settings",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "format",
+                                                "displayName": "Format",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "raw_data",
+                                                            "displayName": "Raw data",
+                                                            "description": "Uploaded file name will be .bin",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "JPEG",
+                                                            "displayName": "JPEG",
+                                                            "description": "Uploaded file name will be .jpg",
+                                                            "enumValue": 1
+                                                        },
+                                                        {
+                                                            "name": "BMP",
+                                                            "displayName": "BMP",
+                                                            "description": "Uploaded file name will be .bmp",
+                                                            "enumValue": 2
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "number_of_inference_per_message",
+                                    "displayName": "Number of Inference per Message",
+                                    "description": "Number of inference results to include in one message. Default:1",
+                                    "schema": "integer"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "custom_settings",
+                        "displayName": "Custom Settings",
+                        "schema": {
+                            "@type": "Object",
+                            "fields": [
+                                {
+                                    "name": "res_info",
+                                    "displayName": "Response Information",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "res_id",
+                                                "displayName": "Response ID",
+                                                "schema": "string"
+                                            },
+                                            {
+                                                "name": "code",
+                                                "displayName": "Response Code",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "ok",
+                                                            "displayName": "OK",
+                                                            "description": "The operation complete successfully.",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "cancelled",
+                                                            "displayName": "CANCELLED",
+                                                            "description": "The operation was cancelled.",
+                                                            "enumValue": 1
+                                                        },
+                                                        {
+                                                            "name": "unknown",
+                                                            "displayName": "UNKNOWN",
+                                                            "description": "An unknown error occurred.",
+                                                            "enumValue": 2
+                                                        },
+                                                        {
+                                                            "name": "invalid_argument",
+                                                            "displayName": "INVALID_ARGUMENT",
+                                                            "description": "An invalid argument was specified.",
+                                                            "enumValue": 3
+                                                        },
+                                                        {
+                                                            "name": "deadline_exceeded",
+                                                            "displayName": "DEADLINE_EXCEEDED",
+                                                            "description": "The deadline expired before the operation could complete.",
+                                                            "enumValue": 4
+                                                        },
+                                                        {
+                                                            "name": "not_found",
+                                                            "displayName": "NOT_FOUND",
+                                                            "description": "Some requested entity was not found.",
+                                                            "enumValue": 5
+                                                        },
+                                                        {
+                                                            "name": "already_exists",
+                                                            "displayName": "ALREADY_EXISTS",
+                                                            "description": "The entity that a user attempted to create already exists.",
+                                                            "enumValue": 6
+                                                        },
+                                                        {
+                                                            "name": "permission_denied",
+                                                            "displayName": "PERMISSION_DENIED",
+                                                            "description": "You do not have permission to execute the specified operation.",
+                                                            "enumValue": 7
+                                                        },
+                                                        {
+                                                            "name": "resource_exhausted",
+                                                            "displayName": "RESOURCE_EXHAUSTED",
+                                                            "description": "Some resources have been exhausted.",
+                                                            "enumValue": 8
+                                                        },
+                                                        {
+                                                            "name": "failed_precondition",
+                                                            "displayName": "FAILED_PRECONDITION",
+                                                            "description": "The operation was rejected because the device or the app is not in a state required for the operation's execution.",
+                                                            "enumValue": 9
+                                                        },
+                                                        {
+                                                            "name": "aborted",
+                                                            "displayName": "ABORTED",
+                                                            "description": "The operation was aborted, typically due to a concurrency issue such as a sequencer check failure or transaction abort.",
+                                                            "enumValue": 10
+                                                        },
+                                                        {
+                                                            "name": "out_of_range",
+                                                            "displayName": "OUT_OF_RANGE",
+                                                            "description": "The operation was attempted past the valid range.",
+                                                            "enumValue": 11
+                                                        },
+                                                        {
+                                                            "name": "unimplemented",
+                                                            "displayName": "UNIMPLEMENTED",
+                                                            "description": "The operation is not implemented or is not supported/enabled in the device or the app.",
+                                                            "enumValue": 12
+                                                        },
+                                                        {
+                                                            "name": "internal",
+                                                            "displayName": "INTERNAL",
+                                                            "description": "Internal errors. Some invariants expected by the underlying system have been broken.",
+                                                            "enumValue": 13
+                                                        },
+                                                        {
+                                                            "name": "unavailable",
+                                                            "displayName": "UNAVAILABLE",
+                                                            "description": "The operation is currently unavailable. This is most likely a transient condition, which can be resolved by retrying with a backoff.",
+                                                            "enumValue": 14
+                                                        },
+                                                        {
+                                                            "name": "data_loss",
+                                                            "displayName": "DATA_LOSS",
+                                                            "description": "Unrecoverable data loss or corruption occurred.",
+                                                            "enumValue": 15
+                                                        },
+                                                        {
+                                                            "name": "unauthenticated",
+                                                            "displayName": "UNAUTHENTICATED",
+                                                            "description": "The request does not have valid authentication credentials for the operation.",
+                                                            "enumValue": 16
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "detail_msg",
+                                                "displayName": "Detail Message",
+                                                "schema": "string"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "ai_models",
+                                    "displayName": "AI Models",
+                                    "schema": {
+                                        "@type": "Map",
+                                        "mapKey": {
+                                            "name": "name",
+                                            "displayName": "Name",
+                                            "schema": "string"
+                                        },
+                                        "mapValue": {
+                                            "name": "value",
+                                            "displayName": "Value",
+                                            "schema": {
+                                                "@type": "Object",
+                                                "fields": [
+                                                    {
+                                                        "name": "ai_model_bundle_id",
+                                                        "displayName": "AI Model Bundle ID",
+                                                        "description": "6 digit HEX value string like '000000'",
+                                                        "comment": "SENSCORD_AI_MODEL_BUNDLE_ID_PROPERTY_KEY",
+                                                        "schema": "string"
+                                                    },
+                                                    {
+                                                        "name": "parameters",
+                                                        "displayName": "Parameters of AI Model",
+                                                        "schema": {
+                                                            "@type": "Object",
+                                                            "fields": [
+                                                                {
+                                                                    "name": "input_width",
+                                                                    "displayName": "Input width",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "input_height",
+                                                                    "displayName": "Input height",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "output_width",
+                                                                    "displayName": "Output width",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "output_height",
+                                                                    "displayName": "Output height",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "score_threshold",
+                                                                    "displayName": "Score threshold",
+                                                                    "schema": "float"
+                                                                },
+                                                                {
+                                                                    "name": "iou_threshold",
+                                                                    "displayName": "Iou threshold",
+                                                                    "schema": "float"
+                                                                },
+                                                                {
+                                                                    "name": "nms_radius",
+                                                                    "displayName": "Nms Radius",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "max_pose_detections",
+                                                                    "displayName": "Max Pose Detections",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "heatmap_index",
+                                                                    "displayName": "Heatmap Index",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "offset_index",
+                                                                    "displayName": "Offset Index",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "forward_displacement_index",
+                                                                    "displayName": "Offset Index",
+                                                                    "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "backward_displacement_index",
+                                                                    "displayName": "Offset Index",
+                                                                    "schema": "integer"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "metadata_settings",
+                                    "displayName": "Metadata settings",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "format",
+                                                "displayName": "Format",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "Base64",
+                                                            "displayName": "Base64",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "Json",
+                                                            "displayName": "Json",
+                                                            "enumValue": 1
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

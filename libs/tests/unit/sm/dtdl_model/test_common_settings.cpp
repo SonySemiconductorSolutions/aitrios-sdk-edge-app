@@ -182,6 +182,12 @@ TEST_F(CommonSettingsIdle, JsonEmpty) {
   json_value_free(value);
 }
 
+TEST_F(CommonSettingsIdle, DefaultValue) {
+  CommonSettings common_settings;
+  uint32_t numOfInf = common_settings.getNumOfInfPerMsg();
+  ASSERT_EQ(numOfInf, 1);
+}
+
 TEST_F(CommonSettingsRunningToIdle, StateUpdateRunning) {
   MockCommonSettings common_settings;
   ASSERT_EQ(context->GetNextState(), STATE_RUNNING);

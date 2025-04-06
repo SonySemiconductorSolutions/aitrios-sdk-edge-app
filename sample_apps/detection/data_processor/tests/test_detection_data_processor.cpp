@@ -38,7 +38,7 @@ EdgeAppLibSensorStream s_stream = 0;
 #define INPUT_HEIGHT_PROP "ai_models.detection.parameters.input_height"
 
 #define EPSILON 1e-4
-#define MODEL_VERSION_ID "ModelVersionID"
+#define MODEL_ID "ModelID"
 #define DEVICE_ID "DeviceID"
 #define BUF_IMAGE "Image"
 #define BUF_TIME "T"
@@ -169,7 +169,43 @@ TEST_F(ConfigureAnalyzeFixtureTests, ThresholdOutOfRangeTest) {
       DataProcessorConfigure((char *)config_mod, &output);
   extern DataProcessorCustomParam ssd_param;
   EXPECT_EQ((float)DEFAULT_THRESHOLD, ssd_param.threshold);
-  EXPECT_EQ(res, kDataProcessorInvalidParam);
+  EXPECT_EQ(res, kDataProcessorOutOfRange);
+  json_free_serialized_string((char *)config_mod);
+  free(output);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, MaxDetectionsOverwriteNegative) {
+  JSON_Status stat =
+      json_object_dotset_number(config_json_object, MAX_PREDICTIONS_PROP, -1);
+  const char *config_mod = json_serialize_to_string_pretty(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOutOfRange);
+  json_free_serialized_string((char *)config_mod);
+  free(output);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, InputWidthOverwriteNegative) {
+  JSON_Status stat =
+      json_object_dotset_number(config_json_object, INPUT_WIDTH_PROP, -1);
+  const char *config_mod = json_serialize_to_string_pretty(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOutOfRange);
+  json_free_serialized_string((char *)config_mod);
+  free(output);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, InputHeightOverwriteNegative) {
+  JSON_Status stat =
+      json_object_dotset_number(config_json_object, INPUT_HEIGHT_PROP, -1);
+  const char *config_mod = json_serialize_to_string_pretty(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOutOfRange);
   json_free_serialized_string((char *)config_mod);
   free(output);
 }
@@ -315,6 +351,22 @@ TEST_F(ConfigureAnalyzeFixtureTests, AIModelsNotNullTest) {
   DataProcessorResultCode res =
       DataProcessorConfigure((char *)config_mod, &output);
   EXPECT_EQ(res, kDataProcessorInvalidParam);
+  JSON_Value *value = json_parse_string(output);
+  EXPECT_TRUE(value);
+  free(output);
+  json_value_free(value);
+
+  json_free_serialized_string((char *)config_mod);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, AiModelBundleIdNotNullTest) {
+  JSON_Status stat = json_object_dotremove(
+      config_json_object, "ai_models.detection.ai_model_bundle_id");
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorInvalidParamSetError);
   JSON_Value *value = json_parse_string(output);
   EXPECT_TRUE(value);
   free(output);

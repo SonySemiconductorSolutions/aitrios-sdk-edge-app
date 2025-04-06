@@ -566,6 +566,102 @@ TEST_F(AnalyzerTest, SetValidatedParamInvalidThreshold) {
   EXPECT_EQ(AnalyzerBase::ResultCode::kInvalidParam, result);
 }
 
+TEST_F(AnalyzerTest, SetValidatedParamInvalidMaxDetections) {
+  std::string text = R"({
+    "ai_models": {
+      "detection_bird": {
+        "ai_model_bundle_id": "000001",
+        "param": {
+          "max_detections": -1,
+          "threshold": 0.3,
+          "input_width": 300,
+          "input_height": 300
+        }
+      },
+      "classification_bird": {
+        "ai_model_bundle_id": "000002",
+        "param": {
+          "max_predictions": 3
+        }
+      }
+    }
+  })";
+  AnalyzerBase::ResultCode result = od_->ValidateParam(text.c_str());
+  EXPECT_EQ(AnalyzerBase::ResultCode::kInvalidParam, result);
+}
+
+TEST_F(AnalyzerTest, SetValidatedParamInvalidInputWidth) {
+  std::string text = R"({
+    "ai_models": {
+      "detection_bird": {
+        "ai_model_bundle_id": "000001",
+        "param": {
+          "max_detections": 3,
+          "threshold": 0.3,
+          "input_width": -1,
+          "input_height": 300
+        }
+      },
+      "classification_bird": {
+        "ai_model_bundle_id": "000002",
+        "param": {
+          "max_predictions": 3
+        }
+      }
+    }
+  })";
+  AnalyzerBase::ResultCode result = od_->ValidateParam(text.c_str());
+  EXPECT_EQ(AnalyzerBase::ResultCode::kInvalidParam, result);
+}
+
+TEST_F(AnalyzerTest, SetValidatedParamInvalidInputHeight) {
+  std::string text = R"({
+    "ai_models": {
+      "detection_bird": {
+        "ai_model_bundle_id": "000001",
+        "param": {
+          "max_detections": 3,
+          "threshold": 0.3,
+          "input_width": 300,
+          "input_height": -1
+        }
+      },
+      "classification_bird": {
+        "ai_model_bundle_id": "000002",
+        "param": {
+          "max_predictions": 3
+        }
+      }
+    }
+  })";
+  AnalyzerBase::ResultCode result = od_->ValidateParam(text.c_str());
+  EXPECT_EQ(AnalyzerBase::ResultCode::kInvalidParam, result);
+}
+
+TEST_F(AnalyzerTest, SetValidatedParamInvalidMaxPredictions) {
+  std::string text = R"({
+    "ai_models": {
+      "detection_bird": {
+        "ai_model_bundle_id": "000001",
+        "param": {
+          "max_detections": 3,
+          "threshold": 0.3,
+          "input_width": 300,
+          "input_height": 300
+        }
+      },
+      "classification_bird": {
+        "ai_model_bundle_id": "000002",
+        "param": {
+          "max_predictions": -1
+        }
+      }
+    }
+  })";
+  AnalyzerBase::ResultCode result = ic_->ValidateParam(text.c_str());
+  EXPECT_EQ(AnalyzerBase::ResultCode::kInvalidParamOutOfRange, result);
+}
+
 TEST_F(AnalyzerTest, ClearValidatingParam) {
   AnalyzerBase::ResultCode result = od_->ClearValidatingParam();
   EXPECT_EQ(AnalyzerBase::ResultCode::kOk, result);

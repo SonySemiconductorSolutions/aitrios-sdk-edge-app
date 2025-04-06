@@ -26,23 +26,11 @@
 
 #include <stdint.h>
 
+#include "log.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-
-/**
- * @enum LogLevel
- * @brief Represents the log level.
- */
-enum LogLevel {
-  kCriticalLevel, /**< Describes the messages used when a fatal error occurs. */
-  kErrorLevel,    /**< Describes messages used when a serious error occurs. */
-  kWarnLevel, /**< Describes messages used when a hazardous situation occurs. */
-  kInfoLevel, /**< Describes messages used to monitor an application. */
-  kDebugLevel, /**< Describes messages used to debug an application. */
-  kTraceLevel, /**< Describes messages about the values of variables and the
-                  flow of control within an application. */
-};
 
 /**
  * @brief Set a log level.

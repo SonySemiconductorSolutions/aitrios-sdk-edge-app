@@ -31,11 +31,13 @@ jobs:
           - sample_apps/classification/data_processor/tests
           - sample_apps/detection/tests
           - sample_apps/detection/data_processor/tests
+          - sample_apps/posenet/tests
+          - sample_apps/posenet/data_processor/tests
           - sample_apps/segmentation/tests
           - sample_apps/segmentation/data_processor/tests
           - sample_apps/switch_dnn/tests
           - sample_apps/perfbench/tests
-          - sample_apps/tests
+          - sample_apps/utils/tests
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -79,7 +81,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        app: [passthrough, draw, classification, detection, segmentation, switch_dnn, apitest]
+        app: [passthrough, draw, classification, detection, posenet, segmentation, switch_dnn, apitest]
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -91,15 +93,15 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y valgrind
-        pip3 install -r sample_apps/tests/edge_app/requirements.txt
+        pip3 install -r tests/edge_app/requirements.txt
 
     - name: Build edge app
-      working-directory: sample_apps/tests/edge_app
+      working-directory: tests/edge_app
       run: |
         mkdir build && cd build
         cmake -DEVP_MOCK=1 -DMOCK=1 -DAPPS_SELECTION=${{ matrix.app }} -DCMAKE_BUILD_TYPE=Debug .. && make -j8
 
     - name: Run integration test (with memcheck)
       run: |
-        python3 -m pytest -s sample_apps/tests/edge_app/test_integration.py --app ${{ matrix.app }}
+        python3 -m pytest -s tests/edge_app/test_integration.py --app ${{ matrix.app }}
 

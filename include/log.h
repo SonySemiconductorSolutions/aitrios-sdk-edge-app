@@ -86,21 +86,36 @@ typedef void (*EdgeAppLibLogType)(const char *context, const char *message);
 
 #define FILENAME(file) (strrchr(file, '/') ? strrchr(file, '/') + 1 : file)
 
-void log_function(EdgeAppLibLogType level, const char *file, int line,
-                  const char *fmt, ...);
+/**
+ * @enum LogLevel
+ * @brief Represents the log level.
+ */
+typedef enum {
+  kCriticalLevel =
+      0,       /**< Describes the messages used when a fatal error occurs. */
+  kErrorLevel, /**< Describes messages used when a serious error occurs. */
+  kWarnLevel, /**< Describes messages used when a hazardous situation occurs. */
+  kInfoLevel, /**< Describes messages used to monitor an application. */
+  kDebugLevel, /**< Describes messages used to debug an application. */
+  kTraceLevel, /**< Describes messages about the values of variables and the
+                  flow of control within an application. */
+} LogLevel;
+
+void log_function(LogLevel level, const char *file, int line, const char *fmt,
+                  ...);
 
 #define LOG_TRACE(fmt, ...) \
-  log_function(EdgeAppLibLogTrace, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  log_function(kTraceLevel, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define LOG_DBG(fmt, ...) \
-  log_function(EdgeAppLibLogDebug, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  log_function(kDebugLevel, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define LOG_INFO(fmt, ...) \
-  log_function(EdgeAppLibLogInfo, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  log_function(kInfoLevel, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define LOG_WARN(fmt, ...) \
-  log_function(EdgeAppLibLogWarn, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  log_function(kWarnLevel, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define LOG_ERR(fmt, ...) \
-  log_function(EdgeAppLibLogError, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  log_function(kErrorLevel, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define LOG_CRITICAL(fmt, ...) \
-  log_function(EdgeAppLibLogCritical, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  log_function(kCriticalLevel, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 
 #ifdef __cplusplus
 }

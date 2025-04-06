@@ -36,7 +36,7 @@ extern "C" {
 #define SENSCORD_POST_PROCESS_AVAILABLE_PROPERTY_KEY \
   "post_process_available_property"
 #define SENSCORD_POST_PROCESS_PARAMETER_PROPERTY_KEY \
-  "post_process_paramter_property"
+  "post_process_parameter_property"
 #define SENSCORD_INFERENCE_POST_PROCESS_PARAM_SIZE (256)
 
 enum senscord_error_level_t {

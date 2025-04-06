@@ -1,6 +1,6 @@
 {
     "@context": "dtmi:dtdl:context;3",
-    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:classification;4",
+    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:classification;5",
     "@type": "Interface",
     "displayName": "Edge App Example",
     "contents": [
@@ -1100,6 +1100,35 @@
                                                 ]
                                             }
                                         }
+                                    }
+                                },
+                                {
+                                    "name": "metadata_settings",
+                                    "displayName": "Metadata settings",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "format",
+                                                "displayName": "Format",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "Base64",
+                                                            "displayName": "Base64",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "Json",
+                                                            "displayName": "Json",
+                                                            "enumValue": 1
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
                                     }
                                 }
                             ]

@@ -21,6 +21,6 @@
 void setProcessFormatMetaFail(ProcessFormatResult result);
 void resetProcessFormatMetaSuccess();
 
-void setProcessFormatMetaOutput(const char *model_version_id);
+void setProcessFormatMetaOutput(const char *model_id);
 
 #endif  // MOCKS_MOCK_PROCSS_FORMAT_HPP

@@ -27,7 +27,6 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 include_directories(
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
-  ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/send_data/src/data_export/include
   ${LIBS_DIR}/common/include
   ${LIBS_DIR}/depend/edge_app

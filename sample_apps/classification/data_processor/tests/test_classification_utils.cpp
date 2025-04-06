@@ -23,7 +23,6 @@
 #include "classification_generated.h"
 #include "classification_utils.hpp"
 #include "flatbuffers/flatbuffers.h"
-#include "output_tensor_generated.h"
 #include "sensor.h"
 #include "testing_utils.hpp"
 

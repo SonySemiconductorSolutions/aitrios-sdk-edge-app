@@ -43,10 +43,12 @@ EdgeAppLibSensorErrorCause SmUtilsPrintSensorError() {
   return cause;
 }
 
-CODE CodeFromSensorErrorCause(EdgeAppLibSensorErrorCause error_cause) {
-  CODE error_code = CODE_INVALID_ARGUMENT;
+void CodeFromSensorErrorCause(EdgeAppLibSensorErrorCause error_cause,
+                              CODE *code) {
   if (error_cause == AITRIOS_SENSOR_ERROR_OUT_OF_RANGE) {
-    error_code = CODE_OUT_OF_RANGE;
+    *code = CODE_OUT_OF_RANGE;
+  } else if (error_cause ==
+             AITRIOS_SENSOR_ERROR_INVALID_CAMERA_OPERATION_PARAMETER) {
+    *code = CODE_INVALID_ARGUMENT;
   }
-  return error_code;
 }

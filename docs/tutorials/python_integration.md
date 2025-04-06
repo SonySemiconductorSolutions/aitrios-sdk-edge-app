@@ -24,7 +24,7 @@ The tutorial was developed with the following setup:
 * a PC with local-console
   connected on local network
 
-#### Rapsberry Pi
+#### Raspberry Pi
 
 The Raspberry Pi must have
 the Aitrios SDK,
@@ -97,7 +97,7 @@ and integrate Aitrios step by step.
 
 2. Import aitrios sample helper app
 
-Add, at the begining of the file:
+Add, at the beginning of the file:
 
 ```python
 from edgeapplib.utils import encode_picam_image
@@ -139,7 +139,7 @@ when the `app.is_running` becomes `False`:
 > [!Note]
 > The image needs to be converted
 > to JPG and encoded to bytearray.
-> As a conveniance, the util function `encode_picam_image`
+> As a convenience, the util function `encode_picam_image`
 > can be used to that matter.
 
 ```python

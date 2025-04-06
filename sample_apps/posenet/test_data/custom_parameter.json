@@ -1,0 +1,26 @@
+{
+    "res_info": {
+        "res_id": "GENERATED_STRING-tzmks",
+        "code": 7,
+        "detail_msg": "GENERATED_STRING-jfgfb"
+    },
+    "ai_models": {
+        "posenet": {
+            "ai_model_bundle_id": "GENERATED_STRING-cvyee",
+            "parameters": {
+                "input_width": 481,
+                "input_height": 353,
+                "output_width": 31,
+                "output_height": 23,
+                "score_threshold": 0.0,
+                "iou_threshold": 0.0,
+                "nms_radius": 20,
+                "max_pose_detections": 15,
+                "heatmap_index": 0,
+                "offset_index": 1,
+                "forward_displacement_index": 2,
+                "backward_displacement_index": 3
+            }
+        }
+    }
+}

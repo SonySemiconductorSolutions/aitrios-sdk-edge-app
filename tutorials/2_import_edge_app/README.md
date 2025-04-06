@@ -70,4 +70,4 @@ Now the packaging is completed.
 
 You can import an "**Edge Application**" using the functions provided by "**Console for AITRIOS**".
 
-See ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-user-manual/) for details.
+See ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/console-user-manual/) for details.

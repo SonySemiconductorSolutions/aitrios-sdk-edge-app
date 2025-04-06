@@ -1,0 +1,10 @@
+[build-system]
+requires = ["scikit-build-core", "pybind11", "pybind11-stubgen", "numpy"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "edge_app_sdk"
+version = "0.1.0"
+
+[tool.scikit-build.cmake.define]
+SENSCORD_INSTALL_PATH = {env="SENSCORD_INSTALL_PATH"}

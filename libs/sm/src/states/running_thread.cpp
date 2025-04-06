@@ -43,7 +43,7 @@ void RunningThread::ThreadStart() {
   }
   pthread_mutex_lock(&command_mutex);
   /* LCOV_EXCL_START: thread is always uninitialized */
-  if (command == Command::UNINITIALIZED)
+  while (command == Command::UNINITIALIZED)
     pthread_cond_wait(&command_cond, &command_mutex);
   /* LCOV_EXCL_STOP */
   LOG_DBG("Thread created.");
@@ -76,11 +76,11 @@ void RunningThread::ThreadStop() {
     }
     current_time = time(NULL);
     if (difftime(current_time, start_time) >= timeout_seconds) {
-      LOG_ERR("pthread_join timeout: %s", strerror(res));
+      LOG_ERR("pthread_join timeout: %d", res);
       return;
     }
   }
-  LOG_DBG("Thread stopped: %d", (int)(intptr_t)status);
+  LOG_INFO("Thread stopped: %d", (int)(intptr_t)status);
 }
 
 IterateStatus RunningThread::ThreadLoopIterate() {

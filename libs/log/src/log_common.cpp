@@ -15,15 +15,46 @@
  ****************************************************************************/
 
 #include "log.h"
+#include "log_internal.h"
 
-void log_function(EdgeAppLibLogType level, const char *file, int line,
-                  const char *fmt, ...) {
-  char buf[LOGBUGSIZE];
-  va_list args;
-  va_start(args, fmt);
-  char full_fmt[LOGBUGSIZE];
-  snprintf(full_fmt, LOGBUGSIZE, "[%s:%d] %s", FILENAME(file), line, fmt);
-  vsnprintf(buf, LOGBUGSIZE, full_fmt, args);
-  va_end(args);
-  level("", buf);
+void log_function(LogLevel level, const char *file, int line, const char *fmt,
+                  ...) {
+#ifndef LOGDISABLE
+#ifndef MOCK_INTEGRATION_TEST
+  if (GetLogLevel() >= level) {
+#else   // MOCK_INTEGRATION_TEST
+  if (1) {
+#endif  // MOCK_INTEGRATION_TEST
+    char buf[LOGBUGSIZE];
+    va_list args;
+    va_start(args, fmt);
+    char full_fmt[LOGBUGSIZE];
+    snprintf(full_fmt, LOGBUGSIZE, "[%s:%d] %s", FILENAME(file), line, fmt);
+    vsnprintf(buf, LOGBUGSIZE, full_fmt, args);
+    va_end(args);
+    const char *context = "";
+    switch (level) {
+      case kCriticalLevel:
+        EdgeAppLibLogCritical(context, buf);
+        break;
+      case kErrorLevel:
+        EdgeAppLibLogError(context, buf);
+        break;
+      case kWarnLevel:
+        EdgeAppLibLogWarn(context, buf);
+        break;
+      case kInfoLevel:
+        EdgeAppLibLogInfo(context, buf);
+        break;
+      case kDebugLevel:
+        EdgeAppLibLogDebug(context, buf);
+        break;
+      case kTraceLevel:
+        EdgeAppLibLogTrace(context, buf);
+        break;
+      default:
+        break;
+    }
+  }
+#endif  // LOGDISABLE
 }

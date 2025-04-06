@@ -78,10 +78,10 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
     return kDataProcessorInvalidParam;
   }
   DataProcessorResultCode res = kDataProcessorOk;
-  res = static_cast<DataProcessorResultCode>(
-      SetEdgeAppLibNetwork(s_stream, object_model));
-  if (res != kDataProcessorOk)
+  if (SetEdgeAppLibNetwork(s_stream, object_model) != 0) {
+    res = kDataProcessorInvalidParamSetError;
     *out_config_json = json_serialize_to_string(value);
+  }
 
   json_value_free(value);
   return res;

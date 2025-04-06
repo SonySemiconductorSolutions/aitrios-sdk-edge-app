@@ -23,6 +23,7 @@
 bool IsAlmostEqual(double a, double b);
 int IsInteger(double value);
 EdgeAppLibSensorErrorCause SmUtilsPrintSensorError();
-CODE CodeFromSensorErrorCause(EdgeAppLibSensorErrorCause error_cause);
+void CodeFromSensorErrorCause(EdgeAppLibSensorErrorCause error_cause,
+                              CODE *code);
 
 #endif /* DTDL_MODEL_PROPERTIES_H */

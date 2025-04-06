@@ -41,7 +41,7 @@ TEST_F(MapTest, FillQueue) {
   map_clear();
   EXPECT_TRUE(map_is_empty());
   for (int i = 0; i < MAX_FUTURES_QUEUE; ++i) {
-    EXPECT_TRUE(map_set((void *)i + 1, (void *)2) == 0);
+    EXPECT_TRUE(map_set((void *)(i + 1), (void *)2) == 0);
   }
   EXPECT_TRUE(map_set((void *)1, (void *)2) == -1);
   map_clear();
@@ -51,7 +51,7 @@ TEST_F(MapTest, FillQueue) {
 TEST_F(MapTest, CancelMap) {
   map_clear();
   for (int i = 0; i < MAX_FUTURES_QUEUE; ++i) {
-    EXPECT_TRUE(map_set((void *)i + 1, (void *)2) == 0);
+    EXPECT_TRUE(map_set((void *)(i + 1), (void *)2) == 0);
   }
   EXPECT_FALSE(map_is_empty());
   while (!map_is_empty()) {

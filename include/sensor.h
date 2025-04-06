@@ -888,6 +888,14 @@ struct EdgeAppLibSensorTensorShapesProperty {
  */
 #define AITRIOS_SENSOR_INFO_STRING_AIISP_DEVICE_ID 0x80000101
 /**
+ * @def AITRIOS_SENSOR_INFO_STRING_AIISP_AI_MODEL_VERSION
+ * @brief Setting the category that member of
+ * EdgeAppLibSensorInfoStringProperty
+ * @details Setting the category for vendor extension
+ */
+#define AITRIOS_SENSOR_INFO_STRING_AIISP_AI_MODEL_VERSION 0x80000104
+
+/**
  * @struct EdgeAppLibSensorInfoStringProperty
  * @brief Value of AITRIOS_SENSOR_INFO_STRING_PROPERTY_KEY
  * @details Defines the properties of the info string
@@ -1236,7 +1244,8 @@ int32_t SensorStreamSetProperty(EdgeAppLibSensorStream stream,
  * @param[in] channel_id Channel ID of the channel to be gotten
  * @param[out] channel Pointer to obtained channel handle
  * @return Zero for success or negative value for failure
- * @details Channel handle is valid until EdgeAppLibSensorReleaseFrame is called
+ * @details Channel handle is valid until EdgeAppLib::SensorReleaseFrame is
+ * called
  */
 int32_t SensorFrameGetChannelFromChannelId(EdgeAppLibSensorFrame frame,
                                            uint32_t channel_id,
@@ -1290,18 +1299,18 @@ int32_t SensorInputDataTypeEnableChannel(
 /**
  * @brief Get level of last error occurred in EdgeAppLibSensor
  * @return One of EdgeAppLibSensorErrorLevel that indicates level of last error
- * @details There is no error information about EdgeAppLibSensorCoreInit and
- * EdgeAppLibSensorCoreExit. The error information is not updated if API is done
- * successfully.
+ * @details There is no error information about EdgeAppLib::SensorCoreInit and
+ * EdgeAppLib::SensorCoreExit. The error information is not updated if API is
+ * done successfully.
  */
 enum EdgeAppLibSensorErrorLevel SensorGetLastErrorLevel(void);
 
 /**
  * @brief Get cause of last error occurred in EdgeAppLibSensor
  * @return One of EdgeAppLibSensorErrorCause that indicates cause of last error
- * @details There is no error information about EdgeAppLibSensorCoreInit and
- * EdgeAppLibSensorCoreExit. The error information is not updated if API is done
- * successfully.
+ * @details There is no error information about EdgeAppLib::SensorCoreInit and
+ * EdgeAppLib::SensorCoreExit. The error information is not updated if API is
+ * done successfully.
  */
 enum EdgeAppLibSensorErrorCause SensorGetLastErrorCause(void);
 
@@ -1328,8 +1337,8 @@ int32_t SensorGetLastErrorString(enum EdgeAppLibSensorStatusParam param,
  * @return Zero for success or negative value for failure
  * @details This function can be called whenever frame is valid
  *
- * @note The latency information is valid until EdgeAppLibSensorReleaseFrame is
- * called
+ * @note The latency information is valid until EdgeAppLib::SensorReleaseFrame
+ * is called
  */
 int32_t SensorGetFrameLatency(EdgeAppLibSensorFrame frame,
                               uint64_t *sequence_number,

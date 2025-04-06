@@ -39,9 +39,13 @@ AutoExposureMetering::AutoExposureMetering() {
       {MODE, kLe,
        AITRIOS_SENSOR_CAMERA_AUTO_EXPOSURE_METERING_MODE_USER_WINDOW},
       {MODE, kType, JSONNumber},
+      {TOP, kGe, 0},
       {TOP, kType, JSONNumber},
+      {LEFT, kGe, 0},
       {LEFT, kType, JSONNumber},
+      {BOTTOM, kGe, 0},
       {BOTTOM, kType, JSONNumber},
+      {RIGHT, kGe, 0},
       {RIGHT, kType, JSONNumber},
   }; /* LCOV_EXCL_BR_LINE: array check */
 
@@ -86,18 +90,16 @@ int AutoExposureMetering::Verify(JSON_Object *obj) {
       AITRIOS_SENSOR_CAMERA_AUTO_EXPOSURE_METERING_MODE_FULL_SCREEN)
     return 0;
 
-  if (!(0 <= aux_auto_exposure_metering.top &&
-        aux_auto_exposure_metering.top < aux_auto_exposure_metering.bottom)) {
+  if (!(aux_auto_exposure_metering.top < aux_auto_exposure_metering.bottom)) {
     DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
-    dtdl->GetResInfo()->SetDetailMsg("top not 0 <= top < bottom");
+    dtdl->GetResInfo()->SetDetailMsg("top not top < bottom");
     dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
     return -1;
   }
 
-  if (!(0 <= aux_auto_exposure_metering.left &&
-        aux_auto_exposure_metering.left < aux_auto_exposure_metering.right)) {
+  if (!(aux_auto_exposure_metering.left < aux_auto_exposure_metering.right)) {
     DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
-    dtdl->GetResInfo()->SetDetailMsg("left not 0 <= left < right");
+    dtdl->GetResInfo()->SetDetailMsg("left not left < right");
     dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
     return -1;
   }
@@ -133,7 +135,7 @@ int AutoExposureMetering::Apply(JSON_Object *obj) {
     SmUtilsPrintSensorError();
     DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
     dtdl->GetResInfo()->SetDetailMsg(
-        "Auto Exposure Metering property failed to be set. Pease use valid "
+        "Auto Exposure Metering property failed to be set. Please use valid "
         "values for mode, top, left, bottom and right.");
     dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
   }

@@ -14,6 +14,7 @@
  * limitations under the License.
  ****************************************************************************/
 
+#include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,7 +36,7 @@ extern "C" {
  * 0: Map, 1: File
  */
 int8_t mapped_flag = -1;
-
+pthread_mutex_t flag_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * Helper function to check if the memory is mapped or if file access is better.
  * Returns:
@@ -56,12 +57,18 @@ static int8_t IsMappedMemory(EdgeAppLibSensorStream stream) {
 
   // Retrieve the first channel from the frame
   EdgeAppLibSensorChannel channel;
-  result = senscord_frame_get_channel_from_channel_id(frame, 0, &channel);
+  result = senscord_frame_get_channel_from_channel_id(
+      frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT, &channel);
   if (result != 0) {
-    LOG_ERR("senscord_frame_get_channel_from_channel_id failed with error: %d",
-            result);
-    senscord_stream_release_frame(stream, frame);
-    return -1;
+    result = senscord_frame_get_channel_from_channel_id(
+        frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, &channel);
+    if (result != 0) {
+      LOG_ERR(
+          "senscord_frame_get_channel_from_channel_id failed with error: %d",
+          result);
+      senscord_stream_release_frame(stream, frame);
+      return -1;
+    }
   }
 
   // Get the raw data handle for the channel
@@ -121,9 +128,11 @@ int32_t SensorStart(EdgeAppLibSensorStream stream) {
   }
 
   // Check memory access mode only once
+  pthread_mutex_lock(&flag_mutex);
   if (mapped_flag == -1) {
     mapped_flag = IsMappedMemory(stream);
   }
+  pthread_mutex_unlock(&flag_mutex);
 
   LOG_TRACE("SensorStart completed with result: %d", result);
   return result;

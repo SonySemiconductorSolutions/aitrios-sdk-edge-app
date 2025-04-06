@@ -27,9 +27,11 @@
 #ifndef AITRIOS_DATA_EXPORT_H
 #define AITRIOS_DATA_EXPORT_H
 
+#include <stdint.h>
+
 #include "data_export_types.h"
-#include "parson.h"
-#include "stdint.h"
+
+struct json_object_t;
 
 namespace EdgeAppLib {
 #ifdef __cplusplus
@@ -78,9 +80,9 @@ EdgeAppLibDataExportResult DataExportCleanup(
  *
  * @warning It's the caller's responsibility to keep portname and data valid
  * until the operation has finished.
- * @note Use EdgeAppLibDataExportAwait to verify that the operation has
+ * @note Use EdgeAppLib::DataExportAwait to verify that the operation has
  * finished.
- * @note Use EdgeAppLibDataExportIsEnabled to check if data upload is enabled.
+ * @note Use EdgeAppLib::DataExportIsEnabled to check if data upload is enabled.
  *
  * @param portname The port name of the destination. [Parameter currently
  * unused]
@@ -119,8 +121,8 @@ EdgeAppLibDataExportResult DataExportStopSelf();
 /**
  * @brief Gets whether sending data of the specified type is enabled.
  *
- * @note When disabled, EdgeAppLibDataExportSendData will return NULL and not
- * upload any data.
+ * @note When disabled, EdgeAppLib::DataExportSendData will return NULL and
+ * not upload any data.
  *
  * @param datatype The type of the data to upload.
  * @return True if enabled; otherwise, false.
@@ -134,7 +136,7 @@ bool DataExportIsEnabled(EdgeAppLibDataExportDataType datatype);
  *
  * @return A JSON object containing the current port settings.
  */
-JSON_Object *DataExportGetPortSettings(void);
+struct json_object_t *DataExportGetPortSettings(void);
 
 #ifdef __cplusplus
 }

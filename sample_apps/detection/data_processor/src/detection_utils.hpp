@@ -48,25 +48,25 @@ typedef struct {
   uint16_t input_height;
 } DataProcessorCustomParam;
 
-JSON_Value *CreateSSDOutputJson(float *out_data_pr, int num_elements,
+JSON_Value *CreateSSDOutputJson(float *out_data_pr, uint32_t num_elements,
                                 DataProcessorCustomParam ssd_param);
 
-int CreateSSDOutputFlatbuffer(float *out_data_pr, int num_elements,
+int CreateSSDOutputFlatbuffer(float *out_data_pr, uint32_t num_elements,
                               flatbuffers::FlatBufferBuilder *builder,
                               DataProcessorCustomParam ssd_param);
 void ExtractDetectionsToFlatbufferObject(
     float *out_data_pr,
     std::vector<flatbuffers::Offset<SmartCamera::GeneralObject> > *gdata_vector,
-    flatbuffers::FlatBufferBuilder *builder, int num_of_detections,
+    flatbuffers::FlatBufferBuilder *builder, uint16_t num_of_detections,
     DataProcessorCustomParam ssd_param);
 
 void ExtractBboxToFlatbuffer(
-    float *out_data_pr, int index, int num_of_detections,
+    float *out_data_pr, int index, uint16_t num_of_detections,
     flatbuffers::FlatBufferBuilder *builder,
     flatbuffers::Offset<SmartCamera::BoundingBox2d> *bbox_data,
     DataProcessorCustomParam ssd_param);
 
-int ExtractNumberOfDetections(int num_elements);
+uint16_t ExtractNumberOfDetections(uint32_t num_elements);
 
 DataProcessorResultCode ExtractMaxDetections(
     JSON_Object *json, DataProcessorCustomParam *ssd_param_pr);

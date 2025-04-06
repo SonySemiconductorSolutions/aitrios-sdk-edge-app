@@ -23,14 +23,13 @@ set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 include(${ROOT_DIR}/cmake/gtest.cmake)
 
 include_directories(
-  ${SAMPLE_APP_DIR}/include/schemas
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/tests/mocks/sensor
 )
 
 add_executable(test_detection_data_processor
   test_detection_data_processor.cpp
-  ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
   ${LIBS_DIR}/tests/mocks/sensor/testing_utils.cpp
   ${LIBS_DIR}/third_party/base64.c/base64.c
@@ -39,7 +38,7 @@ add_executable(test_detection_data_processor
 
 add_executable(test_detection_utils
   test_detection_utils.cpp
-  ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
   ${LIBS_DIR}/tests/mocks/sensor/testing_utils.cpp
   ${MOCKS_DIR}/device/mock_device.cpp
@@ -64,7 +63,7 @@ add_library(sensor
 )
 target_include_directories(sensor PUBLIC
   ${LIBS_DIR}/tests/mocks/sensor
-  ${SAMPLE_APP_DIR}/include
+  ${SAMPLE_APP_DIR}/utils/include
   ${LIBS_DIR}/sm/include
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson

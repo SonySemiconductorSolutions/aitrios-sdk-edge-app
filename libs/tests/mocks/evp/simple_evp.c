@@ -68,6 +68,8 @@ static void *entrypoint(void *args) {
   int opt = 1;
   int addrlen = sizeof(address);
 
+  LOG_INFO("EVP background thread entrypoint");
+
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
     LOG_ERR("Socket failed");
     exit(1);
@@ -118,12 +120,15 @@ static void *entrypoint(void *args) {
 }
 
 struct EVP_client *EVP_initialize(void) {
+  LOG_INFO("EVP_initialize");
   assert(!evp.is_initialized);
   evp.is_initialized = true;
   pthread_mutex_init(&evp.mutex, NULL);
   for (int i = 0; i < PENDING_OPERATIONS; ++i)
     operations.buffer[i] = (RingBufferElement){.config = NULL, .config_len = 0};
-  assert(pthread_create(&evp.thread, NULL, entrypoint, NULL) == 0);
+  int ret = pthread_create(&evp.thread, NULL, entrypoint, NULL);
+  assert(ret == 0);
+  LOG_INFO("EVP_initialize done");
   return &evp.h;
 }
 
@@ -200,7 +205,7 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
        type != EVP_BLOB_TYPE_HTTP && type != EVP_BLOB_TYPE_EVP_EXT &&
        type != EVP_BLOB_TYPE_HTTP_EXT) ||
       !(op == EVP_BLOB_OP_GET || op == EVP_BLOB_OP_PUT) || request == NULL ||
-      localStore == NULL || localStore->filename == NULL || cb == NULL) {
+      localStore == NULL || cb == NULL) {
     return EVP_INVAL;
   }
 

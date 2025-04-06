@@ -18,15 +18,14 @@ set(LIBS_DIR ${ROOT_DIR}/libs)
 
 add_library(data_processor_api
   ${SAMPLE_APP_DIR}/passthrough/data_processor/src/passthrough_data_processor.cpp
-  ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
-  ${SAMPLE_APP_DIR}/utils/data_processor_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/data_processor_utils.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
 )
 
 
 target_include_directories(data_processor_api PUBLIC
-  ${SAMPLE_APP_DIR}/include
-  ${SAMPLE_APP_DIR}/include/schemas
+  ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/passthrough/data_processor/src
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson

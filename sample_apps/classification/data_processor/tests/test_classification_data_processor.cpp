@@ -28,7 +28,7 @@
 #define MAX_PREDICTIONS_PROP \
   "ai_models.classification.parameters.max_predictions"
 
-#define MODEL_VERSION_ID "ModelVersionID"
+#define MODEL_ID "ModelID"
 #define DEVICE_ID "DeviceID"
 #define BUF_IMAGE "Image"
 #define BUF_TIME "T"
@@ -172,6 +172,19 @@ TEST_F(ConfigureAnalyzeFixtureTests,
   free(output);
 }
 
+TEST_F(ConfigureAnalyzeFixtureTests,
+       ConfigureTestCorrectMaxPredictionsOverwriteNegative) {
+  JSON_Status stat =
+      json_object_dotset_number(config_json_object, MAX_PREDICTIONS_PROP, -1);
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOutOfRange);
+  json_free_serialized_string((char *)config_mod);
+  free(output);
+}
+
 TEST_F(ConfigureAnalyzeFixtureTests, ConfigureTestFailParameterInvalidError) {
   std::list<std::string> parameters = {MAX_PREDICTIONS_PROP};
   for (const std::string &parameter : parameters)
@@ -231,5 +244,160 @@ TEST_F(ConfigureAnalyzeFixtureTests, AIModelsNotNullTest) {
   free(output);
   json_value_free(value);
 
+  json_free_serialized_string((char *)config_mod);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, AiModelBundleIdNotNullTest) {
+  JSON_Status stat = json_object_dotremove(
+      config_json_object, "ai_models.classification.ai_model_bundle_id");
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorInvalidParamSetError);
+  JSON_Value *value = json_parse_string(output);
+  EXPECT_TRUE(value);
+  free(output);
+  json_value_free(value);
+
+  json_free_serialized_string((char *)config_mod);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeJsonTest) {
+  JSON_Status stat = json_object_dotset_number(config_json_object,
+                                               "metadata_settings.format", 1);
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  char *p_out_buf;
+  uint32_t p_out_size;
+
+  printf("out_size=%d\n", out_size);
+  DataProcessorResultCode res =
+      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorOk);
+
+  char expected_json_str[1024];
+  snprintf(expected_json_str, sizeof(expected_json_str), R"([
+    {
+        "class_id": 3,
+        "score": 0.19531199336051941
+    },
+    {
+        "class_id": 0,
+        "score": 0.171875
+    },
+    {
+        "class_id": 1,
+        "score": 0.010742249898612499
+    },
+    {
+        "class_id": 2,
+        "score": 0.010742249898612499
+    }
+  ])");
+  JSON_Value *expected_json = json_parse_string(expected_json_str);
+
+  ASSERT_NE(p_out_buf, nullptr);
+  ASSERT_GT(p_out_size, 0);
+
+  JSON_Value *out_json = json_parse_string(p_out_buf);
+  ASSERT_TRUE(json_value_equals(out_json, expected_json))
+      << "  Actual JSON: " << p_out_buf << '\n'
+      << "Expected JSON: " << expected_json_str;
+
+  json_value_free(expected_json);
+  json_value_free(out_json);
+  json_free_serialized_string((char *)config_mod);
+  free(p_out_buf);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, UndefinedFormatTest) {
+  JSON_Status stat = json_object_dotset_number(config_json_object,
+                                               "metadata_settings.format", 10);
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  char *p_out_buf = NULL;
+  uint32_t p_out_size = 0;
+
+  printf("out_size=%d\n", out_size);
+  DataProcessorResultCode res =
+      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorInvalidParam);
+  EXPECT_EQ(p_out_buf, nullptr);
+  EXPECT_EQ(p_out_size, 0);
+
+  json_free_serialized_string((char *)config_mod);
+  free(p_out_buf);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests,
+       AnalyzeJsonMaxPredictionUnderElementsTest) {
+  JSON_Status stat =
+      json_object_dotset_number(config_json_object, MAX_PREDICTIONS_PROP, 2);
+  stat = json_object_dotset_number(config_json_object,
+                                   "metadata_settings.format", 1);
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  char *p_out_buf;
+  uint32_t p_out_size;
+
+  printf("out_size=%d\n", out_size);
+  DataProcessorResultCode res =
+      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorOk);
+
+  char expected_json_str[1024];
+  snprintf(expected_json_str, sizeof(expected_json_str), R"([
+    {
+        "class_id": 3,
+        "score": 0.19531199336051941
+    },
+    {
+        "class_id": 0,
+        "score": 0.171875
+    }
+  ])");
+  JSON_Value *expected_json = json_parse_string(expected_json_str);
+
+  ASSERT_NE(p_out_buf, nullptr);
+  ASSERT_GT(p_out_size, 0);
+
+  JSON_Value *out_json = json_parse_string(p_out_buf);
+  ASSERT_TRUE(json_value_equals(out_json, expected_json))
+      << "  Actual JSON: " << p_out_buf << '\n'
+      << "Expected JSON: " << expected_json_str;
+
+  json_value_free(expected_json);
+  json_value_free(out_json);
+  json_free_serialized_string((char *)config_mod);
+  free(p_out_buf);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, DataProcessorGetDataTypeBase64) {
+  JSON_Status stat = json_object_dotset_number(config_json_object,
+                                               "metadata_settings.format", 0);
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  EdgeAppLibSendDataType res = DataProcessorGetDataType();
+  EXPECT_EQ(res, EdgeAppLibSendDataBase64);
+
+  free(output);
+  json_free_serialized_string((char *)config_mod);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, DataProcessorGetDataTypeJson) {
+  JSON_Status stat = json_object_dotset_number(config_json_object,
+                                               "metadata_settings.format", 1);
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  EdgeAppLibSendDataType res = DataProcessorGetDataType();
+  EXPECT_EQ(res, EdgeAppLibSendDataJson);
+
+  free(output);
   json_free_serialized_string((char *)config_mod);
 }

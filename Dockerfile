@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+       --no-install-recommends \
        make \
-       libxml2 \
        wget \
+       ca-certificates \
        cmake \
-       build-essential \
-       libc6-dev-i386 gcc-multilib g++-multilib \
-       libxml2-dev libedit-dev git build-essential cmake \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

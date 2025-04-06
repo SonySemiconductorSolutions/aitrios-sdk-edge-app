@@ -288,6 +288,8 @@ AnalyzerBase::ResultCode AnalyzerOd::ObjectDetectionParamInit(
         JSON_Object *param = json_object_get_object(detection_param, "param");
         ret = json_object_has_value(param, "max_detections");
         if (ret) {
+          double aux = json_object_get_number(param, "max_detections");
+          if (aux < 0) return AnalyzerBase::ResultCode::kInvalidParamOutOfRange;
           uint16_t maxDetections =
               (int)json_object_get_number(param, "max_detections");
           EdgeAppLibLogDebug(LOG_OD "ObjectDetectionParamInit max_detections:",
@@ -306,7 +308,7 @@ AnalyzerBase::ResultCode AnalyzerOd::ObjectDetectionParamInit(
           if (threshold < 0.0 || threshold > 1.0) {
             EdgeAppLibLogError(LOG_OD "ObjectDetectionParamInit:",
                                "threshold value out of range");
-            return AnalyzerBase::ResultCode::kInvalidParam;
+            return AnalyzerBase::ResultCode::kInvalidParamOutOfRange;
           } else {
             p_param->threshold_ = threshold;
           }
@@ -317,6 +319,8 @@ AnalyzerBase::ResultCode AnalyzerOd::ObjectDetectionParamInit(
         }
         ret = json_object_has_value(param, "input_width");
         if (ret) {
+          double aux = json_object_get_number(param, "input_width");
+          if (aux < 0) return AnalyzerBase::ResultCode::kInvalidParamOutOfRange;
           uint16_t input_width = json_object_get_number(param, "input_width");
           EdgeAppLibLogDebug(LOG_OD "ObjectDetectionParamInit input_width:",
                              Format("%hu", input_width));
@@ -328,6 +332,8 @@ AnalyzerBase::ResultCode AnalyzerOd::ObjectDetectionParamInit(
         }
         ret = json_object_has_value(param, "input_height");
         if (ret) {
+          double aux = json_object_get_number(param, "input_height");
+          if (aux < 0) return AnalyzerBase::ResultCode::kInvalidParamOutOfRange;
           uint16_t input_height = json_object_get_number(param, "input_height");
           EdgeAppLibLogDebug(LOG_OD "ObjectDetectionParamInit input_height:",
                              Format("%hu", input_height));
@@ -762,6 +768,8 @@ AnalyzerBase::ResultCode AnalyzerIc::ClassificationParamInit(
             json_object_get_object(classification_param, "param");
         ret = json_object_has_value(param, "max_predictions");
         if (ret) {
+          double aux = json_object_get_number(param, "max_predictions");
+          if (aux < 0) return AnalyzerBase::ResultCode::kInvalidParamOutOfRange;
           uint16_t maxPredictions =
               (int)json_object_get_number(param, "max_predictions");
           EdgeAppLibLogDebug(LOG_IC "ClassificationParamInit max_predictions:",

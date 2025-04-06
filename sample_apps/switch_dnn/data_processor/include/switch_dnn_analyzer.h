@@ -38,7 +38,13 @@ class AnalyzerBase {
    * @enum AnalyzerBase::ResultCode
    * @brief The error code of analysis process
    */
-  enum class ResultCode { kOk, kInvalidParam, kMemoryError, kOtherError };
+  enum class ResultCode {
+    kOk,
+    kInvalidParam,
+    kMemoryError,
+    kOtherError,
+    kInvalidParamOutOfRange
+  };
 
   /**
    * @class Allocator

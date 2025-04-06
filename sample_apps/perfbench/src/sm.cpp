@@ -282,7 +282,8 @@ static void sendMetadata(EdgeAppLibSensorFrame *frame) {
     EdgeAppLibSendDataResult send_data_res =
         SendDataSyncMeta(data.address, data.size, EdgeAppLibSendDataBase64,
                          data.timestamp, DATA_EXPORT_AWAIT_TIMEOUT);
-    if (send_data_res != EdgeAppLibSendDataResultSuccess) {
+    if (send_data_res != EdgeAppLibSendDataResultSuccess &&
+        send_data_res != EdgeAppLibSendDataResultEnqueued) {
       LOG_ERR("SendDataSyncMeta failed with EdgeAppLibSendDataResult: %d",
               send_data_res);
     }

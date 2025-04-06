@@ -42,6 +42,7 @@ class Running : public State {
 
  private:
   RunningThread *running_thread;
+  bool is_failed_on_start = false;
 };
 
 #endif /* STATES_RUNNING_HPP */

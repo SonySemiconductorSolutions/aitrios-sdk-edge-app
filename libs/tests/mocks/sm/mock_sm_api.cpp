@@ -31,7 +31,7 @@ static EdgeAppLibSensorStream mock_stream;
 
 void setPortSettings(int method) {
   if (test_value != nullptr) json_value_free(test_value);
-  char *test_port_settings_template = R"({
+  const char *test_port_settings_template = R"({
         "metadata": {
             "method": %d,
             "storage_name": "metadatastoragename",
