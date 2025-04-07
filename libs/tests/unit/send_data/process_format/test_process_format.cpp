@@ -27,6 +27,7 @@
 #include "sm_api.hpp"
 
 using namespace EdgeAppLib;
+#define PREALLOCATED_BUFFER_SIZE 1024
 
 class ProcessFormatTest : public ::testing::Test {
  protected:
@@ -38,30 +39,45 @@ class ProcessFormatTest : public ::testing::Test {
   }
 };
 
+void *StreamSetPropertyVersionID(uint32_t category, const char *version_id,
+                                 const char *sensor_name) {
+  EdgeAppLibSensorInfoStringProperty sensor_version_id = {};
+  sensor_version_id.category = AITRIOS_SENSOR_INFO_STRING_SENSOR_NAME;
+  strncpy(sensor_version_id.info, sensor_name,
+          AITRIOS_SENSOR_INFO_STRING_LENGTH);
+  SensorStreamSetProperty(GetSensorStream(),
+                          AITRIOS_SENSOR_INFO_STRING_PROPERTY_KEY,
+                          &sensor_version_id, sizeof(sensor_version_id));
+  sensor_version_id.category = category;
+  strncpy(sensor_version_id.info, version_id,
+          AITRIOS_SENSOR_INFO_STRING_LENGTH);
+  SensorStreamSetProperty(GetSensorStream(),
+                          AITRIOS_SENSOR_INFO_STRING_PROPERTY_KEY,
+                          &sensor_version_id, sizeof(sensor_version_id));
+}
 TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal) {
   uint8_t in_data[5] = {0x51, 0x53, 0x55, 0x57, 0x59};
   uint32_t in_size = sizeof(in_data);
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  void *buffer = malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
-                        output_tensor_value);
+                        (char *)buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
+  JSON_Value *output_tensor_value = json_parse_string((char *)buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
-  const char *modelVersionId =
-      json_object_get_string(output_tensor_object, "ModelVersionID");
-  ASSERT_STREQ(modelVersionId, "11223344");
+  const char *versionId =
+      json_object_get_string(output_tensor_object, "ModelID");
+  ASSERT_STREQ(versionId, "11223344");
 
   JSON_Array *inferences =
       json_object_get_array(output_tensor_object, "Inferences");
@@ -78,6 +94,7 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal) {
   bool image = json_object_get_boolean(output_tensor_object, "Image");
   ASSERT_EQ(image, true);
 
+  free(buffer);
   json_value_free(output_tensor_value);
 }
 
@@ -87,24 +104,23 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_SizeZero) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
-                        output_tensor_value);
+                        buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
+  JSON_Value *output_tensor_value = json_parse_string((char *)buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
-  const char *modelVersionId =
-      json_object_get_string(output_tensor_object, "ModelVersionID");
-  ASSERT_STREQ(modelVersionId, "11223344");
+  const char *versionId =
+      json_object_get_string(output_tensor_object, "ModelID");
+  ASSERT_STREQ(versionId, "11223344");
 
   JSON_Array *inferences =
       json_object_get_array(output_tensor_object, "Inferences");
@@ -120,40 +136,45 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_SizeZero) {
   bool image = json_object_get_boolean(output_tensor_object, "Image");
   ASSERT_EQ(image, true);
 
+  free(buffer);
   json_value_free(output_tensor_value);
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_JsonString) {
-  const char *in_data = "abcdefg";
-  uint32_t in_size = 8;
+  const char *in_data =
+      "[{\"class_id\":81,\"score\":0.5625,\"bbox\":{\"left\":14,\"top\":"
+      "229,\"right\":290,\"bottom\":321}}]";
+
+  uint32_t in_size = sizeof(in_data);
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   // data type is json string.
   ProcessFormatResult result =
       ProcessFormatMeta((void *)in_data, in_size, EdgeAppLibSendDataJson,
-                        time_stamp, output_tensor_value);
+                        time_stamp, buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
+  JSON_Value *output_tensor_value = json_parse_string((char *)buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
-  const char *modelVersionId =
-      json_object_get_string(output_tensor_object, "ModelVersionID");
-  ASSERT_STREQ(modelVersionId, "11223344");
+  const char *versionId =
+      json_object_get_string(output_tensor_object, "ModelID");
+  ASSERT_STREQ(versionId, "11223344");
 
   JSON_Array *inferences =
       json_object_get_array(output_tensor_object, "Inferences");
   JSON_Object *inference = json_array_get_object(inferences, 0);
-  const char *inference_o = json_object_get_string(inference, "O");
-  ASSERT_STREQ(inference_o, "abcdefg");  // the same as in_data
+  JSON_Value *inference_o = json_object_get_value(inference, "O");
+  char *o_str = json_serialize_to_string(inference_o);
+  ASSERT_STREQ(o_str, in_data);  // the same as in_data
+  json_free_serialized_string(o_str);
   ASSERT_EQ(json_object_get_number(inference, "F"), 1);
 
   const char *deviceId =
@@ -164,6 +185,7 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_JsonString) {
   ASSERT_EQ(image, true);
 
   json_value_free(output_tensor_value);
+  free(buffer);
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_GetDeviceID_Error) {
@@ -172,22 +194,21 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_GetDeviceID_Error) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
   // get device id will be failed.
   setEsfSystemGetDeviceIDFail();
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
-                        output_tensor_value);
+                        buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
+  JSON_Value *output_tensor_value = json_parse_string((char *)buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
   const char *deviceId =
@@ -196,7 +217,7 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_GetDeviceID_Error) {
   ASSERT_STREQ(deviceId, "000000000000000");
 
   json_value_free(output_tensor_value);
-
+  free(buffer);
   resetEsfSystemGetDeviceIDSuccess();
 }
 
@@ -206,22 +227,21 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_InputTensorDisabled) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
   // set input tensor disabled.
   setPortSettingsInputTensorDisabled();
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
-                        output_tensor_value);
+                        buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
+  JSON_Value *output_tensor_value = json_parse_string((char *)buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
   bool image = json_object_get_boolean(output_tensor_object, "Image");
@@ -229,7 +249,7 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_InputTensorDisabled) {
   ASSERT_EQ(image, false);
 
   json_value_free(output_tensor_value);
-
+  free(buffer);
   resetPortSettings();
 }
 
@@ -239,22 +259,21 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_NoInputTensor) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
   // input tensor will not be exist.
   setPortSettingsNoInputTensor(2);
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
-                        output_tensor_value);
+                        buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
+  JSON_Value *output_tensor_value = json_parse_string((char *)buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
   bool image = json_object_get_boolean(output_tensor_object, "Image");
@@ -262,7 +281,7 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_NoInputTensor) {
   ASSERT_EQ(image, false);
 
   json_value_free(output_tensor_value);
-
+  free(buffer);
   resetPortSettings();
 }
 
@@ -272,22 +291,21 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_NoInputTensorEnabled) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
   // input tensor's enabled will not exist.
   setPortSettingsNoInputTensorEnabled();
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
-                        output_tensor_value);
+                        buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
+  JSON_Value *output_tensor_value = json_parse_string((char *)buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
   bool image = json_object_get_boolean(output_tensor_object, "Image");
@@ -295,7 +313,7 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_NoInputTensorEnabled) {
   ASSERT_EQ(image, false);
 
   json_value_free(output_tensor_value);
-
+  free(buffer);
   resetPortSettings();
 }
 
@@ -303,40 +321,36 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_InDataNull) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   // in_data is NULL.
   ProcessFormatResult result = ProcessFormatMeta(
-      NULL, 0, EdgeAppLibSendDataBase64, time_stamp, output_tensor_value);
+      NULL, 0, EdgeAppLibSendDataBase64, time_stamp, buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
-  json_value_free(output_tensor_value);
+  free(buffer);
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatMeta_Normal_JsonInDataNull) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   // in_data is NULL.
   ProcessFormatResult result = ProcessFormatMeta(
-      NULL, 0, EdgeAppLibSendDataJson, time_stamp, output_tensor_value);
+      NULL, 0, EdgeAppLibSendDataJson, time_stamp, buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultOk);
 
-  json_value_free(output_tensor_value);
+  free(buffer);
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatMeta_Error_StreamGetProperty) {
@@ -348,11 +362,13 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Error_StreamGetProperty) {
   // stream get property will be failed.
   setEdgeAppLibSensorStreamGetPropertyFail();
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
-                        output_tensor_value);
-  json_value_free(output_tensor_value);
+                        buffer, buffer_size);
+  free(buffer);
   ASSERT_EQ(result, kProcessFormatResultFailure);
 
   resetEdgeAppLibSensorStreamGetPropertySuccess();
@@ -364,21 +380,36 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Error_DataType) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
-  JSON_Value *output_tensor_value = json_value_init_object();
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+
   // data type is invalid.
   ProcessFormatResult result =
       ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataType(2), time_stamp,
-                        output_tensor_value);
+                        buffer, buffer_size);
   ASSERT_EQ(result, kProcessFormatResultInvalidParam);
 
-  json_value_free(output_tensor_value);
+  free(buffer);
+}
+
+TEST_F(ProcessFormatTest, ProcessFormatMeta_Error_verisonId) {
+  uint8_t in_data[5] = {0xa1, 0xa3, 0xa5, 0xa7, 0xa9};
+  uint32_t in_size = sizeof(in_data);
+  uint64_t time_stamp = 10000;
+  int timeout_ms = 10000;
+
+  char *buffer = (char *)malloc(PREALLOCATED_BUFFER_SIZE);
+  size_t buffer_size = PREALLOCATED_BUFFER_SIZE;
+  ProcessFormatResult result =
+      ProcessFormatMeta(in_data, in_size, EdgeAppLibSendDataBase64, time_stamp,
+                        buffer, buffer_size);
+
+  ASSERT_EQ(result, kProcessFormatResultFailure);
+
+  free(buffer);
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatMeta_Error_OutNull) {
@@ -387,16 +418,12 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Error_OutNull) {
   uint64_t time_stamp = 10000;
   int timeout_ms = 10000;
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle_id_prop;
-  strncpy(ai_model_bundle_id_prop.ai_model_bundle_id, "11223344",
-          AI_MODEL_BUNDLE_ID_SIZE);
-  SensorStreamSetProperty(
-      GetSensorStream(), AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-      &ai_model_bundle_id_prop, sizeof(ai_model_bundle_id_prop));
+  StreamSetPropertyVersionID(AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION,
+                             "11223344", "IMX500");
 
   // output_tensor_value is NULL.
   ProcessFormatResult result = ProcessFormatMeta(
-      in_data, in_size, EdgeAppLibSendDataJson, time_stamp, NULL);
+      in_data, in_size, EdgeAppLibSendDataJson, time_stamp, NULL, 0);
   ASSERT_EQ(result, kProcessFormatResultInvalidParam);
 }
 
@@ -411,6 +438,7 @@ TEST_F(ProcessFormatTest, ProcessFormatInputRawMap) {
   EXPECT_EQ(result, kProcessFormatResultOk);
 
   free(in_data);
+  free(image);
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatInputRawFileIO) {

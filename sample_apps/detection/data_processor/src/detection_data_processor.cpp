@@ -109,7 +109,9 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   }
   pthread_mutex_unlock(&data_processor_mutex);
 
-  SetEdgeAppLibNetwork(s_stream, object_model);
+  if (SetEdgeAppLibNetwork(s_stream, object_model) != 0) {
+    res = kDataProcessorInvalidParamSetError;
+  }
 
   // Get metadata settings
   JSON_Object *object_format =

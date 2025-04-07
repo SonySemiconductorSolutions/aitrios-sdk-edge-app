@@ -42,10 +42,19 @@ TEST(PropertiesTest, IsIntegerTest) {
 
 TEST(ErrorCodeTest, CodeFromSensorErrorCauseTest) {
   // Test cases with AITRIOS_SENSOR_ERROR_OUT_OF_RANGE values
-  ASSERT_EQ(CodeFromSensorErrorCause(AITRIOS_SENSOR_ERROR_OUT_OF_RANGE),
-            CODE_OUT_OF_RANGE);
+  CODE code = CODE_OK;
+  CodeFromSensorErrorCause(AITRIOS_SENSOR_ERROR_OUT_OF_RANGE, &code);
+  ASSERT_EQ(code, CODE_OUT_OF_RANGE);
 
-  // Test cases with other than AITRIOS_SENSOR_ERROR_OUT_OF_RANGE values
-  ASSERT_EQ(CodeFromSensorErrorCause(AITRIOS_SENSOR_ERROR_NOT_SUPPORTED),
-            CODE_INVALID_ARGUMENT);
+  // Test cases with AITRIOS_SENSOR_ERROR_INVALID_CAMERA_OPERATION_PARAMETER
+  // values
+  code = CODE_OK;
+  CodeFromSensorErrorCause(
+      AITRIOS_SENSOR_ERROR_INVALID_CAMERA_OPERATION_PARAMETER, &code);
+  ASSERT_EQ(code, CODE_INVALID_ARGUMENT);
+
+  // Test cases with other than former values
+  code = CODE_OK;
+  CodeFromSensorErrorCause(AITRIOS_SENSOR_ERROR_NOT_SUPPORTED, &code);
+  ASSERT_EQ(code, CODE_OK);
 }

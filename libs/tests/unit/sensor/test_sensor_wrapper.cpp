@@ -98,18 +98,6 @@ const char *g_error_channel_unsupported_keys[] = {
     AITRIOS_SENSOR_REGISTER_ACCESS_64_PROPERTY_KEY_UNSUPPORTED,
 };
 
-int32_t StreamSetPropertyAllUnsupported(EdgeAppLibSensorStream stream) {
-  int32_t ret = 0;
-
-  int count = sizeof(g_unsupported_keys) / sizeof(g_unsupported_keys[0]);
-  for (int i = 0; i < count; i++) {
-    const char *key = g_unsupported_keys[0];
-    EdgeAppLibSensorAiModelBundleIdProperty property = {};  // dummy
-    ret = SensorStreamSetProperty(stream, key, &property, sizeof(property));
-    EXPECT_EQ(0, ret);
-  }
-}
-
 // -------- //
 TEST_F(EdgeAppLibSensorUnitTest, EdgeAppLibSensorStart_Normal_Success) {
   EXPECT_CALL(*mock_, senscord_stream_start(_)).WillOnce(testing::Return(0));
@@ -265,6 +253,45 @@ TEST_F(EdgeAppLibSensorUnitTest, IsMappedMemoryFileIO) {
   int32_t ret = SensorStart(stream);
   EXPECT_EQ(0, ret);
   EXPECT_EQ(0, mapped_flag);
+}
+
+TEST_F(EdgeAppLibSensorUnitTest, IsMappedMemoryWithInputTensorOnly) {
+  mapped_flag = -1;
+  EdgeAppLibSensorInputDataTypeProperty enabled = {};
+  EXPECT_CALL(*mock_, senscord_frame_get_channel_from_channel_id(_, 0, _))
+      .WillRepeatedly(testing::Return(-1));
+  EXPECT_CALL(*mock_, senscord_frame_get_channel_from_channel_id(_, 1, _))
+      .WillRepeatedly(testing::Return(0));
+  EdgeAppLibSensorStream stream = DUMMY_HANDLE_STREAM;
+  int32_t ret = SensorStart(stream);
+  EXPECT_EQ(0, ret);
+  EXPECT_EQ(0, mapped_flag);
+}
+
+TEST_F(EdgeAppLibSensorUnitTest, IsMappedMemoryWithOutputTensorOnly) {
+  mapped_flag = -1;
+  EdgeAppLibSensorInputDataTypeProperty enabled = {};
+  EXPECT_CALL(*mock_, senscord_frame_get_channel_from_channel_id(_, 1, _))
+      .WillRepeatedly(testing::Return(-1));
+  EXPECT_CALL(*mock_, senscord_frame_get_channel_from_channel_id(_, 0, _))
+      .WillRepeatedly(testing::Return(0));
+  EdgeAppLibSensorStream stream = DUMMY_HANDLE_STREAM;
+  int32_t ret = SensorStart(stream);
+  EXPECT_EQ(0, ret);
+  EXPECT_EQ(0, mapped_flag);
+}
+
+TEST_F(EdgeAppLibSensorUnitTest, IsMappedMemoryWithNoChannel) {
+  mapped_flag = -1;
+  EdgeAppLibSensorInputDataTypeProperty enabled = {};
+  EXPECT_CALL(*mock_, senscord_frame_get_channel_from_channel_id(_, 1, _))
+      .WillRepeatedly(testing::Return(-1));
+  EXPECT_CALL(*mock_, senscord_frame_get_channel_from_channel_id(_, 0, _))
+      .WillRepeatedly(testing::Return(-1));
+  EdgeAppLibSensorStream stream = DUMMY_HANDLE_STREAM;
+  int32_t ret = SensorStart(stream);
+  EXPECT_EQ(0, ret);
+  EXPECT_EQ(-1, mapped_flag);
 }
 
 TEST_F(EdgeAppLibSensorUnitTest, IsMappedMemoryMap) {

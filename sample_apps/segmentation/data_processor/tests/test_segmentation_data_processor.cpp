@@ -163,6 +163,30 @@ TEST_F(CommonTestFixture, ParameterInvalidError) {
   free(output);
 }
 
+TEST_F(CommonTestFixture, InputWidthOverwriteNegative) {
+  JSON_Status stat =
+      json_object_dotset_number(config_json_object, INPUT_WIDTH_PROP, -1);
+  const char *config_mod = json_serialize_to_string_pretty(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOutOfRange);
+  json_free_serialized_string((char *)config_mod);
+  free(output);
+}
+
+TEST_F(CommonTestFixture, InputHeightOverwriteNegative) {
+  JSON_Status stat =
+      json_object_dotset_number(config_json_object, INPUT_HEIGHT_PROP, -1);
+  const char *config_mod = json_serialize_to_string_pretty(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOutOfRange);
+  json_free_serialized_string((char *)config_mod);
+  free(output);
+}
+
 TEST_F(CommonTestFixture, HeaderIdFailTest) {
   JSON_Status stat = json_object_remove(config_json_object, "header");
   const char *config_mod = json_serialize_to_string(config_json_val);
@@ -222,6 +246,21 @@ TEST_F(CommonTestFixture, AIModelsNotNullTest) {
   DataProcessorResultCode res =
       DataProcessorConfigure((char *)config_mod, &output);
   EXPECT_EQ(res, kDataProcessorInvalidParam);
+  JSON_Value *value = json_parse_string(output);
+  EXPECT_TRUE(value);
+  free(output);
+  json_value_free(value);
+  json_free_serialized_string((char *)config_mod);
+}
+
+TEST_F(CommonTestFixture, AiModelBundleIdNotNullTest) {
+  JSON_Status stat = json_object_dotremove(
+      config_json_object, "ai_models.segmentation.ai_model_bundle_id");
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorInvalidParamSetError);
   JSON_Value *value = json_parse_string(output);
   EXPECT_TRUE(value);
   free(output);

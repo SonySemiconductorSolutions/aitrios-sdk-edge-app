@@ -47,23 +47,50 @@ EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
     return EdgeAppLibSendDataResultInvalidParam;
   }
 
-  // Generate Output Tensor
-  JSON_Value *output_tensor_value = json_value_init_object();
+  // Calculate the size of the Base64 encoded data
+  int base64_size = ((datalen + 2) / 3) * 4;  // For Base64 encoding
+  int json_overhead = 256;                    // For JSON formatting
+  int extra_padding = 0;                      // For extra padding
+
+  size_t buffer_size = base64_size + json_overhead + extra_padding;
+
+  // pre-allocate memory for JSON buffer
+  char *json_buffer = (char *)malloc(buffer_size);
+  if (!json_buffer) {
+    LOG_ERR("Failed to allocate memory for JSON buffer");
+    return EdgeAppLibSendDataResultDataTooLarge;
+  }
+
+  // Pass pre-allocated memory to ProcessFormatMeta
   ProcessFormatResult process_format_ret = ProcessFormatMeta(
-      data, datalen, datatype, timestamp, output_tensor_value);
+      data, datalen, datatype, timestamp, json_buffer, buffer_size);
   if (process_format_ret != kProcessFormatResultOk) {
     LOG_ERR("ProcessFormatMeta failed. Exit with return %d.",
             process_format_ret);
-    json_value_free(output_tensor_value);
+    free(json_buffer);
     return EdgeAppLibSendDataResultFailure;
   }
 
+  // Keep simple for Single Inference case
+  // TODO : Refactor for multiple inferences
+  if (getNumOfInfPerMsg() == 1) {
+    EdgeAppLibDataExportFuture *future =
+        DataExportSendData((char *)PORTNAME_META, EdgeAppLibDataExportMetadata,
+                           json_buffer, strlen(json_buffer), timestamp);
+    DataExportAwait(future, timeout_ms);
+    DataExportCleanup(future);
+    free(json_buffer);
+    pthread_mutex_unlock(&inf_mutex);
+    return EdgeAppLibSendDataResultSuccess;
+  }
   // Append one inference to Output Tensor
+  JSON_Value *output_tensor_value = json_parse_string((char *)json_buffer);
+  free(json_buffer);
   JSON_Object *output_tensor_object =
       json_value_get_object(output_tensor_value);
-  const char *model_version_id =
-      json_object_get_string(output_tensor_object, "ModelVersionID");
-  if (SendDataAppendOutputTensor(model_version_id, output_tensor_value) !=
+  const char *model_id =
+      json_object_get_string(output_tensor_object, "ModelID");
+  if (SendDataAppendOutputTensor(model_id, output_tensor_value) !=
       EdgeAppLibSendDataResultSuccess) {
     LOG_ERR("SendDataAppendOutputTensor failed");
     json_value_free(output_tensor_value);

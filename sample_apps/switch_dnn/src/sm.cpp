@@ -210,7 +210,7 @@ static int GetCropIc(EdgeAppLibSensorImageCropProperty *od,
   ic->height = (ymax - ymin) * scale_y;
 
   /* TODO */
-  /* Check whether to correct or not, and apply the correction　*/
+  /* Check whether to correct or not, and apply the correction */
   /* Crop size can not be smaller than InputTensorSize */
   /* But so far there is no way to get the InputTensor size before GetFrame */
 
@@ -647,13 +647,13 @@ int onIterate() {
                                         &crop_od, sizeof(crop_od));
           /* Get NetworkID for OD */
           s_analyzer_od.GetNetworkId(network_id);
-          EdgeAppLibLogError("s_analyzer_od.GetNetworkId", network_id);
+          EdgeAppLibLogInfo("s_analyzer_od.GetNetworkId", network_id);
         }
         /* Switch DNN */
         if (!err) {
           struct EdgeAppLibSensorAiModelBundleIdProperty bundle_id;
           memcpy(bundle_id.ai_model_bundle_id, network_id, sizeof(network_id));
-          EdgeAppLibLogError(TAG, "SensorStreamSetProperty");
+          EdgeAppLibLogDebug(TAG, "SensorStreamSetProperty");
           if (0 != SensorStreamSetProperty(
                        s_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
                        &bundle_id, sizeof(bundle_id))) {

@@ -27,9 +27,9 @@
                 "exposure_mode": 0,
                 "auto_exposure": {
                     "max_exposure_time": 10000,
-                    "min_exposure_time": 0,
-                    "max_gain": 69.0,
-                    "convergence_speed": 30
+                    "min_exposure_time": 100,
+                    "max_gain": 51.0,
+                    "convergence_speed": 2
                 },
                 "auto_exposure_metering": {
                     "metering_mode": 0,
@@ -41,12 +41,12 @@
                 "ev_compensation": 0,
                 "ae_anti_flicker_mode": 0,
                 "manual_exposure": {
-                    "exposure_time": 16667,
+                    "exposure_time": 10000,
                     "gain": 0.0
                 },
                 "white_balance_mode": 0,
                 "auto_white_balance": {
-                    "convergence_speed": 30
+                    "convergence_speed": 6
                 },
                 "manual_white_balance_preset": {
                     "color_temperature": 0
@@ -94,6 +94,21 @@
             },
             "number_of_inference_per_message": 1
         },
-        "custom_settings": {}
+        "custom_settings": {
+            "ai_models": {
+                "detection": {
+                    "ai_model_bundle_id": "000001",
+                    "parameters": {
+                        "max_detections": 10,
+                        "threshold": 0.3,
+                        "input_width": 320,
+                        "input_height": 320
+                    }
+                }
+            },
+            "metadata_settings": {
+                "format": 0
+            }
+        }
     }
 }

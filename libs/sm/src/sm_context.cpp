@@ -80,6 +80,10 @@ void StateMachineContext::SetPendingConfiguration(void *config,
     free(pending_configuration);
   }
   pending_configuration = malloc(configlen);
+  if (pending_configuration == nullptr) {
+    LOG_ERR("Failed to allocate memory for pending configuration");
+    return;
+  }
   memcpy(pending_configuration, config, configlen);
   pending_configuration_len = configlen;
 }
@@ -97,7 +101,8 @@ void StateMachineContext::ClearPendingConfiguration() {
 /* simple implementation of send state callback */
 static void SendStateCallback(EVP_STATE_CALLBACK_REASON reason,
                               void *userData) {
-  if (reason != EVP_STATE_CALLBACK_REASON_SENT) {
+  if (reason != EVP_STATE_CALLBACK_REASON_SENT &&
+      reason != EVP_STATE_CALLBACK_REASON_OVERWRITTEN) {
     LOG_ERR("SendStateCallback: callback failed because of reason: %d", reason);
   }
   free(userData);

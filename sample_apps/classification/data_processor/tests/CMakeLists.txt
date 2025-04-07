@@ -24,7 +24,7 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 
 add_executable(test_classification_data_processor
   test_classification_data_processor.cpp
-  ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
   ${LIBS_DIR}/tests/mocks/sensor/testing_utils.cpp
   ${LIBS_DIR}/third_party/base64.c/base64.c
@@ -49,14 +49,12 @@ add_subdirectory (
 )
 
 target_include_directories (test_classification_data_processor PUBLIC
-    ${SAMPLE_APP_DIR}/include/schemas
     ${LIBS_DIR}/third_party/parson
     ${LIBS_DIR}/tests/mocks/sensor
     ${LIBS_DIR}/third_party/base64.c
 )
 
 target_include_directories (test_classification_utils PUBLIC
-    ${SAMPLE_APP_DIR}/include/schemas
     ${LIBS_DIR}/tests/mocks/sensor
 )
 
@@ -69,7 +67,7 @@ add_library(sensor
 )
 target_include_directories(sensor PUBLIC
   ${LIBS_DIR}/tests/mocks/sensor
-  ${SAMPLE_APP_DIR}/include
+  ${SAMPLE_APP_DIR}/utils/include
   ${LIBS_DIR}/sm/include
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson

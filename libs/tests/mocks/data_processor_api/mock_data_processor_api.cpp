@@ -18,6 +18,10 @@
 
 #include <string.h>
 
+#include "data_processor_api/mock_utils.hpp"
+
+DataProcessorCustomParam ssd_param = {0};
+
 static int DataProcessorConfigureCalled = 0;
 static DataProcessorResultCode DataProcessorConfigureReturn = kDataProcessorOk;
 static int DataProcessorAnalyzeCalled = 0;

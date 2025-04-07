@@ -23,7 +23,6 @@
 #include "data_processor_api.hpp"
 #include "data_processor_utils.hpp"
 #include "log.h"
-#include "output_tensor_generated.h"
 #include "parson.h"
 #include "segmentation_utils.hpp"
 #include "semantic_segmentation_generated.h"
@@ -103,7 +102,9 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   }
   pthread_mutex_unlock(&data_processor_mutex);
 
-  SetEdgeAppLibNetwork(s_stream, object_model);
+  if (SetEdgeAppLibNetwork(s_stream, object_model) != 0) {
+    res = kDataProcessorInvalidParamSetError;
+  }
 
   if (res != kDataProcessorOk)
     *out_config_json = json_serialize_to_string(value);

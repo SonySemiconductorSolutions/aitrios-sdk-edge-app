@@ -115,9 +115,7 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
     blob_http_request_url.clear();
   }
 
-  if (&vp == NULL) {
-    return EVP_ERROR;
-  } else if (evpBlobOperationNotCallbackCall == 1) {
+  if (evpBlobOperationNotCallbackCall == 1) {
     LOG_DBG("Not calling BlobCallback");
     return EVP_OK;
   }

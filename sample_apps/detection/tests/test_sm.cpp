@@ -259,7 +259,7 @@ TEST_F(EvenFunctionsTest, OnIterateReleaseFrameError) {
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 1);
-  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 1);
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);

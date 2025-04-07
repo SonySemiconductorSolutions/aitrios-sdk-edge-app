@@ -22,15 +22,15 @@
 
 #include "base64.h"
 
-int test_base64_encode(size_t input_length, uint8_t *data,
-                       uint8_t *expected_output) {
+int test_base64_encode(size_t input_length, const char *data,
+                       const char *expected_output) {
   char *b64_input = malloc(input_length + 1);
   if (!b64_input) {
     printf("Failed to allocate memory for the test.\n");
     return -1;
   }
 
-  strcpy(b64_input, (char *)data);
+  strcpy(b64_input, data);
 
   char *b64_output = malloc(((input_length + 2) / 3) * 4 + 1);
   if (!b64_output) {
@@ -41,7 +41,8 @@ int test_base64_encode(size_t input_length, uint8_t *data,
 
   printf("Starting base64 encoding in native code...\n");
 
-  uint32_t encoded_data = b64_encode(b64_input, input_length, b64_output);
+  uint32_t encoded_data = b64_encode((const unsigned char *)b64_input,
+                                     input_length, (unsigned char *)b64_output);
   if (encoded_data == 0) {
     printf("Failed to encode the data.\n");
     free(b64_input);
@@ -50,7 +51,7 @@ int test_base64_encode(size_t input_length, uint8_t *data,
   }
 
   printf("Encoded value (Native) is %s\n", b64_output);
-  if (strcmp(b64_output, (char *)expected_output) != 0) {
+  if (strcmp(b64_output, expected_output) != 0) {
     fprintf(stderr, "Test failed. Expected %s but got %s\n", expected_output,
             b64_output);
   } else {
@@ -64,10 +65,10 @@ int test_base64_encode(size_t input_length, uint8_t *data,
 }
 
 int main() {
-  unsigned char *data1 = "Hello, World!";
-  unsigned char *expected_output1 = "SGVsbG8sIFdvcmxkIQ==";
+  const char *data1 = "Hello, World!";
+  const char *expected_output1 = "SGVsbG8sIFdvcmxkIQ==";
 
-  unsigned char *data2 =
+  const char *data2 =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
       "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim "
       "veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea "
@@ -75,7 +76,7 @@ int main() {
       "velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint "
       "occaecat cupidatat non proident, sunt in culpa qui officia deserunt "
       "mollit anim id est laborum.";
-  unsigned char *expected_output2 =
+  const char *expected_output2 =
       "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIGNvbnNlY3RldHVyIGFkaXBpc2NpbmcgZWxp"
       "dCwgc2VkIGRvIGVpdXNtb2QgdGVtcG9yIGluY2lkaWR1bnQgdXQgbGFib3JlIGV0IGRvbG9y"
       "ZSBtYWduYSBhbGlxdWEuIFV0IGVuaW0gYWQgbWluaW0gdmVuaWFtLCBxdWlzIG5vc3RydWQg"

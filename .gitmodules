@@ -7,3 +7,7 @@
 [submodule "libs/third_party/base64.c"]
 	path = libs/third_party/base64.c
 	url = https://github.com/joedf/base64.c
+[submodule "libs/third_party/pybind11"]
+	path = libs/third_party/pybind11
+	url = https://github.com/pybind/pybind11.git
+	branch = stable

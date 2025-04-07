@@ -40,12 +40,16 @@ int IsFeasibleTransition(STATE start, STATE end) {
 }
 
 void EventHandleError(const char *event, int res, StateMachineContext *context,
-                      STATE next_state) {
+                      STATE next_state, bool is_update_res_info, CODE code) {
   LOG_ERR("Error in %s (ret=%d).", event, res);
   char buf[LOGBUGSIZE] = "";
   snprintf(buf, LOGBUGSIZE, "%s call gave error res=%d", event, res);
   DtdlModel *dtdl = context->GetDtdlModel();
   dtdl->GetCommonSettings()->SetProcessState(next_state);
-  dtdl->GetResInfo()->SetDetailMsg(buf);
-  dtdl->GetResInfo()->SetCode(CODE_FAILED_PRECONDITION);
+  if (is_update_res_info) {
+    dtdl->GetResInfo()->SetDetailMsg(buf);
+    dtdl->GetResInfo()->SetCode(code);
+  } else {
+    LOG_ERR("%s code=%d", buf, code);
+  }
 }

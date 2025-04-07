@@ -3,7 +3,7 @@
 ## Overview
 The Aitrios API provides tools for capturing, managing, and exporting sensor data for analysis or integration. It is particularly useful in applications needing efficient real-time data capture and transmission. The API is organized into two main sections:
 
-- **[API for Sensor Data Acquisition](#api-for-sensor-data-aquisition)**: This section offers functions to initialize, start, manage, and configure sensor streams, allowing robust control over data capture.
+- **[API for Sensor Data Acquisition](#api-for-sensor-data-acquisition)**: This section offers functions to initialize, start, manage, and configure sensor streams, allowing robust control over data capture.
 
 - **[API for Exporting Data](#api-for-exporting-the-data)**: This section supports asynchronous data export, enabling seamless data transmission to external systems. It includes methods for sending data, managing responses, and configuring network settings.
 
@@ -99,36 +99,42 @@ The  Data Export provides an interface for managing network communications and a
 
 ### API lists
 
-| Function                              | Description                                                   |
-| -------------------------------------- | ------------------------------------------------------------- |
-| `DataExportAwait`               | Waits for the completion of an asynchronous operation.         |
-| `DataExportCleanup`             | Cleans up resources associated with the provided future.       |
-| `DataExportSendData`            | Sends serialized data to  asynchronously.              |
+| Function                        | Description                                                   |
+| ------------------------------- | ------------------------------------------------------------- |
+| `SendDataSyncMeta`              | Sends post-processing result synchronously.                   |
+| `DataExportAwait`               | Waits for the completion of an asynchronous operation.        |
+| `DataExportCleanup`             | Cleans up resources associated with the provided future.      |
+| `DataExportSendData`            | Sends serialized data asynchronously.                         |
 | `DataExportSendState`           | Sends state data asynchronously.                              |
-| `DataExportStopSelf`            | Notifies the state machine to transition to 'Idle' state.      |
-| `DataExportIsEnabled`           | Checks whether sending data of the specified type is enabled.  |
-| `DataExportGetPortSettings`     | Gets the current port settings in a JSON object.               |
+| `DataExportStopSelf`            | Notifies the state machine to transition to 'Idle' state.     |
+| `DataExportIsEnabled`           | Checks whether sending data of the specified type is enabled. |
+| `DataExportGetPortSettings`     | Gets the current port settings in a JSON object.              |
 
 
 
 ## Usage Example
+
+### Send input tensor
 
 The following C++ code snippet demonstrates a basic usage scenario of the EdgeAppLib Data Export. It shows how to send data asynchronously, wait for the operation to complete, and then clean up resources. This example assumes that the EdgeAppLib Data Export system has been properly initialized and configured.
 
 
 ```cpp
 int onIterate() {
-    // Duplicate strings for sending data
-    char *portname = strdup("metadata");
-    char *data = strdup("{\"mykey\":\"myvalue\"}");
+    // Get channel from sensor
+    EdgeAppLibSensorChannel channel = 0;
+    int32_t ret = SensorFrameGetChannelFromChannelId(
+        *frame, CHANNEL_ID_INFERENCE_INPUT_IMAGE, &channel);
 
-    // Get the timestamp for the data
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime.time_since_epoch());
-    uint64_t timestamp = duration.count();
+    // Get input tensor from sensor
+    struct EdgeAppLibSensorRawData rawdata = {0};
+    ret = SensorChannelGetRawData(channel, &rawdata);
 
     // Initiating an asynchronous send operation
-    EdgeAppLibDataExportFuture *future = DataExportSendData(portname, EdgeAppLibDataExportMetadata, data, strlen(data), timestamp);
+    char *portname = "input";
+    EdgeAppLibDataExportFuture *future = 
+        DataExportSendData(portname, EdgeAppLibDataExportRaw,
+                           rawdata.address, rawdata.size, rawdata.timestamp);
 
     // Optional: Perform additional tasks or computations here
     while (DataExportAwait(future, 1000) == EdgeAppLibDataExportResultEnqueued) {
@@ -138,6 +144,36 @@ int onIterate() {
     // Cleaning up the resources associated with the future
     res = DataExportCleanup(future);
     assert(res == EdgeAppLibDataExportResultSuccess);
-    free(portname);
+}
+```
+
+> **NOTE**
+> 
+> After `SensorChannelGetRawData` API for getting input tensor is called,  Data Export APIs (`DataExportSendData`, `DataExportCleanup`, Optional: `DataExportAwait`) might also be called.
+
+### Send post-processing result
+
+The following C++ code snippet demonstrates a basic usage scenario of the EdgeAppLib Data Export `SendDataSyncMeta`. The API wraps some operations related to `DataExportSendData`.
+
+```cpp
+int onIterate() {
+    // Get channel from sensor
+    EdgeAppLibSensorChannel channel = 0;
+    int32_t ret = SensorFrameGetChannelFromChannelId(
+        *frame, CHANNEL_ID_INFERENCE_OUTPUT, &channel);
+
+    // Get metadata from sensor
+    struct EdgeAppLibSensorRawData rawdata = {0};
+    int32_t ret = SensorChannelGetRawData(channel, &rawdata);
+
+    // Duplicate strings for sending data
+    char *data = strdup("{\"mykey\":\"myvalue\"}");
+
+    // Send by json text format
+    EdgeAppLibSendDataResult result =
+        SendDataSyncMeta(data, strlen(data), EdgeAppLibSendDataJson,
+                         rawdata.timestamp, 10000);
+    assert(result == EdgeAppLibSendDataResultSuccess ||
+           result == EdgeAppLibSendDataResultEnqueued);
 }
 ```

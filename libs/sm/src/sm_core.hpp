@@ -31,6 +31,7 @@ class StateMachine {
   FRIEND_TEST(StateMachine, LoopIterationCreateFailure);
   FRIEND_TEST(StateMachine, LoopIterationStartFailure);
   FRIEND_TEST(StateMachine, LoopIterationStartStopFailure);
+  FRIEND_TEST(StateMachine, LoopIterationStartStopSensorFailure);
   FRIEND_TEST(StateMachine, LoopIterationStopFailure);
 #endif
  public:

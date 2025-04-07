@@ -106,7 +106,7 @@ struct evp_agent_platform {
   /**
    * \brief Callback for download finished
    *
-   * This function will be called when the download succesfully finished,
+   * This function will be called when the download successfully finished,
    * cancelled or errored.
    *
    * \param module Opaque pointer to a module

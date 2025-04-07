@@ -29,7 +29,6 @@
 #include "data_processor_api.hpp"
 #include "data_processor_utils.hpp"
 #include "log.h"
-#include "output_tensor_generated.h"
 #include "parson.h"
 #include "semantic_segmentation_generated.h"
 
@@ -39,6 +38,7 @@ DataProcessorResultCode ExtractInputHeight(
     JSON_Object *json, DataProcessorCustomParam *seg_param_pr) {
   double aux = 0;
   if (GetValueNumber(json, "input_height", &aux) == 0) {
+    if (aux < 0) return kDataProcessorOutOfRange;
     seg_param_pr->inputHeight = (uint16_t)aux;
     return kDataProcessorOk;
   }
@@ -55,6 +55,7 @@ DataProcessorResultCode ExtractInputWidth(
     JSON_Object *json, DataProcessorCustomParam *seg_param_pr) {
   double aux = 0;
   if (GetValueNumber(json, "input_width", &aux) == 0) {
+    if (aux < 0) return kDataProcessorOutOfRange;
     seg_param_pr->inputWidth = (uint16_t)aux;
     return kDataProcessorOk;
   }

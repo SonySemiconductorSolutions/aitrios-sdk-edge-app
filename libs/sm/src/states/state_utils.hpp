@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 
+#include "dtdl_model/properties.h"
 #include "states/state.hpp"
 #include "states/state_defs.h"
 
@@ -30,6 +31,7 @@ State *StateFromEnum(STATE state);
 int IsFeasibleTransition(STATE start, STATE end);
 
 void EventHandleError(const char *event, int res, StateMachineContext *context,
-                      STATE next_state);
+                      STATE next_state, bool is_update_res_info = true,
+                      CODE code = CODE_FAILED_PRECONDITION);
 
 #endif /* STATES_STATE_UTILS_HPP */

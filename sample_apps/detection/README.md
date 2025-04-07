@@ -15,7 +15,7 @@ The following parameters are used in the sample "**Edge Application**":
   Description: Threshold of detections number. The maximum number of detected Bounding boxes you want to get after "**Edge Application**".<br>
 >**NOTE**
 >
->For the Custom Vision model, the value can be changed between 0 and 64. If an invalid value is entered, the default value is applied.
+>For the Custom Vision model, the value can be changed between 0 and 64.
 
 - **`threshold`**<br>
   Description: Score threshold.<br>

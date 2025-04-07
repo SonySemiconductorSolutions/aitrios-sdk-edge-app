@@ -58,7 +58,7 @@ static EVP_BLOB_IO_RESULT blob_io_cb(void *buf, size_t buflen, void *userData) {
   memcpy(buf, module_vars->blob_buff + module_vars->blob_buff_offset, buflen);
   module_vars->blob_buff_offset += buflen;
 
-  LOG_INFO(
+  LOG_DBG(
       "Sending--> buf: %p, send block of %zu, accumulated %d, "
       "total %d\n",
       buf, buflen, module_vars->blob_buff_offset, module_vars->blob_buff_size);
@@ -131,7 +131,7 @@ static void DataExportSendDataDoneCallback(EVP_BLOB_CALLBACK_REASON reason,
     case EVP_BLOB_CALLBACK_REASON_DONE:
       future->result = EdgeAppLibDataExportResultSuccess;
       result = (EVP_BlobResultEvp *)vp;
-      LOG_INFO(
+      LOG_DBG(
           "EVP_BLOB_CALLBACK_REASON_DONE result=%u "
           "http_status=%u error=%d\n",
           result->result, result->http_status, result->error);
@@ -139,7 +139,7 @@ static void DataExportSendDataDoneCallback(EVP_BLOB_CALLBACK_REASON reason,
       break;
     case EVP_BLOB_CALLBACK_REASON_EXIT:
       future->result = EdgeAppLibDataExportResultDenied;
-      LOG_INFO("EVP_BLOB_CALLBACK_REASON_EXIT\n");
+      LOG_DBG("EVP_BLOB_CALLBACK_REASON_EXIT\n");
 
       break;
     default:
@@ -238,7 +238,7 @@ EdgeAppLibDataExportFuture *DataExportSendData(
   }
 
   future->result = EdgeAppLibDataExportResultEnqueued;
-  LOG_INFO("Sending data %p, %d", data, datalen);
+  LOG_DBG("Sending data %p, %d", data, datalen);
   METHOD sendMethod;
   JSON_Object *object = getPortSettings();
   JSON_Object *port_setting = NULL;
@@ -383,7 +383,10 @@ EdgeAppLibDataExportResult DataExportAwait(EdgeAppLibDataExportFuture *future,
     int res = 0;
     if (timeout_ms < 0) {
       LOG_DBG("pthread_cond_wait");
-      res = pthread_cond_wait(&future->cond, &future->mutex);
+      do {
+        res = pthread_cond_wait(&future->cond, &future->mutex);
+      } while (res == 0 &&
+               future->result == EdgeAppLibDataExportResultEnqueued);
     } else {
       struct timeval now;
       gettimeofday(&now, NULL);
@@ -393,11 +396,14 @@ EdgeAppLibDataExportResult DataExportAwait(EdgeAppLibDataExportFuture *future,
       time_to_wait.tv_sec += time_to_wait.tv_nsec / 1000000000;
       time_to_wait.tv_nsec %= 1000000000;
       LOG_DBG("pthread_cond_timedwait");
-      res =
-          pthread_cond_timedwait(&future->cond, &future->mutex, &time_to_wait);
+      do {
+        res = pthread_cond_timedwait(&future->cond, &future->mutex,
+                                     &time_to_wait);
+      } while (res == 0 &&
+               future->result == EdgeAppLibDataExportResultEnqueued);
     }
 
-    LOG_INFO("Result of conditional wait: %s", strerror(res));
+    LOG_INFO("Result of conditional wait: %d", res);
     output = EdgeAppLibDataExportResultFailure;
     if (res == 0)
       output = EdgeAppLibDataExportResultSuccess;

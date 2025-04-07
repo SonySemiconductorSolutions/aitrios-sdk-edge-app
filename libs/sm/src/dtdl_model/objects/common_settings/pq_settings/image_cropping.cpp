@@ -84,7 +84,8 @@ int ImageCropping::Apply(JSON_Object *obj) {
 
   if (result != 0) {
     EdgeAppLibSensorErrorCause cause = SmUtilsPrintSensorError();
-    CODE code = CodeFromSensorErrorCause(cause);
+    CODE code = CODE_INVALID_ARGUMENT;
+    CodeFromSensorErrorCause(cause, &code);
     DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
     dtdl->GetResInfo()->SetDetailMsg(
         "Image Crop property failed to be set. Please use valid values for "

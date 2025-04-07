@@ -19,13 +19,13 @@ set(LIBS_DIR ${ROOT_DIR}/libs)
 add_library(data_processor_api
   ${SAMPLE_APP_DIR}/switch_dnn/data_processor/src/switch_dnn_analyzer.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
-  ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
 )
 
 target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/switch_dnn/include/schemas
   ${SAMPLE_APP_DIR}/switch_dnn/data_processor/include
-  ${SAMPLE_APP_DIR}/include
+  ${SAMPLE_APP_DIR}/utils/include
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/flatbuffers/include

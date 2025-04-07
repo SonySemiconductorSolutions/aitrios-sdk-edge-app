@@ -55,7 +55,7 @@ EdgeAppLibDataExportFuture *DataExportSendData(
   EdgeAppLibDataExportFuture *future =
       (EdgeAppLibDataExportFuture *)malloc(sizeof(EdgeAppLibDataExportFuture));
   if (datatype == EdgeAppLibDataExportRaw) {
-    /* Input Tensor memory would be controled by libs */
+    /* Input Tensor memory would be controlled by libs */
     free(data);
   }
 

@@ -22,7 +22,7 @@
 #include "time.h"
 
 static ProcessFormatResult ProcessFormatMetaSuccess = kProcessFormatResultOk;
-static const char *s_model_version_id = "1000";
+static const char *s_model_id = "1000";
 static uint8_t s_jpeg_buffer[100];
 
 void setProcessFormatMetaFail(ProcessFormatResult result) {
@@ -33,53 +33,41 @@ void resetProcessFormatMetaSuccess() {
   ProcessFormatMetaSuccess = kProcessFormatResultOk;
 }
 
-void setProcessFormatMetaOutput(const char *model_version_id) {
-  s_model_version_id = model_version_id;
-}
+void setProcessFormatMetaOutput(const char *model_id) { s_model_id = model_id; }
 
 ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
                                       EdgeAppLibSendDataType datatype,
-                                      uint64_t timestamp,
-                                      JSON_Value *output_tensor_value) {
-  if (ProcessFormatMetaSuccess != kProcessFormatResultOk)
-    return ProcessFormatMetaSuccess;
+                                      uint64_t timestamp, char *json_buffer,
+                                      size_t buffer_size) {
+  if (!json_buffer || buffer_size == 0) {
+    LOG_ERR("Invalid JSON buffer.");
+    return kProcessFormatResultInvalidParam;
+  }
 
-  JSON_Object *output_tensor_object =
-      json_value_get_object(output_tensor_value);
+  size_t offset = 0;
+  offset += snprintf(json_buffer + offset, buffer_size - offset,
+                     "{\"ModelID\":\"%s\",", s_model_id);
+  offset +=
+      snprintf(json_buffer + offset, buffer_size - offset, "\"Inferences\":[{");
 
-  // Set AI model bundle ID
-  json_object_set_string(output_tensor_object, "ModelVersionID",
-                         s_model_version_id);
-
-  // Initialize one Inference for appending to "Inferences"
-  JSON_Value *inf_value = json_value_init_object();
-  JSON_Object *inf_object = json_value_get_object(inf_value);
-  // Set "T"
-  json_object_set_string(inf_object, "T", "19700101000000000");
-
-  // Set "O" and "F"
+  offset += snprintf(json_buffer + offset, buffer_size - offset,
+                     "\"T\":\"19700101000000000\",");
   switch (datatype) {
-    case EdgeAppLibSendDataBase64: {
-      json_object_set_string(inf_object, "O", "abcdef");
-      json_object_set_number(inf_object, "F", 0);
-    } break;
+    case EdgeAppLibSendDataBase64:
+      offset += snprintf(json_buffer + offset, buffer_size - offset,
+                         "\"O\":\"abcdef\",\"F\":0");
+      break;
     case EdgeAppLibSendDataJson:
-      json_object_set_value(inf_object, "O", (JSON_Value *)in_data);
-      json_object_set_number(inf_object, "F", 1);
+      offset += snprintf(json_buffer + offset, buffer_size - offset,
+                         "\"O\":\"%s\",\"F\":1", (char *)in_data);
       break;
     default:
-      const char *error_msg = "Invalid datatype.";
-      LOG_ERR("%s : datatype=%d", error_msg, datatype);
+      LOG_ERR("Invalid datatype: %d", datatype);
       return kProcessFormatResultInvalidParam;
   }
-  // Set "inferences"
-  JSON_Value *infs_json_array_value = json_value_init_array();
-  JSON_Array *infs_json_array = json_value_get_array(infs_json_array_value);
-  json_array_append_value(infs_json_array, inf_value);
-  json_object_set_value(output_tensor_object, "Inferences",
-                        infs_json_array_value);
 
-  return kProcessFormatResultOk;
+  offset += snprintf(json_buffer + offset, buffer_size - offset, "}]}");
+  return ProcessFormatMetaSuccess;
 }
 
 ProcessFormatResult ProcessFormatInput(MemoryRef data, uint32_t datalen,

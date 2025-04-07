@@ -239,10 +239,10 @@ TEST_F(SendDataTest,
   // number of inference is over max.
   setNumOfInfPerMsg(101);
 
-  int i = 0;
+  int i;
   char ai_model_first[16];
 
-  for (i; i < MAX_NUMBER_OF_INFERENCE_QUEUE; i++) {
+  for (i = 0; i < MAX_NUMBER_OF_INFERENCE_QUEUE; i++) {
     // different ai model each other.
     snprintf(ai_model_first, 16, "%d", i);
     setProcessFormatMetaOutput(ai_model_first);

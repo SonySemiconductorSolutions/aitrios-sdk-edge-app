@@ -25,7 +25,7 @@ The following parameters are used in the sample "**Edge Application**" :
     >
     > Set to 6 digits.
     > The **`NetworkId`** can be obtained from the "**Console UI**".
-    > See ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-user-manual/) for details.
+    > See ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/console-user-manual/) for details.
     - **`param`**<br>
       - **`max_detections`**<br>
         Description: Threshold of detections number. The maximum number of detected Bounding boxes you want to get after "**Edge Application**".
@@ -57,7 +57,7 @@ The following parameters are used in the sample "**Edge Application**" :
         >
         > Set to 6 digits.
         > The **`NetworkId`** can be obtained from the "**Console UI**".
-        > See ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-user-manual/) for details.
+        > See ["**Console User Manual**"](https://developer.aitrios.sony-semicon.com/en/edge-ai-sensing/documents/console-v2/console-user-manual/) for details.
     - **`param`**<br>
       - **`max_predictions`**<br>
         Description: Threshold of predictions number. The maximum number of predictions you want to get after "**Edge Application**".

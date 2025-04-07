@@ -6,7 +6,6 @@
     "version": "1.0.0",
     "app_dtdl_file": "edge_app_perfbench_interface.json",
     "referred_dtdl_files": [],
-    "compiled_flg": false,
-    "schema_info": ""
+    "compiled_flg": false
   }
 }

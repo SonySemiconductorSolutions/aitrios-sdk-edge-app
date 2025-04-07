@@ -35,6 +35,7 @@ using EdgeAppLib::SensorStreamGetProperty;
 #define MODEL_NAME "classification"
 
 pthread_mutex_t data_processor_mutex;
+EdgeAppLibSendDataType metadata_format = EdgeAppLibSendDataBase64;
 
 DataProcessorCustomParam cls_param = {DEFAULT_MAX_PREDICTIONS};
 
@@ -103,7 +104,15 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   }
   pthread_mutex_unlock(&data_processor_mutex);
 
-  SetEdgeAppLibNetwork(s_stream, object_model);
+  if (SetEdgeAppLibNetwork(s_stream, object_model) != 0) {
+    res = kDataProcessorInvalidParamSetError;
+  }
+
+  // Get metadata settings
+  JSON_Object *object_format =
+      json_object_get_object(object, "metadata_settings");
+  metadata_format =
+      EdgeAppLibSendDataType(json_object_get_number(object_format, "format"));
 
   if (res != kDataProcessorOk)
     *out_config_json = json_serialize_to_string(value);
@@ -131,28 +140,45 @@ DataProcessorResultCode DataProcessorAnalyze(float *in_data, uint32_t in_size,
         "expected maxPreditions");
   }
 
-  flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
+  switch (metadata_format) {
+    case EdgeAppLibSendDataBase64: {
+      flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
 
-  CreateClassificationFlatbuffer(in_data, in_size / sizeof(float), &builder,
-                                 cls_param);
-  /* LCOV_EXCL_START: null pointer check*/
-  uint8_t *buf_ptr = builder.GetBufferPointer();
-  if (buf_ptr == nullptr) {
-    LOG_ERR("Error while getting flatbuffers pointer");
-    return kDataProcessorOther;
+      CreateClassificationFlatbuffer(in_data, in_size / sizeof(float), &builder,
+                                     analyze_params);
+      /* LCOV_EXCL_START: null pointer check*/
+      uint8_t *buf_ptr = builder.GetBufferPointer();
+      if (buf_ptr == nullptr) {
+        LOG_ERR("Error while getting flatbuffers pointer");
+        return kDataProcessorOther;
+      }
+      /* LCOV_EXCL_STOP */
+      /* LCOV_EXCL_START: null pointer check */
+      uint32_t buf_size = builder.GetSize();
+      char *p_out_param = (char *)malloc(buf_size);
+      if (p_out_param == nullptr) {
+        LOG_ERR("Error while allocating memory for flatbuffers of size %d",
+                buf_size);
+        return kDataProcessorMemoryError;
+      }
+      /* LCOV_EXCL_STOP */
+      memcpy(p_out_param, buf_ptr, buf_size);
+      *out_data = p_out_param;
+      *out_size = buf_size;
+      return kDataProcessorOk;
+    }
+    case EdgeAppLibSendDataJson: {
+      JSON_Value *tensor_output =
+          CreateClsOutputJson(in_data, in_size / sizeof(float), analyze_params);
+      *out_data = json_serialize_to_string(tensor_output);
+      *out_size = json_serialization_size(tensor_output);
+      json_value_free(tensor_output);
+      return kDataProcessorOk;
+    }
+    default:
+      LOG_ERR("Specified format of metadata is undefined. ");
+      return kDataProcessorInvalidParam;
   }
-  /* LCOV_EXCL_STOP */
-  /* LCOV_EXCL_START: null pointer check */
-  uint32_t buf_size = builder.GetSize();
-  char *p_out_param = (char *)malloc(buf_size);
-  if (p_out_param == nullptr) {
-    LOG_ERR("Error while allocating memory for flatbuffers of size %d",
-            buf_size);
-    return kDataProcessorMemoryError;
-  }
-  /* LCOV_EXCL_STOP */
-  memcpy(p_out_param, buf_ptr, buf_size);
-  *out_data = p_out_param;
-  *out_size = buf_size;
-  return kDataProcessorOk;
 }
+
+EdgeAppLibSendDataType DataProcessorGetDataType() { return metadata_format; }

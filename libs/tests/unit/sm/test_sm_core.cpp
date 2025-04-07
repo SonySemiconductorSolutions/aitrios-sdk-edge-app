@@ -19,6 +19,7 @@
 
 #include "dtdl_model/properties.h"
 #include "event_functions/mock_sm.hpp"
+#include "sensor/mock_sensor.hpp"
 #include "sm_context.hpp"
 #include "sm_core.hpp"
 #include "states/creating.hpp"
@@ -100,6 +101,11 @@ TEST(StateMachine, LoopIterationStartFailure) {
 
   resetOnStart();
 
+  ASSERT_STREQ("onStart call gave error res=-1",
+               sm.context->GetDtdlModel()->GetResInfo()->GetDetailMsg());
+  EXPECT_EQ(sm.context->GetDtdlModel()->GetResInfo()->GetCode(),
+            CODE_FAILED_PRECONDITION);
+
   EXPECT_EQ(sm.context->GetCurrentState()->GetEnum(), STATE_IDLE);
   EXPECT_EQ(sm.context->GetNextState(), STATE_IDLE);
 }
@@ -125,6 +131,44 @@ TEST(StateMachine, LoopIterationStartStopFailure) {
 
   resetOnStart();
   resetOnStop();
+
+  ASSERT_STREQ("onStart call gave error res=-1",
+               sm.context->GetDtdlModel()->GetResInfo()->GetDetailMsg());
+  EXPECT_EQ(sm.context->GetDtdlModel()->GetResInfo()->GetCode(),
+            CODE_FAILED_PRECONDITION);
+
+  EXPECT_EQ(sm.context->GetCurrentState()->GetEnum(), STATE_IDLE);
+  EXPECT_EQ(sm.context->GetNextState(), STATE_IDLE);
+}
+
+TEST(StateMachine, LoopIterationStartStopSensorFailure) {
+  StateMachine sm;
+  EXPECT_EQ(sm.context->GetCurrentState()->GetEnum(), STATE_CREATING);
+  EXPECT_EQ(sm.context->GetNextState(), STATE_CREATING);
+  // create -> idle
+  sm.LoopIterate();
+  // force same state
+  sm.LoopIterate();
+  EXPECT_EQ(sm.context->GetCurrentState()->GetEnum(), STATE_IDLE);
+  EXPECT_EQ(sm.context->GetNextState(), STATE_IDLE);
+
+  setEdgeAppLibSensorGetLastErrorCauseFail2(AITRIOS_SENSOR_ERROR_OUT_OF_RANGE);
+  setOnStartError();
+  setOnStopError();
+
+  sm.context->SetNextState(STATE_RUNNING);
+  EXPECT_EQ(sm.context->GetNextState(), STATE_RUNNING);
+  // idle -> run -> idle
+  EXPECT_EQ(sm.LoopIterate(), IterateStatus::Ok);
+
+  resetEdgeAppLibSensorGetLastErrorCauseSuccess();
+  resetOnStart();
+  resetOnStop();
+
+  ASSERT_STREQ("onStart call gave error res=-1",
+               sm.context->GetDtdlModel()->GetResInfo()->GetDetailMsg());
+  EXPECT_EQ(sm.context->GetDtdlModel()->GetResInfo()->GetCode(),
+            CODE_OUT_OF_RANGE);
 
   EXPECT_EQ(sm.context->GetCurrentState()->GetEnum(), STATE_IDLE);
   EXPECT_EQ(sm.context->GetNextState(), STATE_IDLE);
@@ -155,6 +199,11 @@ TEST(StateMachine, LoopIterationStopFailure) {
   EXPECT_EQ(sm.LoopIterate(), IterateStatus::Ok);
 
   resetOnStop();
+
+  ASSERT_STREQ("onStop call gave error res=-1",
+               sm.context->GetDtdlModel()->GetResInfo()->GetDetailMsg());
+  EXPECT_EQ(sm.context->GetDtdlModel()->GetResInfo()->GetCode(),
+            CODE_FAILED_PRECONDITION);
 
   EXPECT_EQ(sm.context->GetCurrentState()->GetEnum(), STATE_IDLE);
   EXPECT_EQ(sm.context->GetNextState(), STATE_IDLE);

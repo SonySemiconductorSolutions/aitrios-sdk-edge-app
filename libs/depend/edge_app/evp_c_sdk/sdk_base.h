@@ -97,7 +97,7 @@ typedef enum {
   EVP_TIMEDOUT = 2,
 
   /**
-   * An error ocurred.
+   * An error occurred.
    */
   EVP_ERROR = 3,
 

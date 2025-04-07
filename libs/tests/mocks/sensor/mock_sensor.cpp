@@ -63,8 +63,8 @@ static int EdgeAppLibSensorChannelGetRawDataCalled = 0;
 static int EdgeAppLibSensorChannelGetRawDataSuccess = 0;
 static int EdgeAppLibSensorChannelGetPropertyCalled = 0;
 static int EdgeAppLibSensorChannelGetPropertySuccess = 0;
-static int EdgeAppLibSensorChannelSubFrameCurrentNum = 0;
-static int EdgeAppLibSensorChannelSubFrameDivisionNum = 0;
+static int EdgeAppLibSensorChannelSubFrameCurrentNum = 1;
+static int EdgeAppLibSensorChannelSubFrameDivisionNum = 1;
 static int EdgeAppLibSensorGetLastErrorStringCalled = 0;
 static int EdgeAppLibSensorGetLastErrorStringSuccess = 0;
 static int EdgeAppLibSensorGetLastErrorLevelCalled = 0;
@@ -244,9 +244,6 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
     return EdgeAppLibSensorChannelGetRawDataSuccess;
   }
 
-#if defined(MOCK_PASSTHROUGH) || defined(MOCK_APITEST)
-  setEsfMemoryManagerPreadFail();
-#endif
   uint64_t channel_id = map_channel_channel_id[channel];
   if (channel_id == (uint64_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE) {
     float out_data_aux[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -359,6 +356,35 @@ int32_t SensorCoreOpenStream(EdgeAppLibSensorCore core, const char *stream_key,
   EdgeAppLib::SensorStreamSetProperty(
       *stream, AITRIOS_SENSOR_INPUT_DATA_TYPE_PROPERTY_KEY, &enabled,
       sizeof(EdgeAppLibSensorInputDataTypeProperty));
+
+  EdgeAppLibSensorInfoStringProperty sensor_name = {0};
+  sensor_name.category = AITRIOS_SENSOR_INFO_STRING_SENSOR_NAME;
+
+  // for one device.
+  strncpy(sensor_name.info, "IMX500", strlen("IMX500"));
+
+  // for the other device.
+  // strncpy(sensor_name.info, "AI-ISP", strlen("AI-ISP"));
+
+  EdgeAppLib::SensorStreamSetProperty(
+      *stream, AITRIOS_SENSOR_INFO_STRING_PROPERTY_KEY, &sensor_name,
+      sizeof(EdgeAppLibSensorInfoStringProperty));
+
+  const char *dummySensorId = "00000000000000000000000000000000";
+
+  EdgeAppLibSensorInfoStringProperty sensor_version_id = {0};
+  if (!strncmp("IMX500", sensor_name.info, strlen("IMX500"))) {
+    sensor_version_id.category = AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION;
+    strncpy(sensor_version_id.info, dummySensorId, strlen(dummySensorId));
+  } else if (!strncmp("AI-ISP", sensor_name.info, strlen("AI-ISP"))) {
+    sensor_version_id.category =
+        AITRIOS_SENSOR_INFO_STRING_AIISP_AI_MODEL_VERSION;
+    strncpy(sensor_version_id.info, dummySensorId, strlen(dummySensorId));
+  }
+  EdgeAppLib::SensorStreamSetProperty(
+      *stream, AITRIOS_SENSOR_INFO_STRING_PROPERTY_KEY, &sensor_version_id,
+      sizeof(EdgeAppLibSensorInfoStringProperty));
+
   return EdgeAppLibSensorCoreOpenStreamSuccess;
 }
 int32_t SensorGetFrame(EdgeAppLibSensorStream stream,

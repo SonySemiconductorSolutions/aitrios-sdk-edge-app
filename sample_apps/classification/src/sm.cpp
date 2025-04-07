@@ -119,11 +119,10 @@ static void sendMetadata(EdgeAppLibSensorFrame *frame) {
       "timestamp:%llu\noutput_raw_data.type:%s",
       data.address, data.size, data.timestamp, data.type);
 
-  void *metadata_fb = NULL;
-  uint32_t metadata_fb_size = 0;
-  DataProcessorResultCode data_processor_ret =
-      DataProcessorAnalyze((float *)data.address, data.size,
-                           (char **)&metadata_fb, &metadata_fb_size);
+  void *metadata = NULL;
+  uint32_t metadata_size = 0;
+  DataProcessorResultCode data_processor_ret = DataProcessorAnalyze(
+      (float *)data.address, data.size, (char **)&metadata, &metadata_size);
 
   if (data_processor_ret != kDataProcessorOk) {
     LOG_WARN("DataProcessorAnalyze: ret=%d", ret);
@@ -131,13 +130,14 @@ static void sendMetadata(EdgeAppLibSensorFrame *frame) {
   }
 
   EdgeAppLibSendDataResult send_data_res =
-      SendDataSyncMeta(metadata_fb, metadata_fb_size, EdgeAppLibSendDataBase64,
+      SendDataSyncMeta(metadata, metadata_size, DataProcessorGetDataType(),
                        data.timestamp, DATA_EXPORT_AWAIT_TIMEOUT);
-  if (send_data_res != EdgeAppLibSendDataResultSuccess) {
+  if (send_data_res != EdgeAppLibSendDataResultSuccess &&
+      send_data_res != EdgeAppLibSendDataResultEnqueued) {
     LOG_ERR("SendDataSyncMeta failed with EdgeAppLibSendDataResult: %d",
             send_data_res);
   }
-  free(metadata_fb);
+  free(metadata);
 }
 
 int onCreate() {

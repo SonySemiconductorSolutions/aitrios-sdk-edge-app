@@ -79,6 +79,7 @@ CommonSettings::CommonSettings() {
   json_object_set_value(
       json_obj, CODEC_SETTINGS,
       json_object_get_wrapping_value(codec_settings.GetJsonObject()));
+  json_object_set_number(json_obj, NUMBER_OF_INFERENCE_PER_MESSAGE, 1);
 }
 
 JSON_Object *CommonSettings::GetSettingsJson(const char *setting) {

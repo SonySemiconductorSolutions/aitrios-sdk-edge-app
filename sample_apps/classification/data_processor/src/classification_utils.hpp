@@ -47,6 +47,9 @@ typedef struct tagClassificationItem {
 DataProcessorResultCode ExtractMaxPredictions(
     JSON_Object *json, DataProcessorCustomParam *cls_param_pr);
 
+JSON_Value *CreateClsOutputJson(float *out_data_pr, uint16_t num_elements,
+                                DataProcessorCustomParam cls_param);
+
 int CreateClassificationFlatbuffer(float *out_data_pr, int num_elements,
                                    flatbuffers::FlatBufferBuilder *builder,
                                    DataProcessorCustomParam cls_param_pr);

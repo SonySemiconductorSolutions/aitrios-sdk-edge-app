@@ -126,4 +126,64 @@ TEST_F(LogAPIUnitTest, CheckNoLogCritical) {
   EXPECT_STREQ(expect_log.c_str(), result_log.c_str());
 }
 
+TEST_F(LogAPIUnitTest, CheckNoLogTraceCommon) {
+  std::string expect_log = "";
+
+  testing::internal::CaptureStdout();
+  LOG_TRACE(message);
+  std::string result_log = testing::internal::GetCapturedStdout().c_str();
+
+  EXPECT_STREQ(expect_log.c_str(), result_log.c_str());
+}
+
+TEST_F(LogAPIUnitTest, CheckNoLogDebugCommon) {
+  std::string expect_log = "";
+
+  testing::internal::CaptureStdout();
+  LOG_DBG(message);
+  std::string result_log = testing::internal::GetCapturedStdout().c_str();
+
+  EXPECT_STREQ(expect_log.c_str(), result_log.c_str());
+}
+
+TEST_F(LogAPIUnitTest, CheckNoLogInfoCommon) {
+  std::string expect_log = "";
+
+  testing::internal::CaptureStdout();
+  LOG_INFO(message);
+  std::string result_log = testing::internal::GetCapturedStdout().c_str();
+
+  EXPECT_STREQ(expect_log.c_str(), result_log.c_str());
+}
+
+TEST_F(LogAPIUnitTest, CheckNoLogWarnCommon) {
+  std::string expect_log = "";
+
+  testing::internal::CaptureStdout();
+  LOG_WARN(message);
+  std::string result_log = testing::internal::GetCapturedStdout().c_str();
+
+  EXPECT_STREQ(expect_log.c_str(), result_log.c_str());
+}
+
+TEST_F(LogAPIUnitTest, CheckNoLogErrorCommon) {
+  std::string expect_log = "";
+
+  testing::internal::CaptureStdout();
+  LOG_ERR(message);
+  std::string result_log = testing::internal::GetCapturedStdout().c_str();
+
+  EXPECT_STREQ(expect_log.c_str(), result_log.c_str());
+}
+
+TEST_F(LogAPIUnitTest, CheckNoLogCriticalCommon) {
+  std::string expect_log = "";
+
+  testing::internal::CaptureStdout();
+  LOG_CRITICAL(message);
+  std::string result_log = testing::internal::GetCapturedStdout().c_str();
+
+  EXPECT_STREQ(expect_log.c_str(), result_log.c_str());
+}
+
 };  // namespace logapi_unittest

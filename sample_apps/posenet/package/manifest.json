@@ -1,0 +1,11 @@
+{
+  "manifest_version": "1.0.0",
+  "edge_app": {
+    "app_name": "edge_app_pn",
+    "file_name": "edge_app_pn.wasm",
+    "version": "1.0.0",
+    "app_dtdl_file": "edge_app_pn_interface.json",
+    "referred_dtdl_files": [],
+    "compiled_flg": false
+  }
+}

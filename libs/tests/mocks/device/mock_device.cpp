@@ -68,7 +68,7 @@ void resetEsfMemoryManagerPreadSuccess() {
 
 EsfMemoryManagerResult EsfMemoryManagerPread(EsfMemoryManagerHandle handle,
                                              void *buffer, size_t size,
-                                             size_t offset,
+                                             uint64_t offset,
                                              size_t *bytes_read) {
   memset(buffer, 0xAA, size);  // Fill buffer with mock data
   *bytes_read = size;

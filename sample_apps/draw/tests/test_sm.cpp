@@ -17,7 +17,12 @@
 #include <gtest/gtest.h>
 
 #include "data_export/mock_data_export.hpp"
+#include "data_processor_api/mock_data_processor_api.hpp"
+#include "draw.h"
+#include "mock_device.hpp"
+#include "mock_draw.hpp"
 #include "mock_sensor.hpp"
+#include "send_data/mock_send_data.hpp"
 #include "sensor.h"
 #include "sm.h"
 
@@ -28,18 +33,19 @@ class EvenFunctionsTest : public ::testing::Test {
     resetEdgeAppLibSensorCoreOpenStreamCalled();
     resetEdgeAppLibSensorCoreInitSuccess();
     resetEdgeAppLibSensorCoreOpenStreamSuccess();
+    resetDataProcessorConfigureCalled();
+    resetDataProcessorConfigureSuccess();
+    resetDataProcessorAnalyzeSuccess();
+    resetDataProcessorAnalyzeCalled();
     resetEdgeAppLibDataExportSendStateCalled();
-    resetEdgeAppLibDataExportIsEnabled();
     resetEdgeAppLibSensorChannelGetRawDataCalled();
     resetEdgeAppLibSensorChannelGetRawDataSuccess();
     resetEdgeAppLibSensorFrameGetChannelFromChannelIdSuccess();
     resetEdgeAppLibSensorFrameGetChannelFromChannelIdCalled();
     resetEdgeAppLibSensorStreamGetPropertySuccess();
-    resetEdgeAppLibSensorStreamSetPropertySuccess();
     resetEdgeAppLibSensorStopSuccess();
     resetEdgeAppLibSensorStartSuccess();
     resetEdgeAppLibSensorStreamGetPropertyCalled();
-    resetEdgeAppLibSensorStreamSetPropertyCalled();
     resetEdgeAppLibSensorStopCalled();
     resetEdgeAppLibSensorStartCalled();
     resetEdgeAppLibSensorCoreCloseStreamSuccess();
@@ -48,6 +54,20 @@ class EvenFunctionsTest : public ::testing::Test {
 
   void TearDown() override {}
 };
+
+void SensorStreamSetImageProperty() {
+  EdgeAppLibSensorImageProperty property = {};
+  extern EdgeAppLibSensorStream stream_check;
+  property.height = 300;
+  property.width = 300;
+  property.stride_bytes = 300;
+  strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
+          sizeof(property.pixel_format));
+
+  EdgeAppLib::SensorStreamSetProperty(stream_check,
+                                      AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                                      &property, sizeof(property));
+}
 
 TEST_F(EvenFunctionsTest, OnCreateSuccess) {
   int res = onCreate();
@@ -85,7 +105,8 @@ TEST_F(EvenFunctionsTest, OnConfigureSuccess) {
 
   int res = onConfigure(topic, value, valuesize);
   EXPECT_EQ(res, 0);
-  free(value);
+  EXPECT_EQ(wasDataProcessorConfigureCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendStateCalled(), 1);
 }
 
 TEST_F(EvenFunctionsTest, OnConfigureValueNull) {
@@ -94,17 +115,31 @@ TEST_F(EvenFunctionsTest, OnConfigureValueNull) {
   int valuesize = 10;
 
   int res = onConfigure(topic, value, valuesize);
+  EXPECT_EQ(res, -1);
+}
+
+TEST_F(EvenFunctionsTest, OnConfigureDataProcessorConfigureFail) {
+  char topic[] = "mock";
+  void *value = strdup(topic);
+  int valuesize = 10;
+  setDataProcessorConfigureFail();
+  int res = onConfigure(topic, value, valuesize);
   EXPECT_EQ(res, 0);
+  EXPECT_EQ(wasDataProcessorConfigureCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendStateCalled(), 1);
 }
 
 TEST_F(EvenFunctionsTest, OnIterateSuccess) {
   onCreate();
+  SensorStreamSetImageProperty();
   int res = onIterate();
   EXPECT_EQ(res, 0);
   EXPECT_EQ(wasEdgeAppLibSensorGetFrameCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
+  EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 1);
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
@@ -120,6 +155,8 @@ TEST_F(EvenFunctionsTest, OnIterateChannelError) {
   EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
+  EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
@@ -135,9 +172,52 @@ TEST_F(EvenFunctionsTest, OnIterateRawDataError) {
   EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
+  EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
+  onDestroy();
+}
+
+TEST_F(EvenFunctionsTest, OnIterateSendDataSyncMetaError) {
+  onCreate();
+  resetEdgeAppLibSensorChannelGetPropertySuccess();
+  setEdgeAppLibSensorChannelSubFrameCurrentNum(1);
+  setEdgeAppLibSensorChannelSubFrameDivisionNum(1);
+  setSendDataSyncMetaFail(EdgeAppLibSendDataResultFailure);
+  SensorStreamSetImageProperty();
+  int res = onIterate();
+  EXPECT_EQ(res, 0);
+  EXPECT_EQ(wasEdgeAppLibSensorGetFrameCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDrawRectangleCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 1);
+  onDestroy();
+  setSendDataSyncMetaFail(EdgeAppLibSendDataResultSuccess);
+}
+
+TEST_F(EvenFunctionsTest, OnIterateRawDataNull) {
+  onCreate();
+  setDataProcessorAnalyzeFail();
+  SensorStreamSetImageProperty();
+  int res = onIterate();
+  EXPECT_EQ(res, 0);
+  EXPECT_EQ(wasEdgeAppLibSensorGetFrameCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
+  EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDrawRectangleCalled(), 0);
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
   onDestroy();
 }
 
@@ -150,24 +230,30 @@ TEST_F(EvenFunctionsTest, OnIterateGetFrameError) {
   EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 0);
+  EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDrawRectangleCalled(), 0);
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
   onDestroy();
 }
 
-TEST_F(EvenFunctionsTest, OnIterateReleaseFrameError) {
+TEST_F(EvenFunctionsTest, OnIterateGetFrameErrorTimeout) {
   onCreate();
-  setEdgeAppLibSensorReleaseFrameFail();
+  setEdgeAppLibSensorGetFrameFail();
+  setEdgeAppLibSensorGetLastErrorCauseFail2(AITRIOS_SENSOR_ERROR_TIMEOUT);
   int res = onIterate();
-  EXPECT_EQ(res, -1);
+  EXPECT_EQ(res, 0);
   EXPECT_EQ(wasEdgeAppLibSensorGetFrameCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 0);
+  EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDrawRectangleCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
   onDestroy();
 }
 
@@ -180,6 +266,24 @@ TEST_F(EvenFunctionsTest, OnIterateDataExportDisabled) {
   EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
+  onDestroy();
+}
+
+TEST_F(EvenFunctionsTest, OnIterateReleaseFrameError) {
+  onCreate();
+  setEdgeAppLibSensorReleaseFrameFail();
+  SensorStreamSetImageProperty();
+  int res = onIterate();
+  EXPECT_EQ(res, -1);
+  EXPECT_EQ(wasEdgeAppLibSensorGetFrameCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
+  EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 1);
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
@@ -208,6 +312,7 @@ TEST_F(EvenFunctionsTest, OnStartSuccess) {
   int res = onStart();
   EXPECT_EQ(res, 0);
   EXPECT_EQ(wasEdgeAppLibSensorStartCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorStreamGetPropertyCalled(), 1);
   onDestroy();
 }
 
@@ -217,6 +322,17 @@ TEST_F(EvenFunctionsTest, OnStartStartError) {
   int res = onStart();
   EXPECT_EQ(res, -1);
   EXPECT_EQ(wasEdgeAppLibSensorStartCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorStreamGetPropertyCalled(), 0);
+  onDestroy();
+}
+
+TEST_F(EvenFunctionsTest, OnStartGetPropertyError) {
+  onCreate();
+  setEdgeAppLibSensorStreamGetPropertyFail();
+  int res = onStart();
+  EXPECT_EQ(res, -1);
+  EXPECT_EQ(wasEdgeAppLibSensorStartCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSensorStreamGetPropertyCalled(), 1);
   onDestroy();
 }
 

@@ -27,6 +27,7 @@ CodecSettings::CodecSettings() {
       {.property = FORMAT, .validation = kType, .value = JSONNumber},
   };
   SetValidations(s_validations, sizeof(s_validations) / sizeof(Validation));
+  json_object_set_number(json_obj, FORMAT, 1);
 }
 
 int CodecSettings::Apply(JSON_Object *obj) {

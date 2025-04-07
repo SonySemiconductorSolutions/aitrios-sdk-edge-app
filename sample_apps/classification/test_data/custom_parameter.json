@@ -11,5 +11,8 @@
                 "max_predictions": 10
             }
         }
+    },
+    "metadata_settings": {
+        "format": 0
     }
 }

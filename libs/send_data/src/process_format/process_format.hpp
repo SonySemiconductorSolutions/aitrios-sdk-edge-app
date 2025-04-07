@@ -22,24 +22,25 @@
 #ifndef PROCESS_FORMAT_H
 #define PROCESS_FORMAT_H
 
+#include <stdint.h>
+
 #include "memory_manager.hpp"
 #include "parson.h"
 #include "send_data_types.h"
-#include "stdint.h"
 
 typedef enum {
   kProcessFormatResultOk,           /**< Operation succeeded. */
   kProcessFormatResultFailure,      /**< Operation failed. */
   kProcessFormatResultInvalidParam, /**< Invalid parameter. */
-  kProcessFormatResultMemoryError,  /**< Memory error occured. */
+  kProcessFormatResultMemoryError,  /**< Memory error occurred. */
   kProcessFormatResultOther
 } ProcessFormatResult;
 
 typedef enum {
   kProcessFormatImageTypeRaw,  /**< Image type is RAW. */
-  kProcessFormatImageTypeJpeg, /**< Image type is PNG. */
-  kProcessFormatImageTypeBmp,  /**< Image type is RAW. */
-  kProcessFormatImageTypeOther /**< Image type is other. */
+  kProcessFormatImageTypeJpeg, /**< Image type is JPEG. */
+  kProcessFormatImageTypeBmp,  /**< Image type is BMP. (not implemented) */
+  kProcessFormatImageTypeOther /**< Image type is other. (not implemented) */
 } ProcessFormatImageType;
 
 /**
@@ -48,13 +49,14 @@ typedef enum {
  * @param in_size Pointer of output tensor buffer size.
  * @param datatype The type of the data to upload.
  * @param timestamp The timestamp of the processed frame in nanoseconds.
- * @param out_json_value Pointer of output tensor with Json Value.
+ * @param json_buffer Pointer of JSON buffer.
+ * @param buffer_size Size of JSON buffer.
  * @return Result of the formating operation for meta data.
  */
 ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
                                       EdgeAppLibSendDataType datatype,
-                                      uint64_t timestamp,
-                                      JSON_Value *output_tensor_value);
+                                      uint64_t timestamp, char *json_buffer,
+                                      size_t buffer_size);
 
 /**
  * @brief Encode the data to be Input Tensor

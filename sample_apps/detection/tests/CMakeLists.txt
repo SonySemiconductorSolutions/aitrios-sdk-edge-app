@@ -58,13 +58,12 @@ add_executable(test_event_functions
   ${MOCKS_DIR}/data_processor_api/mock_data_processor_api.cpp
   ${MOCKS_DIR}/data_export/mock_data_export.cpp
   ${SAMPLE_APP_DIR}/detection/src/sm.cpp
-  ${SAMPLE_APP_DIR}/utils/sm_utils.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
 )
 
 target_include_directories (test_event_functions PUBLIC
-  ${SAMPLE_APP_DIR}/include
-  ${SAMPLE_APP_DIR}/include/schemas
+  ${SAMPLE_APP_DIR}/utils/include
   ${ROOT_DIR}/include
   ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/third_party/parson

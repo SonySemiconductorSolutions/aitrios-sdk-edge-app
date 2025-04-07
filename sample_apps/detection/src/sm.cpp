@@ -35,6 +35,7 @@ using namespace EdgeAppLib;
 EdgeAppLibSensorCore s_core = 0;
 EdgeAppLibSensorStream s_stream = 0;
 char *state_topic = NULL;
+int32_t res_release_frame = -1;
 
 char *GetConfigureErrorJsonSm(ResponseCode code, const char *message,
                               const char *res_id) {
@@ -111,6 +112,11 @@ static void sendMetadata(EdgeAppLibSensorFrame *frame) {
         "sending "
         "metadata.",
         ret);
+    if ((res_release_frame = SensorReleaseFrame(s_stream, *frame)) < 0) {
+      LOG_ERR("SensorReleaseFrame : ret= %d", res_release_frame);
+      PrintSensorError();
+      return;
+    }
     return;
   }
 
@@ -120,6 +126,11 @@ static void sendMetadata(EdgeAppLibSensorFrame *frame) {
         "SensorChannelGetRawData : ret=%d. Skipping sending "
         "metadata.",
         ret);
+    if ((res_release_frame = SensorReleaseFrame(s_stream, *frame)) < 0) {
+      LOG_ERR("SensorReleaseFrame : ret= %d", res_release_frame);
+      PrintSensorError();
+      return;
+    }
     return;
   }
 
@@ -136,6 +147,17 @@ static void sendMetadata(EdgeAppLibSensorFrame *frame) {
 
   if (data_processor_ret != kDataProcessorOk) {
     LOG_WARN("DataProcessorAnalyze: ret=%d", ret);
+    if ((res_release_frame = SensorReleaseFrame(s_stream, *frame)) < 0) {
+      LOG_ERR("SensorReleaseFrame : ret= %d", res_release_frame);
+      PrintSensorError();
+      return;
+    }
+    return;
+  }
+
+  if ((res_release_frame = SensorReleaseFrame(s_stream, *frame)) < 0) {
+    LOG_ERR("SensorReleaseFrame : ret= %d", res_release_frame);
+    PrintSensorError();
     return;
   }
 
@@ -225,11 +247,17 @@ int onIterate() {
     DataExportCleanup(future);
   }
 
-  if ((ret = SensorReleaseFrame(s_stream, frame)) < 0) {
-    LOG_ERR("SensorReleaseFrame : ret= %d", ret);
-    PrintSensorError();
+  if (!metadataEnabled) {
+    if ((res_release_frame = SensorReleaseFrame(s_stream, frame)) < 0) {
+      LOG_ERR("SensorReleaseFrame : ret= %d", res_release_frame);
+      PrintSensorError();
+      return -1;
+    }
+    res_release_frame = -1;
+  } else if (res_release_frame < 0) {
     return -1;
   }
+
   return 0;
 }
 

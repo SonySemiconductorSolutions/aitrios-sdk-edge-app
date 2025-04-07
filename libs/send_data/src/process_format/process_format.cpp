@@ -44,7 +44,12 @@ static ProcessFormatResult HandleRawFormat(MemoryRef in_data, size_t in_size,
   }
 
   if (in_data.type == MEMORY_MANAGER_MAP_TYPE) {
-    *image = in_data.u.p;
+    *image = malloc(in_size);
+    if (!*image) {
+      LOG_ERR("Memory allocation failed.");
+      return kProcessFormatResultOther;
+    }
+    memcpy(*image, in_data.u.p, in_size);
     *image_size = in_size;
   } else {
     *image = malloc(in_size);
@@ -244,30 +249,44 @@ ProcessFormatResult ProcessFormatInput(MemoryRef in_data, uint32_t in_size,
 
 ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
                                       EdgeAppLibSendDataType datatype,
-                                      uint64_t timestamp,
-                                      JSON_Value *output_tensor_value) {
-  if (output_tensor_value == NULL) {
-    LOG_ERR("Invalid output_tensor_value.");
+                                      uint64_t timestamp, char *json_buffer,
+                                      size_t buffer_size) {
+  if (json_buffer == NULL) {
+    LOG_ERR("Invalid json_buffer.");
     return kProcessFormatResultInvalidParam;
   }
 
-  JSON_Object *output_tensor_object =
-      json_value_get_object(output_tensor_value);
+  size_t offset = 0;
 
-  // Get AI model bundle ID
-  struct EdgeAppLibSensorAiModelBundleIdProperty stream_property = {};
+  // Get AI model version ID
   EdgeAppLibSensorStream stream = GetSensorStream();
   int32_t ret = -1;
+  EdgeAppLibSensorInfoStringProperty sensor_name = {0};
+  sensor_name.category = AITRIOS_SENSOR_INFO_STRING_SENSOR_NAME;
   if ((ret = EdgeAppLib::SensorStreamGetProperty(
-           stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-           &stream_property, sizeof(stream_property))) != 0) {
-    const char *error_msg = "Error GET AI model bundle id.";
+           stream, AITRIOS_SENSOR_INFO_STRING_PROPERTY_KEY,
+           (void *)&sensor_name, sizeof(sensor_name))) != 0) {
+    const char *error_msg = "Error GET device name.";
     LOG_ERR("%s : SensorStreamGetProperty=%d", error_msg, ret);
     return kProcessFormatResultFailure;
   }
-  // Set AI model bundle ID
-  json_object_set_string(output_tensor_object, "ModelVersionID",
-                         stream_property.ai_model_bundle_id);
+  EdgeAppLibSensorInfoStringProperty sensor_version_id = {0};
+  if (!strncmp("IMX500", sensor_name.info, strlen("IMX500"))) {
+    sensor_version_id.category = AITRIOS_SENSOR_INFO_STRING_AI_MODEL_VERSION;
+  } else if (!strncmp("AI-ISP", sensor_name.info, strlen("AI-ISP"))) {
+    sensor_version_id.category =
+        AITRIOS_SENSOR_INFO_STRING_AIISP_AI_MODEL_VERSION;
+  }
+  if ((ret = EdgeAppLib::SensorStreamGetProperty(
+           stream, AITRIOS_SENSOR_INFO_STRING_PROPERTY_KEY,
+           (void *)&sensor_version_id, sizeof(sensor_version_id))) != 0) {
+    const char *error_msg = "Error GET version id.";
+    LOG_ERR("%s : SensorStreamGetProperty=%d", error_msg, ret);
+    return kProcessFormatResultFailure;
+  }
+  // Set AI model bundle ID directly into the JSON buffer
+  offset += snprintf(json_buffer + offset, buffer_size - offset,
+                     "{\"ModelID\":\"%s\",", sensor_version_id.info);
 
   // Get Device ID
   char device_id[WASM_BINDING_DEVICEID_MAX_SIZE] = {0};
@@ -277,7 +296,8 @@ ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
     snprintf(device_id, sizeof(device_id), "000000000000000");
   }
   // Set Device ID
-  json_object_set_string(output_tensor_object, "DeviceID", device_id);
+  offset += snprintf(json_buffer + offset, buffer_size - offset,
+                     "\"DeviceID\":\"%s\",", device_id);
 
   // Get Image Flag
   bool image_flg = false;
@@ -290,11 +310,13 @@ ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
   }
 
   // Set Image Flag
-  json_object_set_boolean(output_tensor_object, "Image", image_flg);
-
-  // Initialize one Inference for appending to "Inferences"
-  JSON_Value *inf_value = json_value_init_object();
-  JSON_Object *inf_object = json_value_get_object(inf_value);
+  if (image_flg) {
+    offset +=
+        snprintf(json_buffer + offset, buffer_size - offset, "\"Image\":true,");
+  } else {
+    offset += snprintf(json_buffer + offset, buffer_size - offset,
+                       "\"Image\":false,");
+  }
 
   // Set "T"
   char inf_timestamp[32];
@@ -310,40 +332,38 @@ ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
     snprintf(inf_timestamp + num, sizeof(inf_timestamp) - num, "%03d",
              remaining_ms);
   }
-  json_object_set_string(inf_object, "T", (const char *)inf_timestamp);
 
-  // Set "O" and "F"
-  switch (datatype) {
-    case EdgeAppLibSendDataBase64: {
-      int inf_o_size = b64e_size((unsigned int)in_size) + 1;
-      unsigned char *inf_o =
-          (unsigned char *)malloc((sizeof(char) * inf_o_size));
-      if (inf_o == nullptr) {
-        LOG_ERR("Error while allocating memory for \"O\".");
-        json_value_free(inf_value);
-        return kProcessFormatResultMemoryError;
-      }
-      inf_o_size = b64_encode((unsigned char *)in_data, in_size, inf_o);
-      json_object_set_string(inf_object, "O", (const char *)inf_o);
-      json_object_set_number(inf_object, "F", 0);
-      free(inf_o);
-    } break;
-    case EdgeAppLibSendDataJson:
-      json_object_set_string(inf_object, "O", (const char *)in_data);
-      json_object_set_number(inf_object, "F", 1);
-      break;
-    default:
-      const char *error_msg = "Invalid datatype.";
-      LOG_ERR("%s : datatype=%d", error_msg, datatype);
-      json_value_free(inf_value);
-      return kProcessFormatResultInvalidParam;
+  /* Add Inference result into Json */
+  offset += snprintf(json_buffer + offset, buffer_size - offset,
+                     "\"Inferences\":[{\"T\":\"%s\",", inf_timestamp);
+
+  if (datatype == EdgeAppLibSendDataBase64) {
+    int inf_o_size = b64e_size(in_size);
+    offset += snprintf(json_buffer + offset, buffer_size - offset, "\"O\":\"");
+    char *inf_o = json_buffer + offset;
+    /* Memory in-place Base64 encoding */
+    int encoded_size =
+        b64_encode((unsigned char *)in_data, in_size, (unsigned char *)inf_o);
+    offset += encoded_size;
+    int written =
+        snprintf(json_buffer + offset, buffer_size - offset, "\",\"F\":0}]}");
+    if (written < 0 || (size_t)written >= buffer_size - offset) {
+      LOG_ERR("Buffer overflow when writing final JSON.");
+      return kProcessFormatResultMemoryError;
+    }
+    offset += written;
+  } else if (datatype == EdgeAppLibSendDataJson) {
+    int written = snprintf(json_buffer + offset, buffer_size - offset,
+                           "\"O\":%s,\"F\":1}]}", (char *)in_data);
+    if (written < 0 || (size_t)written >= buffer_size - offset) {
+      LOG_ERR("Buffer overflow when writing JSON inference data.");
+      return kProcessFormatResultMemoryError;
+    }
+    offset += written;
+  } else {
+    LOG_ERR("Invalid datatype: %d", datatype);
+    return kProcessFormatResultInvalidParam;
   }
-  // Set "inferences"
-  JSON_Value *infs_json_array_value = json_value_init_array();
-  JSON_Array *infs_json_array = json_value_get_array(infs_json_array_value);
-  json_array_append_value(infs_json_array, inf_value);
-  json_object_set_value(output_tensor_object, "Inferences",
-                        infs_json_array_value);
 
   return kProcessFormatResultOk;
 }
