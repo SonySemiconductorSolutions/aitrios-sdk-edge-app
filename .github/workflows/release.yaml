@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: "Release version. E.g., v0.2.0-rc.0.0"
+      flag:
+        required: true
+        type: choice
+        description: "Flag for release"
+        default: release
+        options:
+          - release
+          - test
+
+jobs:
+  verify:
+    name: Verify if already published
+    runs-on: [ubuntu-22.04]
+    outputs:
+      exists: ${{ steps.check-tag.outputs.exists }}
+    steps:
+    - name: Check
+      uses: mukunku/tag-exists-action@v1.6.0
+      id: check-tag
+      with:
+        tag: ${{ inputs.version }}
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [passthrough, draw, classification, detection, posenet, segmentation, switch_dnn]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+
+    - name: Build edge_app
+      run: |
+        make CMAKE_FLAGS="-DAPPS_SELECTION=${{ matrix.app }}"
+
+    - name: Prepare bundle
+      run: |
+        mkdir -p artifacts
+        cp sample_apps/${{ matrix.app }}/package/* artifacts
+        jq '.edge_app.version = "${{ inputs.version }}" |
+            .edge_app.file_name = "edge_app_${{ matrix.app }}.wasm" |
+            .edge_app.compiled_flg = false' artifacts/manifest.json > tmp.json && mv tmp.json artifacts/manifest.json
+
+        cp bin/edge_app.wasm \
+          artifacts/$(jq -r '.edge_app.file_name' artifacts/manifest.json)
+        cp sample_apps/${{ matrix.app }}/configuration/configuration.json \
+          artifacts/$(jq -r '.edge_app.app_name' artifacts/manifest.json)_configuration.json
+
+        # Verify DTDL json format.
+        jq . artifacts/$(jq -r '.edge_app.app_dtdl_file' artifacts/manifest.json) > /dev/null
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: sample_edge_app_${{ matrix.app }}_wasm_v2_${{ inputs.version }}
+        path: artifacts
+        if-no-files-found: error
+        overwrite: true
+
+  publish:
+    name: Publish and tag
+    runs-on: [ubuntu-22.04]
+    needs:
+    - verify
+    - build
+    if: ${{ needs.verify.outputs.exists == 'false' && github.event.inputs.flag == 'release' }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+    - name: Bundle files
+      run: |
+        for dir in *_${{ inputs.version }}; do
+          zip -r "${dir}.zip" "$dir"
+        done
+    - uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ inputs.version }}
+        tag_name: ${{ inputs.version }}
+        generate_release_notes: true
+        files: |
+          *.zip
