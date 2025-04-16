@@ -14,6 +14,8 @@
 
 FROM ubuntu:24.04
 
+ARG EXTRA_CFLAGS
+
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
        --no-install-recommends \
@@ -21,6 +23,9 @@ RUN apt-get update \
        wget \
        ca-certificates \
        cmake \
+       git \
+       clang \
+       llvm \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -29,6 +34,11 @@ RUN cd /opt \
     && tar zxvf wasi-sdk-22.0-linux.tar.gz \
     && ln -s wasi-sdk-22.0 wasi-sdk \
     && rm wasi-sdk-22.0-linux.tar.gz
+
+RUN test ${EXTRA_CFLAGS} = '-g' && git clone https://github.com/WebAssembly/wasi-libc.git -b wasi-sdk-22 && \
+    cd wasi-libc && \
+    make EXTRA_CFLAGS=${EXTRA_CFLAGS} THREAD_MODEL=posix SYSROOT=/opt/wasi-sdk/share/wasi-sysroot install || \
+    echo "skip building with ${EXTRA_CFLAGS}"
 
 RUN cd /opt \
     && wget https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-linux.tar.gz \

@@ -29,29 +29,29 @@ from abc import ABC, abstractmethod
 
 
 class EdgeApp(ABC):
-    @abstractmethod
     def on_create(self) -> int:
-        ...
+        print("[Python] on_create")
+        return 0
 
-    @abstractmethod
     def on_configure(self) -> int:
-        ...
+        print("[Python] on_configure")
+        return 0
 
     @abstractmethod
     def on_iterate(self) -> int:
         ...
 
-    @abstractmethod
     def on_stop(self) -> int:
-        ...
+        print("[Python] on_stop")
+        return 0
 
-    @abstractmethod
     def on_start(self) -> int:
-        ...
+        print("[Python] on_start")
+        return 0
 
-    @abstractmethod
     def on_destroy(self) -> int:
-        ...
+        print("[Python] on_destroy")
+        return 0
 
 
 __all__ = [

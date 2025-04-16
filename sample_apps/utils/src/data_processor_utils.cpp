@@ -39,6 +39,35 @@ int GetValueNumber(JSON_Object *json, const char *param, double *result) {
   return 1;
 }
 
+int GetValueBoolean(JSON_Object *json, const char *param, bool *result) {
+  if (json == NULL || param == NULL || result == NULL) {
+    LOG_ERR("Invalid input arguments");
+    return -1;
+  }
+  if (json_object_has_value(json, param)) {
+    *result = json_object_get_boolean(json, param);
+    return 0;
+  }
+  LOG_WARN("JSON file does not have parameter '%s' using default value", param);
+  return 1;
+}
+
+int GetValueString(JSON_Object *json, const char *param, char *result) {
+  if (json == NULL || param == NULL || result == NULL) {
+    LOG_ERR("Invalid input arguments");
+    return -1;
+  }
+  if (json_object_has_value(json, param)) {
+    const char *value = json_object_get_string(json, param);
+    if (value) {
+      strcpy(result, value);
+      return 0;
+    }
+  }
+  LOG_WARN("JSON file does not have parameter '%s' using default value", param);
+  return 1;
+}
+
 char *GetConfigureErrorJson(ResponseCode code, const char *message,
                             const char *res_id) {
   char *config_error = nullptr;

@@ -186,7 +186,7 @@ DataProcessorResultCode DataProcessorAnalyze(float *in_data, uint32_t in_size,
       return kDataProcessorOk;
     }
     default:
-      LOG_ERR("Specified format of metadata is undefined. ");
+      LOG_ERR("Unknown metadata format: %d.", metadata_format);
       return kDataProcessorInvalidParam;
   }
 }

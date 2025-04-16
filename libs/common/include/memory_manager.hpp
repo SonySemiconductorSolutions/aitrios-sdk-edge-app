@@ -46,8 +46,11 @@ typedef enum {
 
 typedef uint32_t EsfMemoryManagerHandle;
 
+#if defined(__wasm__)
 __attribute__((import_module("env")))
-__attribute__((import_name("EsfMemoryManagerPread"))) EsfMemoryManagerResult
+__attribute__((import_name("EsfMemoryManagerPread")))
+#endif
+EsfMemoryManagerResult
 EsfMemoryManagerPread(EsfMemoryManagerHandle handle, void *buf, size_t sz,
                       uint64_t offset, size_t *rsz);
 

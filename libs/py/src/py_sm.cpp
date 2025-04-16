@@ -284,6 +284,7 @@ int onCreate() {
     return -1;
   }
 
+  py::gil_scoped_acquire acquire;
   if (g_py_edge_app.on_create) {
     return g_py_edge_app.on_create().cast<int>();
   }
@@ -311,6 +312,7 @@ int onConfigure(char *topic, void *value, int valuesize) {
   }
   DataExportSendState(topic, value, valuesize);
 
+  py::gil_scoped_acquire acquire;
   if (g_py_edge_app.on_configure) {
     return g_py_edge_app.on_configure().cast<int>();
   }
@@ -321,9 +323,8 @@ int onConfigure(char *topic, void *value, int valuesize) {
 int onIterate() {
   LOG_TRACE("Inside onIterate.");
 
+  py::gil_scoped_acquire acquire;
   if (g_py_edge_app.on_iterate) {
-    py::gil_scoped_release release;
-    py::gil_scoped_acquire acquire;
     return g_py_edge_app.on_iterate().cast<int>();
   }
 
@@ -339,6 +340,7 @@ int onStop() {
     return -1;
   }
 
+  py::gil_scoped_acquire acquire;
   if (g_py_edge_app.on_stop) {
     return g_py_edge_app.on_stop().cast<int>();
   }
@@ -355,6 +357,7 @@ int onStart() {
     return -1;
   }
 
+  py::gil_scoped_acquire acquire;
   if (g_py_edge_app.on_start) {
     return g_py_edge_app.on_start().cast<int>();
   }
@@ -376,6 +379,7 @@ int onDestroy() {
     return -1;
   }
 
+  py::gil_scoped_acquire acquire;
   if (g_py_edge_app.on_destroy) {
     return g_py_edge_app.on_destroy().cast<int>();
   }
@@ -394,9 +398,11 @@ int run_sm(py::type edge_app_class, std::optional<py::str> stream_key) {
 
   g_py_edge_app.init(edge_app_class, stream_key);
 
+  py::gil_scoped_release release(true);
   int main(int argc, char *argv[]);  // from libs/sm/src/main.cpp
   int result = main(0, nullptr);
 
+  py::gil_scoped_acquire acquire;
   g_py_edge_app.reset();
 
   return result;

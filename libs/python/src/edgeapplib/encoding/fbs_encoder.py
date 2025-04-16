@@ -72,10 +72,10 @@ class FBSEncoder:
         object_list_offsets = []
         for det in reversed(detection_list):
             BoundingBox2d.Start(self.builder)
-            BoundingBox2d.AddTop(self.builder, det["bbox"]["top"])
-            BoundingBox2d.AddLeft(self.builder, det["bbox"]["left"])
-            BoundingBox2d.AddRight(self.builder, det["bbox"]["right"])
-            BoundingBox2d.AddBottom(self.builder, det["bbox"]["bottom"])
+            BoundingBox2d.AddTop(self.builder, det["bounding_box"]["top"])
+            BoundingBox2d.AddLeft(self.builder, det["bounding_box"]["left"])
+            BoundingBox2d.AddRight(self.builder, det["bounding_box"]["right"])
+            BoundingBox2d.AddBottom(self.builder, det["bounding_box"]["bottom"])
             bbox2d_offset = BoundingBox2d.End(self.builder)
 
             GeneralObject.Start(self.builder)

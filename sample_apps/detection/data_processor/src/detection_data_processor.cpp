@@ -41,15 +41,22 @@ using EdgeAppLib::SensorStreamGetProperty;
 
 pthread_mutex_t data_processor_mutex;
 EdgeAppLibSendDataType metadata_format = EdgeAppLibSendDataBase64;
+Area area = {};
+bool send_area_counts = false;
 
-DataProcessorCustomParam ssd_param = {DEFAULT_MAX_DETECTIONS, DEFAULT_THRESHOLD,
-                                      DEFAULT_SSD_INPUT_TENSOR_WIDTH,
-                                      DEFAULT_SSD_INPUT_TENSOR_HEIGHT};
+DataProcessorCustomParam detection_param = {DEFAULT_MAX_DETECTIONS,
+                                            DEFAULT_THRESHOLD,
+                                            DEFAULT_INPUT_TENSOR_WIDTH,
+                                            DEFAULT_INPUT_TENSOR_HEIGHT,
+                                            "yxyx",
+                                            true,
+                                            "cls_score"};
 
 static DataProcessorResultCode (*extractors[])(JSON_Object *,
                                                DataProcessorCustomParam *) = {
-    ExtractThreshold, ExtractInputHeight, ExtractInputWidth,
-    ExtractMaxDetections, VerifyConstraints};
+    ExtractThreshold,     ExtractInputHeight, ExtractInputWidth,
+    ExtractMaxDetections, ExtractBboxOrder,   ExtractBboxNorm,
+    ExtractClassOrder,    VerifyConstraints};
 
 DataProcessorResultCode DataProcessorInitialize() {
   LOG_INFO(
@@ -104,13 +111,47 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   DataProcessorResultCode res = kDataProcessorOk;
   DataProcessorResultCode act = kDataProcessorOk;
   for (auto &extractor : extractors) {
-    if ((act = extractor(object_params, &ssd_param)) != kDataProcessorOk)
+    if ((act = extractor(object_params, &detection_param)) != kDataProcessorOk)
       res = act;
   }
   pthread_mutex_unlock(&data_processor_mutex);
 
   if (SetEdgeAppLibNetwork(s_stream, object_model) != 0) {
     res = kDataProcessorInvalidParamSetError;
+  }
+
+  // Get Area settings
+  JSON_Object *area_obj = json_object_get_object(object, "area");
+  if (area_obj != NULL) {
+    JSON_Object *area_coordinates_obj =
+        json_object_get_object(area_obj, "coordinates");
+    area.coordinates.left =
+        json_object_get_number(area_coordinates_obj, "left");
+    area.coordinates.top = json_object_get_number(area_coordinates_obj, "top");
+    area.coordinates.right =
+        json_object_get_number(area_coordinates_obj, "right");
+    area.coordinates.bottom =
+        json_object_get_number(area_coordinates_obj, "bottom");
+    area.overlap = json_object_get_number(area_obj, "overlap");
+
+    JSON_Array *class_id_array = json_object_get_array(area_obj, "class_id");
+    area.num_of_class = json_array_get_count(class_id_array);
+    if (area.num_of_class > CLASS_IDS_SIZE) {
+      LOG_ERR(
+          "The number of class_ids specified is %d. It exceeds the "
+          "limitation(=%d).",
+          area.num_of_class, CLASS_IDS_SIZE);
+      json_value_free(value);
+      return kDataProcessorInvalidParam;
+    }
+    for (int i = 0; i < area.num_of_class; i++) {
+      JSON_Value *class_id_value = json_array_get_value(class_id_array, i);
+      area.class_ids[i] = json_value_get_number(class_id_value);
+    }
+    send_area_counts = true;
+  } else {
+    send_area_counts = false;
+    area = {};
   }
 
   // Get metadata settings
@@ -136,46 +177,113 @@ DataProcessorResultCode DataProcessorAnalyze(float *in_data, uint32_t in_size,
   }
 
   pthread_mutex_lock(&data_processor_mutex);
-  DataProcessorCustomParam analyze_params = ssd_param;
+  DataProcessorCustomParam analyze_params = detection_param;
   pthread_mutex_unlock(&data_processor_mutex);
 
-  switch (metadata_format) {
-    case EdgeAppLibSendDataBase64: {
-      flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
-      CreateSSDOutputFlatbuffer(in_data, in_size / sizeof(float), &builder,
-                                analyze_params);
-      /* LCOV_EXCL_START: null pointer check*/
-      uint8_t *buf_ptr = builder.GetBufferPointer();
-      if (buf_ptr == nullptr) {
-        LOG_ERR("Error while getting flatbuffers pointer");
-        return kDataProcessorOther;
+  Detections *detections = CreateDetections(in_data, in_size, analyze_params);
+
+  if (detections == NULL || detections->detection_data == NULL) {
+    LOG_ERR("Error while allocating memory for detections.");
+    return kDataProcessorMemoryError;
+  }
+
+  FilterByParams(&detections, analyze_params);
+
+  if (send_area_counts) {
+    LOG_INFO("Send the result of area counts.");
+    AreaCount *area_count = CreateAreaCount(&detections, area);
+    switch (metadata_format) {
+      case EdgeAppLibSendDataBase64: {
+        flatbuffers::FlatBufferBuilder builder =
+            flatbuffers::FlatBufferBuilder();
+        MakeAreaFlatbuffer(detections, area_count, &builder, area.num_of_class);
+        /* LCOV_EXCL_START: null pointer check*/
+        uint8_t *buf_ptr = builder.GetBufferPointer();
+        if (buf_ptr == nullptr) {
+          LOG_ERR("Error while getting flatbuffers pointer");
+          return kDataProcessorOther;
+        }
+        uint32_t buf_size = builder.GetSize();
+        char *p_out_param = (char *)malloc(buf_size);
+        if (p_out_param == nullptr) {
+          LOG_ERR("Error while allocating memory for flatbuffers of size %d",
+                  buf_size);
+          return kDataProcessorMemoryError;
+        }
+        /* LCOV_EXCL_STOP */
+        memcpy(p_out_param, buf_ptr, buf_size);
+        *out_data = p_out_param;
+        *out_size = buf_size;
+
+        free(detections->detection_data);
+        free(detections);
+        free(area_count);
+        return kDataProcessorOk;
       }
-      /* LCOV_EXCL_STOP */
-      /* LCOV_EXCL_START: null pointer check */
-      uint32_t buf_size = builder.GetSize();
-      char *p_out_param = (char *)malloc(buf_size);
-      if (p_out_param == nullptr) {
-        LOG_ERR("Error while allocating memory for flatbuffers of size %d",
-                buf_size);
-        return kDataProcessorMemoryError;
+      case EdgeAppLibSendDataJson: {
+        JSON_Value *tensor_output =
+            MakeAreaJson(detections, area_count, area.num_of_class);
+        *out_data = json_serialize_to_string(tensor_output);
+        *out_size = json_serialization_size(tensor_output);
+        json_value_free(tensor_output);
+        free(detections->detection_data);
+        free(detections);
+        free(area_count);
+        return kDataProcessorOk;
       }
-      /* LCOV_EXCL_STOP */
-      memcpy(p_out_param, buf_ptr, buf_size);
-      *out_data = p_out_param;
-      *out_size = buf_size;
-      return kDataProcessorOk;
+      default:
+        LOG_ERR("Unknown metadata format: %d.", metadata_format);
+        free(detections->detection_data);
+        free(detections);
+        free(area_count);
+        return kDataProcessorInvalidParam;
     }
-    case EdgeAppLibSendDataJson: {
-      JSON_Value *tensor_output =
-          CreateSSDOutputJson(in_data, in_size / sizeof(float), analyze_params);
-      *out_data = json_serialize_to_string(tensor_output);
-      *out_size = json_serialization_size(tensor_output);
-      json_value_free(tensor_output);
-      return kDataProcessorOk;
+    return kDataProcessorOk;
+
+  } else {
+    LOG_INFO("Send the result of detections.");
+    switch (metadata_format) {
+      case EdgeAppLibSendDataBase64: {
+        flatbuffers::FlatBufferBuilder builder =
+            flatbuffers::FlatBufferBuilder();
+        MakeDetectionFlatbuffer(detections, &builder);
+        /* LCOV_EXCL_START: null pointer check*/
+        uint8_t *buf_ptr = builder.GetBufferPointer();
+        if (buf_ptr == nullptr) {
+          LOG_ERR("Error while getting flatbuffers pointer");
+          return kDataProcessorOther;
+        }
+        uint32_t buf_size = builder.GetSize();
+        char *p_out_param = (char *)malloc(buf_size);
+        if (p_out_param == nullptr) {
+          LOG_ERR("Error while allocating memory for flatbuffers of size %d",
+                  buf_size);
+          return kDataProcessorMemoryError;
+        }
+        /* LCOV_EXCL_STOP */
+        memcpy(p_out_param, buf_ptr, buf_size);
+        *out_data = p_out_param;
+        *out_size = buf_size;
+
+        free(detections->detection_data);
+        free(detections);
+        return kDataProcessorOk;
+      }
+      case EdgeAppLibSendDataJson: {
+        JSON_Value *tensor_output = MakeDetectionJson(detections);
+        *out_data = json_serialize_to_string(tensor_output);
+        *out_size = json_serialization_size(tensor_output);
+        json_value_free(tensor_output);
+        free(detections->detection_data);
+        free(detections);
+        return kDataProcessorOk;
+      }
+      default:
+        LOG_ERR("Unknown metadata format: %d.", metadata_format);
+        free(detections->detection_data);
+        free(detections);
+        return kDataProcessorInvalidParam;
     }
-    default:
-      LOG_ERR("Specified format of metadata is undefined. ");
-      return kDataProcessorInvalidParam;
   }
 }
 

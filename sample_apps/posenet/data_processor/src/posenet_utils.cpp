@@ -1379,7 +1379,7 @@ static void PoseNetPostPostPackFaceResult(
     float y_average = 0.0f;
     float face_size = 0.0f;
     float face_dist_x_R, face_dist_x_L, face_dist_y_R, face_dist_y_L;
-    face_result.id = num_faces;
+    face_result.id = static_cast<unsigned int>(num_faces);
     face_result.faceScore = pose_data->pose_score;
 
     for (int key = 0; key < key_loop_num; key++) {

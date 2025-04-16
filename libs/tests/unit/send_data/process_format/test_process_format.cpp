@@ -39,8 +39,8 @@ class ProcessFormatTest : public ::testing::Test {
   }
 };
 
-void *StreamSetPropertyVersionID(uint32_t category, const char *version_id,
-                                 const char *sensor_name) {
+void StreamSetPropertyVersionID(uint32_t category, const char *version_id,
+                                const char *sensor_name) {
   EdgeAppLibSensorInfoStringProperty sensor_version_id = {};
   sensor_version_id.category = AITRIOS_SENSOR_INFO_STRING_SENSOR_NAME;
   strncpy(sensor_version_id.info, sensor_name,

@@ -8,3 +8,4 @@ version = "0.1.0"
 
 [tool.scikit-build.cmake.define]
 SENSCORD_INSTALL_PATH = {env="SENSCORD_INSTALL_PATH"}
+EVP_MOCK_TEST = {env="EVP_MOCK_TEST"}

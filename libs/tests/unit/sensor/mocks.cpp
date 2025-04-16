@@ -84,6 +84,12 @@ int32_t senscord_frame_get_channel_from_channel_id(
       ->senscord_frame_get_channel_from_channel_id(frame, channel_id, channel);
 }
 
+int32_t senscord_channel_get_channel_id(senscord_channel_t channel,
+                                        uint32_t *channel_id) {
+  return aitrios_sensor_ut::EdgeAppLibSensorUnitTest::mock_
+      ->senscord_channel_get_channel_id(channel, channel_id);
+}
+
 int32_t senscord_channel_get_raw_data(senscord_channel_t channel,
                                       struct senscord_raw_data_t *raw_data) {
   return aitrios_sensor_ut::EdgeAppLibSensorUnitTest::mock_

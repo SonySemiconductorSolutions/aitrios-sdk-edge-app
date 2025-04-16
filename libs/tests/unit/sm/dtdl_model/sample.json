@@ -90,7 +90,10 @@
                     "max_detections": 8,
                     "threshold": 0.125,
                     "input_width": 8,
-                    "input_height": 4
+                    "input_height": 4,
+                    "bbox_order": "xyxy",
+                    "bbox_normalization": false,
+                    "class_score_order": "cls_score"
                 }
             }
         }

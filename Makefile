@@ -25,13 +25,29 @@ WASM_OPT = /opt/binaryen/bin/wasm-opt
 IMAGE_NAME = app_build_env:2.0.0
 IMAGE = $(shell docker image ls -q $(IMAGE_NAME))
 
+ifeq ($(DEBUG_AOT), 1)
+EXTRA_CFLAGS += "-g"
+endif
+
 .PHONY: all
 all: docker_build
 	docker run --rm \
 	  -v $(MAKEFILE_DIR):$(ROOTDIR) \
 	  $(IMAGE_NAME) \
-	  	/bin/sh -c \
-		"mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && cmake -DCMAKE_TOOLCHAIN_FILE=/opt/wasi-sdk/share/cmake/wasi-sdk-pthread.cmake $(CMAKE_FLAGS) ..  && make && $(WASM_OPT) -Oz -o $(TARGET) $(BUILDDIR)/$(MODULE_NAME)"
+	  	/bin/sh -c "\
+		mkdir -p $(BUILDDIR) && \
+		cd $(BUILDDIR) && \
+		cmake -DCMAKE_TOOLCHAIN_FILE=/opt/wasi-sdk/share/cmake/wasi-sdk-pthread.cmake $(CMAKE_FLAGS) .. && make && \
+		if [ \"$(DEBUG_AOT)\" = \"1\" ]; then \
+			echo 'DEBUG_AOT is enabled: Copying $(BUILDDIR)/$(MODULE_NAME) to $(TARGET)'; \
+			cp $(BUILDDIR)/$(MODULE_NAME) $(TARGET); \
+		else \
+			echo 'DEBUG_AOT is disabled: Running WASM_OPT on $(BUILDDIR)/$(MODULE_NAME)'; \
+			$(WASM_OPT) -Oz -o $(TARGET) $(BUILDDIR)/$(MODULE_NAME); \
+		fi"
+
+
+
 
 .PHONY: clean
 clean:
@@ -53,5 +69,5 @@ cleanall: clean
 .PHONY: docker_build
 docker_build:
 ifeq ($(IMAGE),)
-	docker build . -f $(MAKEFILE_DIR)Dockerfile -t $(IMAGE_NAME)
+	docker build . --build-arg EXTRA_CFLAGS=$(EXTRA_CFLAGS) -f $(MAKEFILE_DIR)Dockerfile -t $(IMAGE_NAME)
 endif

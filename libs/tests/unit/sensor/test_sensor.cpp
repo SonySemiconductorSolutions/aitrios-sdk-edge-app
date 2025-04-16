@@ -354,6 +354,10 @@ TEST_F(EdgeAppLibSensorUnitTest,
       frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, &channel);
   ASSERT_EQ(ret, 0);
   EdgeAppLibSensorRawData raw_data = {};
+  EXPECT_CALL(*mock_, senscord_channel_get_channel_id(_, _))
+      .WillOnce(DoAll(
+          SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE),
+          Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
   ASSERT_EQ(ret, 0);
 }
@@ -369,6 +373,10 @@ TEST_F(EdgeAppLibSensorUnitTest,
       frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, &channel);
   ASSERT_EQ(ret, 0);
   EdgeAppLibSensorRawData raw_data = {};
+  EXPECT_CALL(*mock_, senscord_channel_get_channel_id(_, _))
+      .WillOnce(DoAll(
+          SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE),
+          Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
   ASSERT_EQ(ret, 0);
 }
@@ -385,6 +393,10 @@ TEST_F(EdgeAppLibSensorUnitTest, EdgeAppLibSensorChannelGetRawDataFailFileIO) {
       frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, &channel);
   ASSERT_EQ(ret, 0);
   EdgeAppLibSensorRawData raw_data = {};
+  EXPECT_CALL(*mock_, senscord_channel_get_channel_id(_, _))
+      .WillOnce(DoAll(
+          SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE),
+          Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
   ASSERT_EQ(ret, -1);
 }
@@ -400,6 +412,10 @@ TEST_F(EdgeAppLibSensorUnitTest,
       frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT, &channel);
   ASSERT_EQ(ret, 0);
   EdgeAppLibSensorRawData raw_data = {};
+  EXPECT_CALL(*mock_, senscord_channel_get_channel_id(_, _))
+      .WillOnce(
+          DoAll(SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT),
+                Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
   ASSERT_EQ(ret, 0);
 }
@@ -415,6 +431,10 @@ TEST_F(EdgeAppLibSensorUnitTest,
       frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, &channel);
   ASSERT_EQ(ret, 0);
   EdgeAppLibSensorRawData raw_data = {};
+  EXPECT_CALL(*mock_, senscord_channel_get_channel_id(_, _))
+      .WillOnce(DoAll(
+          SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE),
+          Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
   ASSERT_EQ(ret, 0);
 }
@@ -431,6 +451,10 @@ TEST_F(EdgeAppLibSensorUnitTest, EdgeAppLibSensorChannelGetRawData_Fail_MapIO) {
       frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, &channel);
   ASSERT_EQ(ret, 0);
   EdgeAppLibSensorRawData raw_data = {};
+  EXPECT_CALL(*mock_, senscord_channel_get_channel_id(_, _))
+      .WillOnce(DoAll(
+          SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE),
+          Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
   ASSERT_EQ(ret, -1);
 }
@@ -448,6 +472,10 @@ TEST_F(EdgeAppLibSensorUnitTest,
   EXPECT_CALL(*mock_, senscord_channel_get_raw_data(_, _))
       .WillRepeatedly(testing::Return(-1));
   EdgeAppLibSensorRawData raw_data = {};
+  EXPECT_CALL(*mock_, senscord_channel_get_channel_id(_, _))
+      .WillOnce(DoAll(
+          SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE),
+          Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
   ASSERT_EQ(ret, -1);
 }

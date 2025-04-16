@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import argparse
-import numpy as np
+import sys
+
 from edge_app_sdk import (
     EdgeApp,
     EdgeAppError,
@@ -31,19 +31,11 @@ IN_INTEGRATION_TEST = False
 
 def log(msg: str):
     if not IN_INTEGRATION_TEST:
-        print(msg)
+        print(msg, flush=True)
 
 
-class SimpleEdgeApp(EdgeApp):
+class DetectionEdgeApp(EdgeApp):
     """Implements the event functions of our Edge App."""
-
-    def on_create(self) -> int:
-        log("[PYTHON] on_create")
-        return 0
-
-    def on_configure(self) -> int:
-        log("[PYTHON] on_configure")
-        return 0
 
     def on_iterate(self) -> int:
         log("[PYTHON] on_iterate")
@@ -73,18 +65,6 @@ class SimpleEdgeApp(EdgeApp):
 
         return 0
 
-    def on_stop(self) -> int:
-        log("[PYTHON] on_stop")
-        return 0
-
-    def on_start(self) -> int:
-        log("[PYTHON] on_start")
-        return 0
-
-    def on_destroy(self) -> int:
-        log("[PYTHON] on_destroy")
-        return 0
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -97,7 +77,7 @@ def main():
     IN_INTEGRATION_TEST = args.integration_test
 
     log("[PYTHON] Running state machine...")
-    exit_code = run_sm(SimpleEdgeApp, stream_key)
+    exit_code = run_sm(DetectionEdgeApp, stream_key)
     log(f"[PYTHON] {exit_code=}")
     sys.exit(exit_code)
 

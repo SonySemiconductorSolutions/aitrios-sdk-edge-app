@@ -54,8 +54,11 @@ if (DEFINED INITIAL_MEMORY)
     endif()
 endif()
 
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -flto -Xclang -fmerge-functions")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -Xclang -fmerge-functions -g")
+else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -flto -Xclang -fmerge-functions")
+endif()
 
 # -fno-exceptions
 #   For our target (wasm), C++ exceptions are not available in general.

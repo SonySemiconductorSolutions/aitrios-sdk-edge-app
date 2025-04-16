@@ -11,7 +11,7 @@ This repository provides SDKs and libraries to simplify the development of Edge 
 ## Getting Started
 
 ### Cloning the Repository
-This project requires external libraries such as **FlatBuffers**, **Parson**, and **Base64**, you need to ensure that all submodules are initialized and updated. Use the following command: 
+This project requires external libraries such as **FlatBuffers**, **Parson**, **Base64** and **Pybind11** you need to ensure that all submodules are initialized and updated. Use the following command: 
 `git submodule update --init --recursive`
 
 ### Install Local Console
@@ -38,7 +38,7 @@ python3 sample_apps/classification/python/imx500_classification_local_console_de
 
 ### Sample Application for C/C++
 
-Currently, C/C++ applications do not run on the Raspberry Pi with the AI Camera and AITRIOS™ compatible edge AI hardware. Support for this configuration is planned for the future. 
+Currently, C/C++ applications do not run on the Raspberry Pi with the AI Camera.
 
 #### Build apps
 

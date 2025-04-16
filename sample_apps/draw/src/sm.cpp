@@ -103,9 +103,9 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
   }
 
   LOG_TRACE("Create draw buffer");
-  extern DataProcessorCustomParam ssd_param;
-  uint32_t img_w = ssd_param.input_width;
-  uint32_t img_h = ssd_param.input_height;
+  extern DataProcessorCustomParam detection_param;
+  uint32_t img_w = detection_param.input_width;
+  uint32_t img_h = detection_param.input_height;
   EdgeAppLibDrawFormat img_format = AITRIOS_DRAW_FORMAT_UNDEFINED;
   EdgeAppLibSensorImageProperty property = {};
   if (SensorStreamGetProperty(s_stream, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
@@ -130,9 +130,12 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
                                         img_w, img_h};
   // Draw box
   if (strlen(s_metadata) > 0) {
-    auto object_detection_top = SmartCamera::GetObjectDetectionTop(s_metadata);
+    auto object_detection_root =
+        SmartCamera::GetObjectDetectionRoot(s_metadata);
     auto obj_detection_data =
-        object_detection_top->perception()->object_detection_list();
+        object_detection_root->metadata_as_ObjectDetectionTop()
+            ->perception()
+            ->object_detection_list();
     for (int i = 0; i < obj_detection_data->size(); ++i) {
       auto general_object = obj_detection_data->Get(i);
 

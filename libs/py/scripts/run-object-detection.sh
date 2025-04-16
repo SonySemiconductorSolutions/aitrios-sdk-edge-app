@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2024 Sony Semiconductor Solutions Corp. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-APP_PATH = "./tests/edge_app/build/build/edge_app"
-PYTHON_APP_PATH = "./libs/py/example/simple_edge_app.py"
-VALGRIND_LOG = "./valgrind.log"
-DTDL_LOG = "./state.logs"
-INTEGRATION_TEST_LOG = "./integration_test.log"
-INTEGRATION_TEST_INTERVAL_SECONDS = 0.5
-INTEGRATION_TEST_RETRY_NUM = 20
-APITEST_LAST_SCENARIO_ID = 7
-TIME_LIMIT_SEC = 30.0 # 2.0 # TODO: for some reason Python bindings integration test requires more time for consistent test runs # increased more for running on github actions
+if [ -d "./metadata" ]; then
+  rm -rf "./metadata"
+fi
+if [ -d "./images" ]; then
+  rm -rf "./images"
+fi
+
+/home/pi/senscord_libcamera_package/share/senscord/setup_env.sh \
+python ../example/object_detection_edge_app.py
