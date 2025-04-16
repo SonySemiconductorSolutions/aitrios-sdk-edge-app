@@ -464,10 +464,10 @@ def test_generate_inference_data_detection(data_export):
 
     assert inference_results[0]["object_id"] == 1
     assert inference_results[0]["score"] == 0.5
-    assert inference_results[0]["bbox"]["left"] == 0
-    assert inference_results[0]["bbox"]["top"] == 0
-    assert inference_results[0]["bbox"]["right"] == 10
-    assert inference_results[0]["bbox"]["bottom"] == 20
+    assert inference_results[0]["bounding_box"]["left"] == 0
+    assert inference_results[0]["bounding_box"]["top"] == 0
+    assert inference_results[0]["bounding_box"]["right"] == 10
+    assert inference_results[0]["bounding_box"]["bottom"] == 20
 
 
 def test_generate_inference_data_none(data_export):

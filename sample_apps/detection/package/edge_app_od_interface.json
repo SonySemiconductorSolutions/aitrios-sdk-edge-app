@@ -1,6 +1,6 @@
 {
     "@context": "dtmi:dtdl:context;3",
-    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:detection;5",
+    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:detection;7",
     "@type": "Interface",
     "displayName": "Edge App Example",
     "contents": [
@@ -1108,6 +1108,70 @@
                                                                     "name": "input_height",
                                                                     "displayName": "Input height",
                                                                     "schema": "integer"
+                                                                },
+                                                                {
+                                                                    "name": "bbox_order",
+                                                                    "displayName": "Bounding box format",
+                                                                    "description": "The format of the bounding box.",
+                                                                    "schema": {
+                                                                        "@type": "Enum",
+                                                                        "valueSchema": "string",
+                                                                        "enumValues": [
+                                                                            {
+                                                                                "name": "xywh",
+                                                                                "displayName": "XYWH",
+                                                                                "description": "Bounding box format is (x, y, width, height).",
+                                                                                "enumValue": "xywh"
+                                                                            },
+                                                                            {
+                                                                                "name": "xyxy",
+                                                                                "displayName": "XYXY",
+                                                                                "description": "Bounding box format is (xmin, ymin, xmax, ymax).",
+                                                                                "enumValue": "xyxy"
+                                                                            },
+                                                                            {
+                                                                                "name": "xxyy",
+                                                                                "displayName": "XXYY",
+                                                                                "description": "Bounding box format is (xmin, xmax, ymin, ymax).",
+                                                                                "enumValue": "xxyy"
+                                                                            },
+                                                                            {
+                                                                                "name": "yxyx",
+                                                                                "displayName": "YXYX",
+                                                                                "description": "Bounding box format is (ymin, xmax, ymax, xmin).",
+                                                                                "enumValue": "yxyx"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "name": "bbox_normalization",
+                                                                    "displayName": "Flag for Bounding box normalization",
+                                                                    "description": "A value of true indicates that the bounding box is normalized (0.0-1.0). If false, the values are in absolute pixels based on the input image size.",
+                                                                    "schema": "boolean"
+                                                                },
+                                                                {
+                                                                    "name": "class_score_order",
+                                                                    "displayName": "Class and Score Order",
+                                                                    "description": "The order in which the class_id and score information is stored in the input buffer, either first containing the class_id information followed by the score information or the other way around.",
+                                                                    "schema": {
+                                                                        "@type": "Enum",
+                                                                        "valueSchema": "string",
+                                                                        "enumValues": [
+                                                                            {
+                                                                                "name": "cls_score",
+                                                                                "displayName": "Class-Score",
+                                                                                "description": "Class-Score order is (class_id, score).",
+                                                                                "enumValue": "cls_score"
+                                                                            },
+                                                                            {
+                                                                                "name": "score_cls",
+                                                                                "displayName": "Score-Class",
+                                                                                "description": "Score-Class order is (score, class_id).",
+                                                                                "enumValue": "score_cls"
+                                                                            }
+                                                                        ]
+                                                                    }
                                                                 }
                                                             ]
                                                         }
@@ -1115,6 +1179,61 @@
                                                 ]
                                             }
                                         }
+                                    }
+                                },
+                                {
+                                    "name": "area",
+                                    "displayName": "Area",
+                                    "description": "If area is included in Configuration, the count result of the objects within the set area and the objects within the area will be sent.",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "coordinates",
+                                                "displayName": "Area coordinates",
+                                                "description": "Area coordinates as a rectangle",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "left",
+                                                            "displayName": "X coordinate for the top left corner of Area",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "top",
+                                                            "displayName": "Y coordinate for the top left corner of Area",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "right",
+                                                            "displayName": "X coordinate for the bottom right corner of Area",
+                                                            "schema": "integer"
+                                                        },
+                                                        {
+                                                            "name": "bottom",
+                                                            "displayName": "Y coordinate for the bottom right corner of Area",
+                                                            "schema": "integer"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "overlap",
+                                                "displayName": "Overlap",
+                                                "description": "Threshold on the value of the overlap between the Area and the detected object, above which an object is considered to be inside the area. The overlap is calculated as ratio of the intersection area of the object and the Area, divided by the area of the object.",
+                                                "schema": "float"
+                                            },
+                                            {
+                                                "name": "class_id",
+                                                "displayName": "Class id",
+                                                "description": "Only objects that match one of the specified class_ids are checked. Setting class_id to an empty array means that all objects will be checked.",
+                                                "schema": {
+                                                    "@type": "Array",
+                                                    "elementSchema": "integer"
+                                                }
+                                            }
+                                        ]
                                     }
                                 },
                                 {

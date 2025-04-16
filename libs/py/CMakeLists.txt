@@ -15,42 +15,51 @@
 project(edge_app_py)
 cmake_minimum_required(VERSION 3.22)
 
+# Compiler settings
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread -fPIC")
+
+# Root Directories
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(LIBS_DIR ${ROOT_DIR}/libs)
 set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
 
-set(EVP_MOCK 1)
-if(NOT SENSCORD_INSTALL_PATH)
-  set(MOCK 1)
-else()
-  set(MOCK 0)
-endif()
-set(ELF 1)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread -fPIC")
+# Base source files
 set(SOURCE_FILES ${SOURCE_FILES}
-  ${MOCKS_DIR}/evp/simple_evp.c
   ${LIBS_DIR}/third_party/parson/parson.c
-  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
+  src/py_module.cpp
+  src/py_sm.cpp
 )
 
-add_compile_definitions(PYTHON_MODULE)
+# Allow manually setting of EVP_MOCK (OFF by default)
+option(EVP_MOCK "Force using mock EVP Agent implementation" OFF)
 
-if(MOCK EQUAL 1)
-  message(STATUS "Using mock")
+# Detect SensCord
+if(NOT SENSCORD_INSTALL_PATH)
+  message(WARNING "##### SENSCORD_INSTALL_PATH is not set. SensCord will be mocked.")
+  set(SENSCORD_MOCK ON)
+else()
+  message(WARNING "##### SENSCORD_INSTALL_PATH is set. Using real SensCord.")
+  set(SENSCORD_MOCK OFF)
+endif()
 
-  # For the data provided by mock sensor
-  add_compile_definitions(MOCK_PASSTHROUGH)
-
-  set(SOURCE_FILES ${SOURCE_FILES}
+# Build logic
+if(SENSCORD_MOCK)
+  message(WARNING "##### Fully mock build.")
+  # Fully mock build
+  list(APPEND SOURCE_FILES
+    ${MOCKS_DIR}/evp/simple_evp.c
+    ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
     ${MOCKS_DIR}/sensor/mock_sensor.cpp
     ${MOCKS_DIR}/sensor/testing_utils.cpp
     ${MOCKS_DIR}/device/mock_device.cpp
     ${MOCKS_DIR}/log/mock_log.cpp
   )
+  add_compile_definitions(PYTHON_MODULE MOCK_PASSTHROUGH)
+
   include_directories(
     ${SAMPLE_APP_DIR}/include
     ${SAMPLE_APP_DIR}/include/schemas
@@ -62,63 +71,71 @@ if(MOCK EQUAL 1)
     ${MOCKS_DIR}/device
     ${LIBS_DIR}/sensor/src/
   )
-else()
-  # still need some mocks even when linking to real senscord
-  set(SOURCE_FILES ${SOURCE_FILES}
+
+elseif(EVP_MOCK)
+  message(WARNING "##### SensCord real + EVP Agent mock.")
+  # SensCord real + EVP Agent mock
+  list(APPEND SOURCE_FILES
+    ${MOCKS_DIR}/evp/simple_evp.c
+    ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
     ${MOCKS_DIR}/device/mock_device.cpp
     src/py_mocks.cpp
   )
+  add_compile_definitions(PYTHON_MODULE)
+
+else()
+  message(WARNING "##### Both SensCord and EVP Agent real.")
+  # Both SensCord and EVP Agent real
+  list(APPEND SOURCE_FILES
+    ${MOCKS_DIR}/device/mock_device.cpp
+    src/py_mocks.cpp
+  )
+  add_compile_definitions(PYTHON_MODULE)
 endif()
 
-add_subdirectory(${LIBS_DIR} ${CMAKE_BINARY_DIR}/build)
 
+# Dependencies
+add_subdirectory(${LIBS_DIR} ${CMAKE_BINARY_DIR}/build)
 # For now using the passthrough data_processor until a data_processor can be implemeneted in Python
 add_subdirectory(${SAMPLE_APP_DIR}/passthrough/data_processor/src ${CMAKE_BINARY_DIR}/build/data_processor)
-
 set(PYBIND11_FINDPYTHON ON)
 add_subdirectory(${LIBS_DIR}/third_party/pybind11 ${CMAKE_BINARY_DIR}/build/pybind11)
 
-set(SOURCE_FILES ${SOURCE_FILES}
-  src/py_module.cpp
-  src/py_sm.cpp
+# Build the pybind11 module
+pybind11_add_module(_edge_app_sdk ${SOURCE_FILES})
+
+# Linking
+target_link_libraries(_edge_app_sdk
+  PRIVATE
+    edge_app_lib
+    data_processor_api
 )
 
-pybind11_add_module(_edge_app_sdk ${SOURCE_FILES})
-target_link_libraries(_edge_app_sdk PRIVATE edge_app_lib data_processor_api)
-
-
-if(MOCK EQUAL 0)
-  message(STATUS "Linking senscord")
-
-  if(NOT SENSCORD_INSTALL_PATH)
-    message(FATAL_ERROR "SENSCORD_INSTALL_PATH variable is not defined.")
-  endif()
+if(NOT SENSCORD_MOCK)
   list(APPEND CMAKE_PREFIX_PATH ${SENSCORD_INSTALL_PATH})
   find_package(senscord REQUIRED)
   target_link_libraries(_edge_app_sdk PRIVATE senscord)
+
+  if(NOT EVP_MOCK)
+    set(EVP_LIB ${LIBS_DIR}/py/lib/libevp-app-sdk-bundle.a)
+    target_link_libraries(_edge_app_sdk PRIVATE ${EVP_LIB})
+  endif()
 endif()
 
-
+# Install Python module
 install(TARGETS _edge_app_sdk DESTINATION edge_app_sdk)
 
-# Generate typing stubs for the python module
+# Generate typing stub files after build
 add_custom_command(
-    TARGET _edge_app_sdk POST_BUILD
-    # Create the py.typed marker file to indicate that the package has type annotations
-    COMMAND
-    "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/py.typed"
-    # Execute pybind11-stubgen, with our python module
-    COMMAND
-    "${Python_EXECUTABLE}" -m pybind11_stubgen
-    --exit-code
-    -o "${CMAKE_CURRENT_BINARY_DIR}" _edge_app_sdk
-    VERBATIM
+  TARGET _edge_app_sdk POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/py.typed"
+  COMMAND "${Python_EXECUTABLE}" -m pybind11_stubgen --exit-code -o "${CMAKE_CURRENT_BINARY_DIR}" _edge_app_sdk
+  VERBATIM
 )
 
-# Include the generated stub files in the installation
 install(
-    FILES
+  FILES
     "${CMAKE_CURRENT_BINARY_DIR}/_edge_app_sdk.pyi"
     "${CMAKE_CURRENT_BINARY_DIR}/py.typed"
-    DESTINATION edge_app_sdk
+  DESTINATION edge_app_sdk
 )

@@ -28,7 +28,8 @@
 #include "pthread.h"
 #define PORT 8080
 #define MAX_CONNECTIONS 5
-#define BUFFER_SIZE 1024 * 8
+/** buffer size depends on evp specification */
+#define EVP_MQTT_SEND_BUFF_SIZE 131072
 
 #define PENDING_OPERATIONS 10
 
@@ -67,6 +68,7 @@ static void *entrypoint(void *args) {
   struct sockaddr_in address;
   int opt = 1;
   int addrlen = sizeof(address);
+  int buffer_size = EVP_MQTT_SEND_BUFF_SIZE;
 
   LOG_INFO("EVP background thread entrypoint");
 
@@ -75,6 +77,16 @@ static void *entrypoint(void *args) {
     exit(1);
   }
   if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+    LOG_ERR("setsockopt failed");
+    exit(1);
+  }
+  if (setsockopt(server_fd, SOL_SOCKET, SO_SNDBUF, &buffer_size,
+                 sizeof(buffer_size))) {
+    LOG_ERR("setsockopt failed");
+    exit(1);
+  }
+  if (setsockopt(server_fd, SOL_SOCKET, SO_RCVBUF, &buffer_size,
+                 sizeof(buffer_size))) {
     LOG_ERR("setsockopt failed");
     exit(1);
   }
@@ -100,14 +112,14 @@ static void *entrypoint(void *args) {
 
     pthread_mutex_lock(&evp.mutex);
     if (operations.buffer[operations.next].config == NULL) {
-      char *aux = (char *)malloc(BUFFER_SIZE);
+      char *aux = (char *)malloc(EVP_MQTT_SEND_BUFF_SIZE);
       // assuming we receive all data at one call
-      int config_len = recv(new_socket, aux, BUFFER_SIZE, 0);
+      int config_len = recv(new_socket, aux, EVP_MQTT_SEND_BUFF_SIZE, 0);
       operations.buffer[operations.next] =
           (RingBufferElement){.config = aux, .config_len = config_len};
       operations.next = (operations.next + 1) % PENDING_OPERATIONS;
       pthread_mutex_unlock(&evp.mutex);
-      assert(config_len < BUFFER_SIZE);
+      assert(config_len < EVP_MQTT_SEND_BUFF_SIZE);
       assert(config_len > 0);
       LOG_INFO("Received: %d", config_len);
     } else {
@@ -146,6 +158,8 @@ EVP_RESULT EVP_processEvent(struct EVP_client *h, int timeout_ms) {
   assert(h == &evp.h);
   EVP_RESULT res = EVP_OK;
   pthread_mutex_lock(&evp.mutex);
+  // To reduce cpu load during integration test, sleep a short time.
+  usleep(10000);
   if (operations.buffer[operations.curr].config_len == 1) {
     res = EVP_SHOULDEXIT;
     pthread_cancel(evp.thread);
@@ -162,8 +176,6 @@ EVP_RESULT EVP_processEvent(struct EVP_client *h, int timeout_ms) {
     operations.buffer[operations.curr] =
         (RingBufferElement){.config = NULL, .config_len = 0};
     operations.curr = (operations.curr + 1) % PENDING_OPERATIONS;
-  } else {
-    usleep(1);
   }
   pthread_mutex_unlock(&evp.mutex);
   return res;

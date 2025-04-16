@@ -59,6 +59,9 @@ class EdgeAppLibSensorUnitTestMock {
               (senscord_frame_t frame, uint32_t channel_id,
                senscord_channel_t *channel));
 
+  MOCK_METHOD(int32_t, senscord_channel_get_channel_id,
+              (senscord_channel_t channel, uint32_t *channel_id));
+
   MOCK_METHOD(int32_t, senscord_channel_get_raw_data,
               (senscord_channel_t channel,
                struct senscord_raw_data_t *raw_data));

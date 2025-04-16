@@ -21,6 +21,13 @@ Then, build and install the Edge App SDK package:
 pip install .
 ```
 
+>**NOTE**
+>
+> You need to ensure **Pybind11** is initialized and updated as a submodule. Use the following command.
+> ```sh
+> git submodule update --init --recursive libs/third_party/pybind11
+> ```
+
 ## Build with Senscord
 
 Build Senscord:

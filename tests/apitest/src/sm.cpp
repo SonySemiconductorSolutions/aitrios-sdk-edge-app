@@ -220,11 +220,12 @@ int onConfigure(char *topic, void *value, int valuesize) {
   // apitest
   const char *context = "<onConfigure>";
   EdgeAppLibLogTrace(context, "start.");
-  // EdgeAppLibLogDebug(context, "start.");
-  // EdgeAppLibLogInfo(context, "start.");
-  // EdgeAppLibLogWarn(context, "start.");
-  // EdgeAppLibLogError(context, "start.");
-  // EdgeAppLibLogCritical(context, "start.");
+  EdgeAppLibLogDebug(context, "start.");
+  EdgeAppLibLogInfo(context, "start.");
+  EdgeAppLibLogWarn(context, "start.");
+  EdgeAppLibLogError(context, "start.");
+  EdgeAppLibLogCritical(context, "start.");
+  LOG_CRITICAL("start.");
 
   if (value == NULL) {
     LOG_ERR("[onConfigure] Invalid param : value=NULL");

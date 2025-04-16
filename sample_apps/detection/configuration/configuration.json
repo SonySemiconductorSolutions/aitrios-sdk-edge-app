@@ -102,9 +102,26 @@
                         "max_detections": 10,
                         "threshold": 0.3,
                         "input_width": 320,
-                        "input_height": 320
+                        "input_height": 320,
+                        "bbox_order": "xyxy",
+                        "bbox_normalization": true,
+                        "class_score_order": "cls_score"
                     }
                 }
+            },
+            "area": {
+                "coordinates": {
+                    "left": 10,
+                    "top": 15,
+                    "right": 610,
+                    "bottom": 415
+                },
+                "overlap": 0.5,
+                "class_id": [
+                    1,
+                    2,
+                    3
+                ]
             },
             "metadata_settings": {
                 "format": 0

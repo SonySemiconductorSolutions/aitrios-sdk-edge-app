@@ -15,6 +15,8 @@
 import json
 import os
 import pytest
+import random
+import string
 import time
 import check_pq_settings
 from utils import manage_edge_app
@@ -25,9 +27,26 @@ from utils import send_data
 from constants import APITEST_LAST_SCENARIO_ID, DTDL_LOG, INTEGRATION_TEST_INTERVAL_SECONDS, INTEGRATION_TEST_RETRY_NUM, INTEGRATION_TEST_LOG, APP_PATH, PYTHON_APP_PATH, VALGRIND_LOG
 from state_checker import DTDLStateChecker
 
+# buffer size depends on evp specification
+EVP_MQTT_SEND_BUFF_SIZE = 131072
+
 class State:
     IDLE = 1
     RUNNING = 2
+
+class Method:
+    MQTT = 0
+    BLOB = 1
+    HTTP = 2
+
+class Codec:
+    RAW = 0
+    JPG = 1
+    BMP = 2
+
+class MetadataFormat:
+    BASE64 = 0
+    JSON = 1
 
 def change_pq_settings(data: dict) -> None:
     data["req_info"]["req_id"] = "change_pq_settings"
@@ -151,6 +170,17 @@ def validate_switch_dnn_custom_settings(data: dict, id_suffix: str) -> None:
     assert data["custom_settings"]["res_info"]["res_id"] == f"switch_dnn_custom_settings{id_suffix}"
     assert data["common_settings"]["number_of_inference_per_message"] == 2
 
+def change_custom_settings_metadata_format(data: dict, metadata_format: int) -> None:
+    data["req_info"]["req_id"] = f"custom_settings_metadata_format{metadata_format}"
+    data["custom_settings"]["metadata_settings"]["format"] = metadata_format
+    send_data(data)
+    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+
+def validate_custom_settings_metadata_format(data: dict, metadata_format: int) -> None:
+    assert data["res_info"]["res_id"] == f"custom_settings_metadata_format{metadata_format}"
+    assert data["custom_settings"]["res_info"]["res_id"] == f"custom_settings_metadata_format{metadata_format}"
+    assert data["custom_settings"]["metadata_settings"]["format"] == metadata_format
+
 def change_process_state(data: dict, state: int, method: int, req_id: str = None) -> None:
     if req_id:
         data["req_info"]["req_id"] = req_id
@@ -164,12 +194,6 @@ def change_process_state(data: dict, state: int, method: int, req_id: str = None
     send_data(data)
     time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
 
-def validate_process_state(data: dict, state: int, method: int) -> None:
-    assert data["res_info"]["res_id"] == "change_process_state" + str(state)
-    assert data["common_settings"]["process_state"] == state
-    assert data["common_settings"]["port_settings"]["input_tensor"]["method"] == method
-    assert data["common_settings"]["port_settings"]["metadata"]["method"] == method
-
 def change_codec_settings(data: dict, format: int) -> None:
     data["req_info"]["req_id"] = f"change_codec_settings{format}"
     data["common_settings"]["codec_settings"]["format"] = format
@@ -180,12 +204,16 @@ def validate_codec_settings(data: dict, format: int) -> None:
     assert data["res_info"]["res_id"] == f"change_codec_settings{format}"
     assert data["common_settings"]["codec_settings"]["format"] == format
 
-def get_and_validate_process_state(checker: DTDLStateChecker, state: int, res_id: str) -> None:
+def get_and_validate_process_state(checker: DTDLStateChecker, state: int, method: int, res_id: str = None) -> dict:
+    if res_id == None:
+        res_id = "change_process_state" + str(state)
     for i in range(INTEGRATION_TEST_RETRY_NUM):
         data = checker.get_state()
         if data["res_info"]["res_id"] == res_id and data["common_settings"]["process_state"] == state:
+            assert data["common_settings"]["port_settings"]["input_tensor"]["method"] == method
+            assert data["common_settings"]["port_settings"]["metadata"]["method"] == method
             # Pass
-            break
+            return data
 
         if i == INTEGRATION_TEST_RETRY_NUM - 1:
             # Failed. So raise assertion.
@@ -237,6 +265,47 @@ VALIDATE_CUSTOM_SETTINGS_PER_APP = {
     "switch_dnn": validate_switch_dnn_custom_settings,
 }
 
+def generate_random_string(length):
+    letters = string.ascii_letters
+    random_string = ''.join(random.choice(letters) for _ in range(length))
+    return random_string
+
+def do_test_configuration_json_max_size(checker: DTDLStateChecker, app: str, data: dict):
+
+    # preserve original value
+    original_value = data["common_settings"]["port_settings"]["metadata"]["path"]
+
+    data["req_info"]["req_id"] = "configuration_max_size"
+    data["common_settings"]["port_settings"]["metadata"]["path"] = ""
+
+    json_str = json.dumps(data)
+    json_str_len = len(json_str)
+
+    max_len = EVP_MQTT_SEND_BUFF_SIZE - 1
+
+    if max_len > json_str_len:
+        # generate and set dummy value for being configuration json size max.
+        dummy_value = generate_random_string(max_len - json_str_len)
+        data["common_settings"]["port_settings"]["metadata"]["path"] = dummy_value
+
+        json_str = json.dumps(data)
+        json_str_len = len(json_str.encode())
+        assert json_str_len == max_len
+        print(f"[do_test_configuration_json_max_size] json_str_len {json_str_len}")
+
+        send_data(data)
+        time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+
+        state_dict = checker.get_state()
+
+        assert state_dict["res_info"]["res_id"] == "configuration_max_size"
+        assert state_dict["res_info"]["code"] == 0
+        assert state_dict["res_info"]["detail_msg"] == ""
+        assert state_dict["common_settings"]["port_settings"]["metadata"]["path"] == dummy_value
+
+    # restore original value.
+    data["common_settings"]["port_settings"]["metadata"]["path"] = original_value
+
 @pytest.fixture(scope="session")
 def app(pytestconfig) -> str:
     app_name = pytestconfig.getoption("app")
@@ -271,17 +340,19 @@ def test_valgrind(app: str, python_bindings: bool):
             state_dict = checker.get_state()
             validate_pq_settings(state_dict)
 
-            change_number_iterations(data, 3)
+            change_number_iterations(data, 2)
             state_dict = checker.get_state()
-            validate_number_iterations(state_dict, 3)
+            validate_number_iterations(state_dict, 2)
 
-            change_codec_settings(data, 0)
+            codec = Codec.RAW
+            change_codec_settings(data, codec)
             state_dict = checker.get_state()
-            validate_codec_settings(state_dict, 0)
+            validate_codec_settings(state_dict, codec)
 
-            change_codec_settings(data, 1)
+            codec = Codec.JPG
+            change_codec_settings(data, codec)
             state_dict = checker.get_state()
-            validate_codec_settings(state_dict, 1)
+            validate_codec_settings(state_dict, codec)
 
             CUSTOM_SETTINGS_PER_APP[app](data, "1")
             state_dict = checker.get_state()
@@ -292,63 +363,97 @@ def test_valgrind(app: str, python_bindings: bool):
             state_dict = checker.get_state()
             VALIDATE_CUSTOM_SETTINGS_PER_APP[app](state_dict, "2")
 
-            change_process_state(data, State.IDLE, 0)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.IDLE, 0)
+            # check configuration json max size
+            do_test_configuration_json_max_size(checker, app, data)
 
+            state = State.IDLE
+            method = Method.MQTT
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
+
+            state = State.RUNNING
+            method = Method.MQTT
             req_id = "change_process_state_numofinf"
-            change_process_state(data, State.RUNNING, 0, req_id)
-            # number_of_iterations is 3.
-            # So after iterate 3 times completed, state changes from running to idle.
-            get_and_validate_process_state(checker, State.IDLE, req_id)
+            change_process_state(data, state, method, req_id)
+            # number_of_iterations is 2.
+            # So after iterate 2 times completed, state changes from running to idle.
+            state_dict = get_and_validate_process_state(checker, State.IDLE, method, req_id)
+            data["common_settings"]["process_state"] = 1
 
             change_number_iterations(data, 0)
             state_dict = checker.get_state()
             validate_number_iterations(state_dict, 0)
 
-            # inference with port_settings method 0
-            change_process_state(data, State.RUNNING, 0)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.RUNNING, 0)
+            # inference with port_settings method MQTT
+            state = State.RUNNING
+            method = Method.MQTT
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            change_process_state(data, State.IDLE, 0)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.IDLE, 0)
+            state = State.IDLE
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            # inference with port_settings method 1
-            change_process_state(data, State.RUNNING, 1)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.RUNNING, 1)
+            # inference with port_settings method BLOB
+            state = State.RUNNING
+            method = Method.BLOB
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            change_process_state(data, State.IDLE, 1)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.IDLE, 1)
+            state = State.IDLE
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            # inference with port_settings method 2
-            change_process_state(data, State.RUNNING, 2)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.RUNNING, 2)
+            # inference with port_settings method HTTP
+            state = State.RUNNING
+            method = Method.HTTP
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            change_process_state(data, State.IDLE, 2)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.IDLE, 2)
+            state = State.IDLE
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            # inference with codec_settings format 0
-            change_codec_settings(data, 0)
+            # inference with codec_settings format RAW
+            codec = Codec.RAW
+            change_codec_settings(data, codec)
             state_dict = checker.get_state()
-            validate_codec_settings(state_dict, 0)
+            validate_codec_settings(state_dict, codec)
 
-            change_process_state(data, State.RUNNING, 2)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.RUNNING, 2)
+            state = State.RUNNING
+            method = Method.HTTP
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            change_process_state(data, State.IDLE, 2)
-            state_dict = checker.get_state()
-            validate_process_state(state_dict, State.IDLE, 2)
+            state = State.IDLE
+            change_process_state(data, state, method)
+            state_dict = get_and_validate_process_state(checker, state, method)
 
-            change_codec_settings(data, 1)
+            codec = Codec.JPG
+            change_codec_settings(data, codec)
             state_dict = checker.get_state()
-            validate_codec_settings(state_dict, 1)
+            validate_codec_settings(state_dict, codec)
+
+            # inference with metadata format JSON
+            if app == "detection" or app == "classification":
+                metadata_format = MetadataFormat.JSON
+                change_custom_settings_metadata_format(data, metadata_format)
+                state_dict = checker.get_state()
+                validate_custom_settings_metadata_format(state_dict, metadata_format)
+
+                state = State.RUNNING
+                method = Method.HTTP
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
+
+                state = State.IDLE
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
+
+                metadata_format = MetadataFormat.BASE64
+                change_custom_settings_metadata_format(data, metadata_format)
+                state_dict = checker.get_state()
+                validate_custom_settings_metadata_format(state_dict, metadata_format)
 
             # prepare
             change_pq_settings(data)

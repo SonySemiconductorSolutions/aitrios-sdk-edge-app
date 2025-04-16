@@ -67,7 +67,11 @@ void RunningThread::ThreadStop() {
   const int timeout_seconds = 60;
   start_time = time(NULL);
   while (1) {
+#if defined(__APPLE__)
+    res = 0;
+#else
     res = pthread_tryjoin_np(command_thread, &status);
+#endif
     if (res == 0) {
       break;
     } else {

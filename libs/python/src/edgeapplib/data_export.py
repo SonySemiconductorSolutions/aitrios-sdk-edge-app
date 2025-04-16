@@ -201,7 +201,7 @@ class DataExport:
                     {
                         "object_id": int(detection.category),
                         "score": round(float(detection.conf), 3),
-                        "bbox": {
+                        "bounding_box": {
                             "left": x,
                             "top": y,
                             "right": x + w,

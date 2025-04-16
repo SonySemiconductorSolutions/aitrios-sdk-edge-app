@@ -33,7 +33,8 @@ class MockSensor {
               (char *port_name, int type, const void *data, size_t size,
                uint64_t timestamp),
               ());
-  MOCK_METHOD(void, SensorLatencySetMode, (bool enable, int max_points), ());
+  MOCK_METHOD(int32_t, SensorLatencySetMode, (bool enable, uint32_t backlog),
+              ());
 };
 
 MockSensor *g_mock = nullptr;
@@ -46,9 +47,9 @@ extern "C" int32_t SensorGetFrameLatency(EdgeAppLibSensorFrame frame,
   }
   return -1;
 }
-extern "C" void SensorLatencySetMode(bool enable, int max_points) {
+extern "C" int32_t SensorLatencySetMode(bool enable, uint32_t backlog) {
   if (g_mock) {
-    g_mock->SensorLatencySetMode(enable, max_points);
+    g_mock->SensorLatencySetMode(enable, backlog);
   }
 }
 

@@ -389,6 +389,7 @@ int32_t RunApiTestScenarioFrame() {
   }
 
   CLEANUP_STOP
+  return 0;
 }
 
 int32_t RunApiTestScenarioProperty() {

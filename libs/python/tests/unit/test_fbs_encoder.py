@@ -30,7 +30,7 @@ def test_encode_detection():
         {
             "object_id": 0,
             "score": 0.68,
-            "bbox": {"left": 177, "top": 76, "right": 581, "bottom": 479},
+            "bounding_box": {"left": 177, "top": 76, "right": 581, "bottom": 479},
         }
     ]
     flatbuffers: bytearray = fbs_encoder.encode(inference_results)

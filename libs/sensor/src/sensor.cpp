@@ -16,12 +16,12 @@
 
 #include "sensor.h"
 
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "edge_app/senscord.h"
-#include "map.hpp"
 #include "memory_manager.hpp"
 #include "process_format.hpp"
 #include "sensor_def.h"
@@ -179,7 +179,7 @@ int32_t SensorGetFrameLatency(EdgeAppLibSensorFrame frame,
     LOG_ERR("EsfSensorLatencyGetTimestamps %d", result);
   }
 
-  LOG_TRACE("SensorFrameGetChannelFromChannelId end");
+  LOG_TRACE("SensorGetFrameLatency end");
   return result;
 }
 
@@ -264,7 +264,6 @@ int32_t SensorFrameGetChannelFromChannelId(EdgeAppLibSensorFrame frame,
     LOG_ERR("senscord_frame_get_channel_from_channel_id %d", result);
     return result;
   }
-  map_set((void *)*channel, (void *)(uintptr_t)channel_id);
   LOG_TRACE("SensorFrameGetChannelFromChannelId end");
   return result;
 }
@@ -278,7 +277,12 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
   int result = -1;
 
   // Get the channel ID from the channel handle
-  uint32_t channel_id = (uint32_t)(uintptr_t)map_pop((void *)channel);
+  uint32_t channel_id;
+  int32_t ret = senscord_channel_get_channel_id(channel, &channel_id);
+  if (ret != 0) {
+    LOG_ERR("senscord_channel_get_channel_id failed with %" PRId32 ".", ret);
+    return -1;
+  }
   EdgeAppLibSensorRawMemoryRef raw_data_tmp = {0};
   if (mapped_flag != -1) {
     if (IsInferenceMetaChannel(channel_id)) {
