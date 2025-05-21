@@ -14,6 +14,8 @@
  * limitations under the License.
  ****************************************************************************/
 
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
 #include <math.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -23,11 +25,9 @@
 
 #include "data_processor_api.hpp"
 #include "data_processor_utils.hpp"
-#include "log.h"
 #include "parson.h"
 #include "poseestimation_generated.h"
 #include "posenet_utils.hpp"
-#include "sensor.h"
 #include "sm_utils.hpp"
 
 extern EdgeAppLibSensorStream s_stream;

@@ -17,8 +17,9 @@
 #ifndef AITRIOS_SM_UTILS_H
 #define AITRIOS_SM_UTILS_H
 
+#include <edgeapp/sensor.h>
+
 #include "parson.h"
-#include "sensor.h"
 
 /**
  * @brief Prints error details from the EdgeAppLib sensor.

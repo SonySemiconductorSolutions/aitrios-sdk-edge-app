@@ -16,10 +16,9 @@
 
 #include "apitest_sensor.h"
 
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
 #include <stdlib.h>
-
-#include "log.h"
-#include "sensor.h"
 
 #if MOCK_APITEST
 #include "sensor/mock_sensor.hpp"

@@ -25,10 +25,6 @@ WASM_OPT = /opt/binaryen/bin/wasm-opt
 IMAGE_NAME = app_build_env:2.0.0
 IMAGE = $(shell docker image ls -q $(IMAGE_NAME))
 
-ifeq ($(DEBUG_AOT), 1)
-EXTRA_CFLAGS += "-g"
-endif
-
 .PHONY: all
 all: docker_build
 	docker run --rm \
@@ -69,5 +65,5 @@ cleanall: clean
 .PHONY: docker_build
 docker_build:
 ifeq ($(IMAGE),)
-	docker build . --build-arg EXTRA_CFLAGS=$(EXTRA_CFLAGS) -f $(MAKEFILE_DIR)Dockerfile -t $(IMAGE_NAME)
+	docker build . -f $(MAKEFILE_DIR)Dockerfile -t $(IMAGE_NAME)
 endif

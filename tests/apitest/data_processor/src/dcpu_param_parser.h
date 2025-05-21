@@ -16,13 +16,13 @@
 #ifndef DCPU_PARAM_PARSER_H
 #define DCPU_PARAM_PARSER_H
 
+#include <edgeapp/sensor.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <string>
 
 #include "parson.h"
-#include "sensor.h"
 
 /* enum */
 typedef enum {

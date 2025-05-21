@@ -102,8 +102,7 @@ The  Data Export provides an interface for managing network communications and a
 | Function                    | Description                                                   |
 |----------------------------|---------------------------------------------------------------|
 | `SendDataSyncMeta`         | Sends post-processing result synchronously.                   |
-| `DataExportAwait`          | Waits for the completion of an asynchronous operation.  
-                              Currently, only `-1` can be specified for the timeout parameter; other values will be replaced. |
+| `DataExportAwait`          | Waits for the completion of an asynchronous operation.  <br>Currently, only `-1` can be specified for the timeout parameter; other values will be replaced. |
 | `DataExportCleanup`        | Cleans up resources associated with the provided future.      |
 | `DataExportSendData`       | Sends serialized data asynchronously.                         |
 | `DataExportSendState`      | Sends state data asynchronously.                              |

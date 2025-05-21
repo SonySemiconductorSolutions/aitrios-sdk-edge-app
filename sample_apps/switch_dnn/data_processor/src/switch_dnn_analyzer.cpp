@@ -16,12 +16,12 @@
 
 #include "switch_dnn_analyzer.h"
 
+#include <edgeapp/log.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "log.h"
 #include "sm_utils.hpp"
 /* -------------------------------------------------------- */
 /* define                                                   */

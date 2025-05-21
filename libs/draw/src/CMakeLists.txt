@@ -17,14 +17,25 @@ set(LIBS_DIR ${ROOT_DIR}/libs)
 set(AITRIOS_DRAW_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(AITRIOS_DRAW_SRC_DIR ${AITRIOS_DRAW_ROOT_DIR}/src)
 
-add_library(draw STATIC
+add_library(edge-app-lib-draw STATIC
   ${AITRIOS_DRAW_SRC_DIR}/draw.cpp
 )
 
-target_include_directories(draw PRIVATE
-  ${ROOT_DIR}/include
+set(draw_headers
+  ${ROOT_DIR}/include/edgeapp/draw.h
 )
 
-target_link_libraries(draw
-  log
+set_property(TARGET edge-app-lib-draw PROPERTY PUBLIC_HEADER ${draw_headers})
+
+target_include_directories(edge-app-lib-draw INTERFACE
+  $<BUILD_INTERFACE:${ROOT_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(edge-app-lib-draw PRIVATE
+  ${ROOT_DIR}/include/edgeapp
+)
+
+target_link_libraries(edge-app-lib-draw
+  edge-app-lib-log
 )

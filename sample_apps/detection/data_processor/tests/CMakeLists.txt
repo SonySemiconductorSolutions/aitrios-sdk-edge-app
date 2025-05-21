@@ -66,6 +66,7 @@ target_include_directories(sensor PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${LIBS_DIR}/sm/include
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/sm/include
   ${LIBS_DIR}/common/include

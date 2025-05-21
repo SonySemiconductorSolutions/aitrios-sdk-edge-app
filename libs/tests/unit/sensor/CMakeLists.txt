@@ -27,9 +27,14 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 
 include_directories(
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
+  ${LIBS_DIR}/send_data/src/process_format
   ${LIBS_DIR}/sensor/src
+  ${LIBS_DIR}/sm/include
+  ${LIBS_DIR}/depend
   ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/third_party
+  ${LIBS_DIR}/third_party/parson
   ${MOCKS_DIR}/device
 )
 
@@ -47,7 +52,7 @@ set(COMMON_SRC
 macro(add_test_executable test_name)
   add_executable(${test_name} ${test_name}.cpp sensor_unit_test.cpp mocks.cpp ${COMMON_SRC} ${AITRIOS_SENSOR_SRC} ${ARGN})
   target_include_directories(${test_name} PRIVATE ${LIBS_DIR}/log/include ${LIBS_DIR}/common/include)
-  target_link_libraries(${test_name} sensor log common GTest::gtest_main GTest::gmock_main)
+  target_link_libraries(${test_name} edge-app-lib-sensor edge-app-lib-log edge-app-lib-common GTest::gtest_main GTest::gmock_main)
   gtest_discover_tests(${test_name})
 endmacro()
 

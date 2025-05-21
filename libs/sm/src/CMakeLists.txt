@@ -18,7 +18,7 @@ set(SM_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(SM_SRC_DIR ${SM_ROOT_DIR}/src)
 set(SM_INC_DIR ${SM_ROOT_DIR}/include)
 
-add_library(sm STATIC
+add_library(edge-app-lib-sm STATIC
   ${SM_SRC_DIR}/main.cpp
   ${SM_SRC_DIR}/sm_configurator.cpp
   ${SM_SRC_DIR}/sm_context.cpp
@@ -37,16 +37,33 @@ add_library(sm STATIC
   ${SM_SRC_DIR}/states/state.cpp
 )
 
-target_include_directories(sm PRIVATE
+set(sm_headers
+  ${ROOT_DIR}/include/edgeapp/sm.h
+  ${ROOT_DIR}/include/edgeapp/sm_types.h
+)
+
+set_property(TARGET edge-app-lib-sm PROPERTY PUBLIC_HEADER ${sm_headers})
+
+target_include_directories(edge-app-lib-sm INTERFACE
+  $<BUILD_INTERFACE:${ROOT_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(edge-app-lib-sm PRIVATE
+  ${ROOT_DIR}/include/edgeapp
   ${SM_SRC_DIR}
   ${SM_INC_DIR}
-  ${ROOT_DIR}/include
+  ${SM_SRC_DIR}/dtdl_model
+  ${LIBS_DIR}/common/include
+  ${LIBS_DIR}/send_data/src/data_export/include
   ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/depend/
+  ${LIBS_DIR}/third_party/parson
 )
 
 add_subdirectory(dtdl_model)
 
-target_link_libraries(sm
-  common data_export dtdl_model
+target_link_libraries(edge-app-lib-sm
+  edge-app-lib-common
+  edge-app-lib-dtdl-model
 )

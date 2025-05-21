@@ -29,7 +29,7 @@ add_library(send_data
 )
 target_include_directories(send_data PUBLIC
   ${LIBS_DIR}/send_data/src/process_format
-  ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/tests/mocks/send_data/process_format
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/common/include
@@ -78,7 +78,7 @@ target_include_directories (test_event_functions PUBLIC
 
 target_link_libraries(
   test_event_functions
-  log
+  edge-app-lib-log
   send_data
   GTest::gtest_main
   GTest::gmock_main

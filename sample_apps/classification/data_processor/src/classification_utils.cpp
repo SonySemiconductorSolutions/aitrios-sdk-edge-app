@@ -16,11 +16,12 @@
 
 #include "classification_utils.hpp"
 
+#include <edgeapp/log.h>
+
 #include "classification_generated.h"
 #include "data_processor_api.hpp"
 #include "data_processor_utils.hpp"
 #include "flatbuffers/flatbuffers.h"
-#include "log.h"
 #include "parson.h"
 
 DataProcessorResultCode ExtractMaxPredictions(

@@ -16,6 +16,7 @@
 
 #include "data_processor_utils.hpp"
 
+#include <edgeapp/log.h>
 #include <string.h>
 
 #include <iostream>
@@ -23,7 +24,6 @@
 #include <vector>
 
 #include "data_processor_api.hpp"
-#include "log.h"
 #include "parson.h"
 
 int GetValueNumber(JSON_Object *json, const char *param, double *result) {

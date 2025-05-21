@@ -16,6 +16,7 @@
 
 #include "detection_utils.hpp"
 
+#include <edgeapp/log.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +29,6 @@
 
 #include "data_processor_api.hpp"
 #include "data_processor_utils.hpp"
-#include "log.h"
 #include "parson.h"
 
 #define MAX_DETECTION_DATA_SIZE (sizeof(DetectionData) * UINT16_MAX)

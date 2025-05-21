@@ -17,9 +17,10 @@
 #ifndef DATA_PROCESSOR_UTILS_H
 #define DATA_PROCESSOR_UTILS_H
 
+#include <edgeapp/sm_types.h>
+
 #include "data_processor_api.hpp"
 #include "parson.h"
-#include "sm_types.h"
 
 /**
  * Retrieves a double associated with a parameter from a JSON object.

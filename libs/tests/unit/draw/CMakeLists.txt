@@ -36,12 +36,13 @@ add_executable(test_draw
   test_draw.cpp
 )
 target_link_libraries(test_draw
-  draw
+  edge-app-lib-draw
   GTest::gtest_main
   GTest::gmock_main
 )
 target_include_directories(test_draw PUBLIC
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
   ${AITRIOS_DRAW_TEST_DIR}
 )
 

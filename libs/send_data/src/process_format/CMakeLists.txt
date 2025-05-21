@@ -16,19 +16,24 @@ set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(LIBS_DIR ${ROOT_DIR}/libs)
 set(PROCESS_FORMAT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(process_format STATIC
+add_library(edge-app-lib-process-format STATIC
   ${PROCESS_FORMAT_ROOT_DIR}/process_format.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
   ${LIBS_DIR}/third_party/base64.c/base64.c
 )
 
-target_include_directories(process_format PUBLIC
+target_include_directories(edge-app-lib-process-format PRIVATE
+  ${ROOT_DIR}/include/edgeapp
   ${PROCESS_FORMAT_ROOT_DIR}
-  ${ROOT_DIR}/include
+  ${LIBS_DIR}/common/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/base64.c
+  ${LIBS_DIR}/depend/edge_app
+  ${LIBS_DIR}/sm/include
 )
 
-target_link_libraries(process_format
-  common log sm
+target_link_libraries(edge-app-lib-process-format
+  edge-app-lib-common
+  edge-app-lib-log
+  edge-app-lib-sm
 )

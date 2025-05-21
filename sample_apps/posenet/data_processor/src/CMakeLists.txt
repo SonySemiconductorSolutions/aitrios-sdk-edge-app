@@ -27,12 +27,11 @@ target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/posenet/include/schemas
   ${SAMPLE_APP_DIR}/posenet/data_processor/src
-  ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/flatbuffers/include
   ${LIBS_DIR}/third_party/base64.c
-  ${LIBS_DIR}/depend/edge_app
 )
 
 
-target_link_libraries(data_processor_api log)
+target_link_libraries(data_processor_api
+  edge-app-lib-log)

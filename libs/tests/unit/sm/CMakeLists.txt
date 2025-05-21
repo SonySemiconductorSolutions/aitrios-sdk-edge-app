@@ -26,26 +26,31 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 
 include_directories(
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/send_data/src/data_export/include
   ${LIBS_DIR}/common/include
+  ${LIBS_DIR}/log/include
   ${LIBS_DIR}/depend/edge_app
   ${SM_ROOT_DIR}/include
   ${SM_SRC_DIR}
   ${SM_SRC_DIR}/dtdl_model
   ${SM_TEST_DIR}
   ${MOCKS_DIR}
+  ${LIBS_DIR}/tests/mocks/sensor
 )
 
-add_library(sensor
+add_library(edge-app-lib-sensor
   ${LIBS_DIR}/tests/mocks/sensor/mock_sensor.cpp
   ${LIBS_DIR}/tests/mocks/device/mock_device.cpp
   ${LIBS_DIR}/tests/mocks/sensor/testing_utils.cpp
 )
-target_include_directories(sensor PUBLIC
+target_include_directories(edge-app-lib-sensor PRIVATE
   ${LIBS_DIR}/tests/mocks/sensor
   ${LIBS_DIR}/tests/mocks/device
 )
+install(TARGETS edge-app-lib-sensor EXPORT sensor-mock-config)
+install(EXPORT sensor-mock-config DESTINATION /tmp)
 
 add_subdirectory(${LIBS_DIR}/common/src ${CMAKE_BINARY_DIR}/common)
 add_subdirectory(${LIBS_DIR}/log/src ${CMAKE_BINARY_DIR}/log)
@@ -71,7 +76,9 @@ add_library(sm STATIC
   ${SM_SRC_DIR}/sm_api.cpp
 )
 target_link_libraries(sm GTest::gtest_main GTest::gmock_main)
-target_link_libraries(sensor sm)
+install(TARGETS sm EXPORT sm-mock-config)
+install(EXPORT sm-mock-config DESTINATION /tmp)
+target_link_libraries(edge-app-lib-sensor sm)
 
 add_library(fixtures
   ${SM_TEST_DIR}/fixtures/common_fixture.cpp
@@ -82,7 +89,7 @@ add_subdirectory(dtdl_model)
 
 macro(add_test_executable TEST_NAME)
   add_executable(${TEST_NAME} ${TEST_NAME}.cpp ${ARGN})
-  target_link_libraries(${TEST_NAME} sm fixtures dtdl_model sm GTest::gtest_main GTest::gmock_main)
+  target_link_libraries(${TEST_NAME} sm fixtures edge-app-lib-dtdl-model sm GTest::gtest_main GTest::gmock_main)
   gtest_discover_tests(${TEST_NAME})
 endmacro()
 

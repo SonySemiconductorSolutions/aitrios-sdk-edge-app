@@ -75,10 +75,15 @@ if(SENSCORD_MOCK)
     ${LIBS_DIR}/third_party/flatbuffers/include
     ${LIBS_DIR}/third_party/parson
     ${ROOT_DIR}/include
+    ${ROOT_DIR}/include/edgeapp
     ${MOCKS_DIR}
     ${MOCKS_DIR}/sensor
     ${MOCKS_DIR}/device
     ${LIBS_DIR}/sensor/src/
+    ${LIBS_DIR}/common/include
+    ${LIBS_DIR}/log/include
+    ${LIBS_DIR}/sm/include
+    ${LIBS_DIR}/depend/edge_app
   )
 
 elseif(EVP_MOCK)
@@ -116,7 +121,7 @@ pybind11_add_module(_edge_app_sdk ${SOURCE_FILES})
 # Linking
 target_link_libraries(_edge_app_sdk
   PRIVATE
-    edge_app_lib
+    edge-app-lib
     data_processor_api
 )
 

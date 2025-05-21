@@ -16,13 +16,13 @@
 
 #include "sm_utils.hpp"
 
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
 #include <stdlib.h>
 
 #include <cstdint>
 
 #include "data_processor_utils.hpp"
-#include "log.h"
-#include "sensor.h"
 
 #define BUFSIZE 128
 

@@ -14,6 +14,8 @@
  * limitations under the License.
  ****************************************************************************/
 
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -25,10 +27,7 @@
 #include "data_processor_api.hpp"
 #include "data_processor_utils.hpp"
 #include "detection_utils.hpp"
-#include "device.h"
-#include "log.h"
 #include "parson.h"
-#include "sensor.h"
 #include "sm_utils.hpp"
 extern "C" {
 #include "base64.h"

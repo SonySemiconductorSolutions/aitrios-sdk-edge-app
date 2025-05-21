@@ -10,19 +10,18 @@ in the agent. This way the obtained executable can be use without the need of th
 
 ### Build
 
-To build executable app, run from **`./build`**.
+To build executable app, run from the top directory of this repo.
 
 ```sh
 cmake \
-    -DEVP_MOCK=1 \
-    -DMOCK=1 \
+    -B build \
+    -DCMAKE_INSTALL_PREFIX=/tmp/dist.native \
     -DAPPS_SELECTION=classification \
     -DCMAKE_BUILD_TYPE=Debug \
-    .. \
-&& make -j8
+    . \
+&& cmake --build build
 ```
 
-The flags `EVP_MOCK` and `MOCK` indicate the executable to use the mocks of the libraries and EVP.  
 You can as well use the options `detection` or `segmentation` for the `APPS_SELECTION` flag.
 
 ### How-to run

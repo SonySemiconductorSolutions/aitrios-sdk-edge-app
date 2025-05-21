@@ -12,16 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 project(edge_app)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
-
-set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
-set(TESTS_DIR ${ROOT_DIR}/tests)
-set(LIBS_DIR ${ROOT_DIR}/libs)
 
 # Define a list of possible apps
 set(APPS_LIST "passthrough" "classification" "detection" "posenet" "segmentation" "switch_dnn" "draw" "perfbench" "apitest")
@@ -38,35 +33,51 @@ else()
   )
 endif()
 
-if(NOT DEFINED ELF)
-  include(${ROOT_DIR}/cmake/config_common.cmake)
+set(app_dir ${CMAKE_CURRENT_LIST_DIR}/sample_apps/${APPS_SELECTION})
+if (APPS_SELECTION STREQUAL apitest)
+  set(app_dir ${CMAKE_CURRENT_LIST_DIR}/tests/${APPS_SELECTION})
 endif()
 
-add_subdirectory(${LIBS_DIR})
+set(tmp_install ${CMAKE_CURRENT_BINARY_DIR}/install)
 
-# Add the appropriate subdirectory based on the parameter
-if(NOT APPS_SELECTION STREQUAL "apitest")
-  set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-    ${SAMPLE_APP_DIR}/${APPS_SELECTION}/src/sm.cpp
-  )
-else()
-  set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-    ${TESTS_DIR}/${APPS_SELECTION}/src/sm.cpp
-  )
-endif()
-
-
-if(NOT APPS_SELECTION STREQUAL "apitest")
-  add_subdirectory(${SAMPLE_APP_DIR}/${APPS_SELECTION}/data_processor/src)
-else()
-  add_subdirectory(${TESTS_DIR}/${APPS_SELECTION}/data_processor/src)
-endif()
-if(NOT APPS_SELECTION STREQUAL "switch_dnn")
-set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
+# Note: edge-app-lib uses APPS_SELECTION only for
+# non-wasm targets (libs/mock)
+include(ExternalProject)
+ExternalProject_Add(edge-app-lib
+  SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/libs"
+  CMAKE_ARGS
+    -DWASI_SDK_PREFIX=${WASI_SDK_PREFIX}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DCMAKE_INSTALL_PREFIX=${tmp_install}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DAPPS_SELECTION=${APPS_SELECTION}
+  BUILD_COMMAND
+    cmake --build .
+  INSTALL_COMMAND
+    cmake --build . --target install
 )
-endif()
-set(TARGET_LIBS data_processor_api)
 
-add_executable(edge_app ${EXECUTABLE_FILES})
-target_link_libraries(edge_app ${TARGET_LIBS} edge_app_lib)
+include(ExternalProject)
+ExternalProject_Add(edge-app
+  SOURCE_DIR
+    ${app_dir}
+  CMAKE_ARGS
+    -DWASI_SDK_PREFIX=${WASI_SDK_PREFIX}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DCMAKE_INSTALL_PREFIX=${tmp_install}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_PREFIX_PATH=${tmp_install}
+  BUILD_COMMAND
+    cmake --build .
+  INSTALL_COMMAND
+    cmake --build . --target install
+)
+
+add_dependencies(edge-app edge-app-lib)
+
+set(edge_app ${CMAKE_CURRENT_BINARY_DIR}/edge_app)
+add_custom_command(
+  OUTPUT ${edge_app}
+  COMMAND cmake -E copy ${tmp_install}/bin/${APPS_SELECTION} ${edge_app}
+  DEPENDS edge-app)
+add_custom_target(copy-edge-app ALL DEPENDS ${edge_app})

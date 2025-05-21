@@ -17,19 +17,30 @@ set(LIBS_DIR ${ROOT_DIR}/libs)
 set(LOGS_API_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(LOGS_API_SRC_DIR ${LOGS_API_ROOT_DIR}/src)
 
-add_library(log STATIC
+add_library(edge-app-lib-log STATIC
   ${LOGS_API_SRC_DIR}/log_internal.cpp
   ${LOGS_API_SRC_DIR}/log_private.cpp
   ${LOGS_API_SRC_DIR}/log.cpp
   ${LOGS_API_SRC_DIR}/log_common.cpp
 )
 
-target_include_directories(log PRIVATE
-  ${ROOT_DIR}/include
+set(log_headers
+  ${ROOT_DIR}/include/edgeapp/log.h
+)
+
+set_property(TARGET edge-app-lib-log PROPERTY PUBLIC_HEADER ${log_headers})
+
+target_include_directories(edge-app-lib-log INTERFACE
+  $<BUILD_INTERFACE:${ROOT_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(edge-app-lib-log PRIVATE
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/depend/edge_app
   ${LOGS_API_ROOT_DIR}/include
 )
 
 if(NOT DEFINED LOGDISABLE)
-  target_compile_definitions(log PUBLIC LOGSDISABLE)
+  target_compile_definitions(edge-app-lib-log PUBLIC LOGSDISABLE)
 endif()

@@ -23,7 +23,7 @@ set(COMMON_SRC
 
 macro(add_test_executable TEST_NAME)
   add_executable(${TEST_NAME} ${TEST_NAME}.cpp ${COMMON_SRC} ${ARGN})
-  target_link_libraries(${TEST_NAME} fixtures dtdl_model sm log GTest::gtest_main GTest::gmock_main)
+  target_link_libraries(${TEST_NAME} fixtures edge-app-lib-dtdl-model sm edge-app-lib-log GTest::gtest_main GTest::gmock_main)
   gtest_discover_tests(${TEST_NAME})
 endmacro()
 

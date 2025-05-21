@@ -26,8 +26,10 @@ target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/switch_dnn/include/schemas
   ${SAMPLE_APP_DIR}/switch_dnn/data_processor/include
   ${SAMPLE_APP_DIR}/utils/include
-  ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/flatbuffers/include
-  ${LIBS_DIR}/depend/edge_app
+)
+
+target_link_libraries(data_processor_api
+  edge-app-lib-sensor
 )

@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
+#include <edgeapp/sm_types.h>
 #include <stdlib.h>
 
 #include "apitest_util.h"
 #include "data_processor_utils.hpp"
 #include "device.h"
-#include "log.h"
 #include "parson.h"
-#include "sensor.h"
-#include "sm_types.h"
 #include "sm_utils.hpp"
 #include "time.h"
 extern "C" {

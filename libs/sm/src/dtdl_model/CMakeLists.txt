@@ -32,7 +32,7 @@ set(PQ_SETTINGS_FILES
   ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/pq_settings/register_access_array.cpp
 )
 
-add_library(dtdl_model
+add_library(edge-app-lib-dtdl-model
   ${DTDL_MODEL_ROOT_DIR}/dtdl_model.cpp
   ${DTDL_MODEL_ROOT_DIR}/utils.cpp
   ${DTDL_MODEL_ROOT_DIR}/objects/common_settings.cpp
@@ -52,18 +52,19 @@ add_library(dtdl_model
   ${SM_SRC_DIR}/states/state_utils.cpp
 )
 
-target_include_directories(dtdl_model PUBLIC
-  ${DTDL_MODEL_ROOT_DIR}/..
+target_include_directories(edge-app-lib-dtdl-model PRIVATE
   ${DTDL_MODEL_ROOT_DIR}
+  ${DTDL_MODEL_ROOT_DIR}/..
   ${SM_SRC_DIR}/states
   # TODO: properly define include directories for logger and parson
-  ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
+  ${LIBS_DIR}/common/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/depend/edge_app
-)
-
-target_include_directories(log PUBLIC
   ${LIBS_DIR}/log/include
 )
 
-target_link_libraries(dtdl_model common sensor log)
+target_link_libraries(edge-app-lib-dtdl-model
+  edge-app-lib-common
+  edge-app-lib-sensor
+  edge-app-lib-log)

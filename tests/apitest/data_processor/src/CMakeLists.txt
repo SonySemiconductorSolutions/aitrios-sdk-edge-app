@@ -31,10 +31,18 @@ add_library(data_processor_api
 target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${TESTS_DIR}/apitest/data_processor/src
-  ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/base64.c
   ${LIBS_DIR}/depend/edge_app
 )
 
-target_link_libraries(data_processor_api log)
+if(NOT CMAKE_C_COMPILER_TARGET MATCHES "wasm")
+  target_compile_definitions(data_processor_api PRIVATE MOCK_APITEST)
+  target_include_directories(data_processor_api PRIVATE
+    ${LIBS_DIR}/tests/mocks
+    ${ROOT_DIR}/include/edgeapp
+  )
+endif()
+
+target_link_libraries(data_processor_api
+  edge-app-lib-log)

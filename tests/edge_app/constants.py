@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-APP_PATH = "./tests/edge_app/build/build/edge_app"
+APP_PATH = "./build/edge_app"
 PYTHON_APP_PATH = "./libs/py/example/simple_edge_app.py"
 VALGRIND_LOG = "./valgrind.log"
 DTDL_LOG = "./state.logs"

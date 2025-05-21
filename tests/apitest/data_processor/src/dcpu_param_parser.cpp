@@ -15,16 +15,16 @@
  ****************************************************************************/
 #include "dcpu_param_parser.h"
 
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
+#include <edgeapp/sm.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <string>
 
 #include "apitest_util.h"
-#include "log.h"
 #include "parson.h"
-#include "sensor.h"
-#include "sm.h"
 #include "sm_utils.hpp"
 
 #define PPL_OT_TMP_STR_BUFSIZE \

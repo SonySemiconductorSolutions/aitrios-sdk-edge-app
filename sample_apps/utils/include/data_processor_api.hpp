@@ -17,9 +17,10 @@
 #ifndef DATA_PROCESSOR_API_H
 #define DATA_PROCESSOR_API_H
 
+#include <edgeapp/send_data_types.h>
+
 #include <cstdint>
 
-#include "send_data_types.h"
 typedef enum {
   kDataProcessorOk,
   kDataProcessorUninitialized,

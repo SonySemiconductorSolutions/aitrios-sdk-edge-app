@@ -26,6 +26,7 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 
 include_directories(
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/send_data/src/data_export/include
@@ -87,7 +88,11 @@ add_subdirectory(${LIBS_DIR}/log/src ${CMAKE_BINARY_DIR}/log)
 add_library(send_data STATIC
   ${SEND_DATA_SRC_DIR}/send_data.cpp
 )
-target_link_libraries(send_data log GTest::gtest_main GTest::gmock_main)
+target_link_libraries(send_data
+  edge-app-lib-log
+  GTest::gtest_main
+  GTest::gmock_main
+)
 target_link_libraries(sensor send_data)
 
 macro(add_test_executable TEST_NAME)

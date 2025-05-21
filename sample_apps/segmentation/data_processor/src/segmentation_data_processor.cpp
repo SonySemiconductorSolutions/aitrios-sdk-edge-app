@@ -14,6 +14,8 @@
  * limitations under the License.
  ****************************************************************************/
 
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -22,11 +24,9 @@
 
 #include "data_processor_api.hpp"
 #include "data_processor_utils.hpp"
-#include "log.h"
 #include "parson.h"
 #include "segmentation_utils.hpp"
 #include "semantic_segmentation_generated.h"
-#include "sensor.h"
 #include "sm_utils.hpp"
 
 extern EdgeAppLibSensorStream s_stream;

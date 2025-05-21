@@ -17,14 +17,25 @@ set(LIBS_DIR ${ROOT_DIR}/libs)
 set(AITRIOS_SENSOR_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(AITRIOS_SENSOR_SRC_DIR ${AITRIOS_SENSOR_ROOT_DIR}/src)
 
-add_library(sensor STATIC
+add_library(edge-app-lib-sensor STATIC
   ${AITRIOS_SENSOR_SRC_DIR}/sensor.cpp
   ${AITRIOS_SENSOR_SRC_DIR}/sensor_wrapper.cpp
   ${AITRIOS_SENSOR_SRC_DIR}/sensor_wrapper_error.cpp
 )
 
-target_include_directories(sensor PUBLIC
-  ${ROOT_DIR}/include
+set(sensor_headers
+  ${ROOT_DIR}/include/edgeapp/sensor.h
+)
+
+set_property(TARGET edge-app-lib-sensor PROPERTY PUBLIC_HEADER ${sensor_headers})
+
+target_include_directories(edge-app-lib-sensor INTERFACE
+  $<BUILD_INTERFACE:${ROOT_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(edge-app-lib-sensor PRIVATE
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/depend/
   ${LIBS_DIR}/sm/include
   ${LIBS_DIR}/common/include

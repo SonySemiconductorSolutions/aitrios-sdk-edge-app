@@ -23,14 +23,22 @@ set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 
 include(${ROOT_DIR}/cmake/gtest.cmake)
 
-add_library(sm
+include_directories(
+  ${LIBS_DIR}/common/include
+  ${LIBS_DIR}/send_data/src/data_export/include
+)
+
+add_library(edge-app-lib-sm
   ${MOCKS_DIR}/sm/mock_sm_api.cpp
 )
-target_include_directories(sm PUBLIC
+target_include_directories(edge-app-lib-sm PRIVATE
   ${LIBS_DIR}/sm/include
-  ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
+  ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
 )
+install(TARGETS edge-app-lib-sm EXPORT sm-mock-config)
+install(EXPORT sm-mock-config DESTINATION /tmp)
 
 add_subdirectory (
   ${ROOT_DIR}/libs/log/src
@@ -52,9 +60,17 @@ add_executable(${TEST_NAME} ${TEST_NAME}.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
   ${ARGN}
 )
-target_link_libraries(${TEST_NAME} data_export common GTest::gtest_main GTest::gmock_main)
+target_link_libraries(${TEST_NAME}
+  edge-app-lib-data-export
+  edge-app-lib-common
+  GTest::gtest_main
+  GTest::gmock_main
+)
 target_include_directories (${TEST_NAME} PUBLIC
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
+  ${LIBS_DIR}/sm/include
+  ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/depend/edge_app
   ${MOCKS_DIR}
   ${AITRIOS_DATA_EXPORT_TEST_DIR}

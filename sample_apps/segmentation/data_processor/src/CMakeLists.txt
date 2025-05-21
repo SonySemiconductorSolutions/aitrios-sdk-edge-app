@@ -29,11 +29,11 @@ target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/segmentation/include/schemas
   ${SAMPLE_APP_DIR}/segmentation/data_processor/src
-  ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/flatbuffers/include
   ${MOCKS_DIR}/sensor
   ${MOCKS_DIR}/device
 )
 
-target_link_libraries(data_processor_api log)
+target_link_libraries(data_processor_api
+  edge-app-lib-log)

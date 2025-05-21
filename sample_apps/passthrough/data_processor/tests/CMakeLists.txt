@@ -59,6 +59,7 @@ target_include_directories(sensor PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${LIBS_DIR}/sm/include
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/common/include
   ${LIBS_DIR}/depend/edge_app
@@ -69,7 +70,7 @@ target_link_libraries(test_passthrough_data_processor
   data_processor_api
   sensor
   stdc++
-  log
+  edge-app-lib-log
   GTest::gtest_main
 )
 

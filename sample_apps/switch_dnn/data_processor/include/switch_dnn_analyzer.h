@@ -17,6 +17,7 @@
 #ifndef _ANALYZER_SWITCH_DNN_H_
 #define _ANALYZER_SWITCH_DNN_H_
 
+#include <edgeapp/sensor.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -24,7 +25,6 @@
 #include <vector>
 
 #include "parson.h"
-#include "sensor.h"
 #include "switch_dnn_classification_generated.h"
 #include "switch_dnn_objectdetection_generated.h"
 

@@ -26,11 +26,11 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 
 include_directories(
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/send_data/src/data_export/include
   ${LIBS_DIR}/common/include
-  ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/third_party/flatbuffers/include
   ${LIBS_DIR}/third_party/base64.c
   ${LIBS_DIR}/sm/include
@@ -90,7 +90,12 @@ add_subdirectory(${LIBS_DIR}/log/src ${CMAKE_BINARY_DIR}/log)
 add_library(process_format STATIC
   ${PROCESS_FORMAT_SRC_DIR}/process_format.cpp
 )
-target_link_libraries(process_format log common GTest::gtest_main GTest::gmock_main)
+target_link_libraries(process_format
+  edge-app-lib-log
+  edge-app-lib-common
+  GTest::gtest_main
+  GTest::gmock_main
+)
 target_link_libraries(sensor process_format)
 
 macro(add_test_executable TEST_NAME)

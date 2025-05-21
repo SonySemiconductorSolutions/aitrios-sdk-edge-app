@@ -14,16 +14,15 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include "sm.h"
-
+#include <edgeapp/data_export.h>
+#include <edgeapp/log.h>
+#include <edgeapp/sensor.h>
+#include <edgeapp/sm.h>
 #include <stdlib.h>
 
 #include "apitest_util.h"
-#include "data_export.h"
 #include "data_processor_api.hpp"
 #include "dcpu_param_parser.h"
-#include "log.h"
-#include "sensor.h"
 #include "sm_utils.hpp"
 
 #define PORTNAME_META "metadata"

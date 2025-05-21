@@ -21,11 +21,15 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 
 add_subdirectory(${LIBS_DIR}/common/src ${CMAKE_BINARY_DIR}/common)
 
+include_directories(
+  ${LIBS_DIR}/common/include
+)
+
 add_executable(test_context
 test_context.cpp
 )
 target_link_libraries(test_context
-  common
+  edge-app-lib-common
   GTest::gtest_main
   GTest::gmock_main
 )
@@ -34,7 +38,7 @@ add_executable(test_memory_manager
 test_memory_manager.cpp
 )
 target_link_libraries(test_memory_manager
-  common
+  edge-app-lib-common
   GTest::gtest_main
   GTest::gmock_main
 )

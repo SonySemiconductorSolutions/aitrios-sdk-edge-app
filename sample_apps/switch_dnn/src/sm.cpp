@@ -14,17 +14,16 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include "sm.h"
-
+#include <edgeapp/data_export.h>
+#include <edgeapp/log.h>
+#include <edgeapp/send_data.h>
+#include <edgeapp/sensor.h>
+#include <edgeapp/sm.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "data_export.h"
-#include "log.h"
-#include "send_data.h"
-#include "sensor.h"
 #include "switch_dnn_analyzer.h"
 
 #define PORTNAME_META "metadata"

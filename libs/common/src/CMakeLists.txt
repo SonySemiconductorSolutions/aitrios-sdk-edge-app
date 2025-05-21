@@ -16,12 +16,12 @@ set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(COMMON_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(COMMON_SRC_DIR ${COMMON_ROOT_DIR}/src)
 
-add_library(common STATIC
+add_library(edge-app-lib-common STATIC
   ${COMMON_SRC_DIR}/context.cpp
   ${COMMON_SRC_DIR}/memory_manager.cpp
   ${COMMON_SRC_DIR}/map.cpp
 )
 
-target_include_directories(common PUBLIC
+target_include_directories(edge-app-lib-common PRIVATE
   ${COMMON_ROOT_DIR}/include
 )

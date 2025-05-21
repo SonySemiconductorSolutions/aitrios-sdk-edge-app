@@ -28,6 +28,7 @@ include_directories(
   ${LOGS_API_SRC_DIR}
   ${LOGS_API_ROOT_DIR}/include
   ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
 )
 
 add_library(log
