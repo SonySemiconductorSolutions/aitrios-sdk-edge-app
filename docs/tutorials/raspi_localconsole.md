@@ -112,7 +112,7 @@ imx500-package -i yolov8n_imx_model/packerOut.zip -o yolov8n_imx_model
 You can use either formats, the Python or the WASM edge applications (they are the same)
   - WASM: https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.1.6/edge_app_detection_arm64.aot_1.1.6.zip
     - Once extracted zip file, deploy edge_app_detection.arm64.aot using the Local Console.
-  - Python: https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/libs/py/example/object_detection_edge_app_yolov8.py
+  - Python: https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/blob/main/libs/py/example/object_detection_edge_app_yolov8.py
 
 ### 3. Apply the configuration file to the Edge Application
 
