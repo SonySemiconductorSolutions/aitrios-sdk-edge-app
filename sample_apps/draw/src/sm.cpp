@@ -31,7 +31,7 @@
 #define PORTNAME_META "metadata"
 #define PORTNAME_INPUT "input"
 
-#define DATA_EXPORT_AWAIT_TIMEOUT 10000
+#define DATA_EXPORT_AWAIT_TIMEOUT -1
 #define SENSOR_GET_FRAME_TIMEOUT 5000
 #define METADATA_MAX_LENTH 500
 
@@ -130,12 +130,9 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
                                         img_w, img_h};
   // Draw box
   if (strlen(s_metadata) > 0) {
-    auto object_detection_root =
-        SmartCamera::GetObjectDetectionRoot(s_metadata);
+    auto object_detection_root = SmartCamera::GetObjectDetectionTop(s_metadata);
     auto obj_detection_data =
-        object_detection_root->metadata_as_ObjectDetectionTop()
-            ->perception()
-            ->object_detection_list();
+        object_detection_root->perception()->object_detection_list();
     for (int i = 0; i < obj_detection_data->size(); ++i) {
       auto general_object = obj_detection_data->Get(i);
 

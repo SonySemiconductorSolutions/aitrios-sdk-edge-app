@@ -44,14 +44,8 @@ struct ObjectDetectionDataBuilder;
 struct CountData;
 struct CountDataBuilder;
 
-struct AreaCountTop;
-struct AreaCountTopBuilder;
-
 struct ObjectDetectionTop;
 struct ObjectDetectionTopBuilder;
-
-struct ObjectDetectionRoot;
-struct ObjectDetectionRootBuilder;
 
 enum BoundingBox : uint8_t {
   BoundingBox_NONE = 0,
@@ -93,54 +87,6 @@ template<> struct BoundingBoxTraits<SmartCamera::BoundingBox2d> {
 
 bool VerifyBoundingBox(::flatbuffers::Verifier &verifier, const void *obj, BoundingBox type);
 bool VerifyBoundingBoxVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
-
-enum ObjectDetectionUnion : uint8_t {
-  ObjectDetectionUnion_NONE = 0,
-  ObjectDetectionUnion_ObjectDetectionTop = 1,
-  ObjectDetectionUnion_AreaCountTop = 2,
-  ObjectDetectionUnion_MIN = ObjectDetectionUnion_NONE,
-  ObjectDetectionUnion_MAX = ObjectDetectionUnion_AreaCountTop
-};
-
-inline const ObjectDetectionUnion (&EnumValuesObjectDetectionUnion())[3] {
-  static const ObjectDetectionUnion values[] = {
-    ObjectDetectionUnion_NONE,
-    ObjectDetectionUnion_ObjectDetectionTop,
-    ObjectDetectionUnion_AreaCountTop
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesObjectDetectionUnion() {
-  static const char * const names[4] = {
-    "NONE",
-    "ObjectDetectionTop",
-    "AreaCountTop",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameObjectDetectionUnion(ObjectDetectionUnion e) {
-  if (::flatbuffers::IsOutRange(e, ObjectDetectionUnion_NONE, ObjectDetectionUnion_AreaCountTop)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesObjectDetectionUnion()[index];
-}
-
-template<typename T> struct ObjectDetectionUnionTraits {
-  static const ObjectDetectionUnion enum_value = ObjectDetectionUnion_NONE;
-};
-
-template<> struct ObjectDetectionUnionTraits<SmartCamera::ObjectDetectionTop> {
-  static const ObjectDetectionUnion enum_value = ObjectDetectionUnion_ObjectDetectionTop;
-};
-
-template<> struct ObjectDetectionUnionTraits<SmartCamera::AreaCountTop> {
-  static const ObjectDetectionUnion enum_value = ObjectDetectionUnion_AreaCountTop;
-};
-
-bool VerifyObjectDetectionUnion(::flatbuffers::Verifier &verifier, const void *obj, ObjectDetectionUnion type);
-bool VerifyObjectDetectionUnionVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
 struct BoundingBox2d FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef BoundingBox2dBuilder Builder;
@@ -396,83 +342,25 @@ inline ::flatbuffers::Offset<CountData> CreateCountData(
   return builder_.Finish();
 }
 
-struct AreaCountTop FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef AreaCountTopBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_AREA_COUNT = 4,
-    VT_PERCEPTION = 6
-  };
-  const ::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>> *area_count() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>> *>(VT_AREA_COUNT);
-  }
-  const SmartCamera::ObjectDetectionData *perception() const {
-    return GetPointer<const SmartCamera::ObjectDetectionData *>(VT_PERCEPTION);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_AREA_COUNT) &&
-           verifier.VerifyVector(area_count()) &&
-           verifier.VerifyVectorOfTables(area_count()) &&
-           VerifyOffset(verifier, VT_PERCEPTION) &&
-           verifier.VerifyTable(perception()) &&
-           verifier.EndTable();
-  }
-};
-
-struct AreaCountTopBuilder {
-  typedef AreaCountTop Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_area_count(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>>> area_count) {
-    fbb_.AddOffset(AreaCountTop::VT_AREA_COUNT, area_count);
-  }
-  void add_perception(::flatbuffers::Offset<SmartCamera::ObjectDetectionData> perception) {
-    fbb_.AddOffset(AreaCountTop::VT_PERCEPTION, perception);
-  }
-  explicit AreaCountTopBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<AreaCountTop> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<AreaCountTop>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<AreaCountTop> CreateAreaCountTop(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>>> area_count = 0,
-    ::flatbuffers::Offset<SmartCamera::ObjectDetectionData> perception = 0) {
-  AreaCountTopBuilder builder_(_fbb);
-  builder_.add_perception(perception);
-  builder_.add_area_count(area_count);
-  return builder_.Finish();
-}
-
-inline ::flatbuffers::Offset<AreaCountTop> CreateAreaCountTopDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<::flatbuffers::Offset<SmartCamera::CountData>> *area_count = nullptr,
-    ::flatbuffers::Offset<SmartCamera::ObjectDetectionData> perception = 0) {
-  auto area_count__ = area_count ? _fbb.CreateVector<::flatbuffers::Offset<SmartCamera::CountData>>(*area_count) : 0;
-  return SmartCamera::CreateAreaCountTop(
-      _fbb,
-      area_count__,
-      perception);
-}
-
 struct ObjectDetectionTop FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ObjectDetectionTopBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PERCEPTION = 4
+    VT_PERCEPTION = 4,
+    VT_AREA_COUNT = 6
   };
   const SmartCamera::ObjectDetectionData *perception() const {
     return GetPointer<const SmartCamera::ObjectDetectionData *>(VT_PERCEPTION);
+  }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>> *area_count() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>> *>(VT_AREA_COUNT);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_PERCEPTION) &&
            verifier.VerifyTable(perception()) &&
+           VerifyOffset(verifier, VT_AREA_COUNT) &&
+           verifier.VerifyVector(area_count()) &&
+           verifier.VerifyVectorOfTables(area_count()) &&
            verifier.EndTable();
   }
 };
@@ -483,6 +371,9 @@ struct ObjectDetectionTopBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_perception(::flatbuffers::Offset<SmartCamera::ObjectDetectionData> perception) {
     fbb_.AddOffset(ObjectDetectionTop::VT_PERCEPTION, perception);
+  }
+  void add_area_count(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>>> area_count) {
+    fbb_.AddOffset(ObjectDetectionTop::VT_AREA_COUNT, area_count);
   }
   explicit ObjectDetectionTopBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -497,77 +388,23 @@ struct ObjectDetectionTopBuilder {
 
 inline ::flatbuffers::Offset<ObjectDetectionTop> CreateObjectDetectionTop(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<SmartCamera::ObjectDetectionData> perception = 0) {
+    ::flatbuffers::Offset<SmartCamera::ObjectDetectionData> perception = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<SmartCamera::CountData>>> area_count = 0) {
   ObjectDetectionTopBuilder builder_(_fbb);
+  builder_.add_area_count(area_count);
   builder_.add_perception(perception);
   return builder_.Finish();
 }
 
-struct ObjectDetectionRoot FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef ObjectDetectionRootBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_METADATA_TYPE = 4,
-    VT_METADATA = 6
-  };
-  SmartCamera::ObjectDetectionUnion metadata_type() const {
-    return static_cast<SmartCamera::ObjectDetectionUnion>(GetField<uint8_t>(VT_METADATA_TYPE, 0));
-  }
-  const void *metadata() const {
-    return GetPointer<const void *>(VT_METADATA);
-  }
-  template<typename T> const T *metadata_as() const;
-  const SmartCamera::ObjectDetectionTop *metadata_as_ObjectDetectionTop() const {
-    return metadata_type() == SmartCamera::ObjectDetectionUnion_ObjectDetectionTop ? static_cast<const SmartCamera::ObjectDetectionTop *>(metadata()) : nullptr;
-  }
-  const SmartCamera::AreaCountTop *metadata_as_AreaCountTop() const {
-    return metadata_type() == SmartCamera::ObjectDetectionUnion_AreaCountTop ? static_cast<const SmartCamera::AreaCountTop *>(metadata()) : nullptr;
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<uint8_t>(verifier, VT_METADATA_TYPE, 1) &&
-           VerifyOffset(verifier, VT_METADATA) &&
-           VerifyObjectDetectionUnion(verifier, metadata(), metadata_type()) &&
-           verifier.EndTable();
-  }
-};
-
-template<> inline const SmartCamera::ObjectDetectionTop *ObjectDetectionRoot::metadata_as<SmartCamera::ObjectDetectionTop>() const {
-  return metadata_as_ObjectDetectionTop();
-}
-
-template<> inline const SmartCamera::AreaCountTop *ObjectDetectionRoot::metadata_as<SmartCamera::AreaCountTop>() const {
-  return metadata_as_AreaCountTop();
-}
-
-struct ObjectDetectionRootBuilder {
-  typedef ObjectDetectionRoot Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_metadata_type(SmartCamera::ObjectDetectionUnion metadata_type) {
-    fbb_.AddElement<uint8_t>(ObjectDetectionRoot::VT_METADATA_TYPE, static_cast<uint8_t>(metadata_type), 0);
-  }
-  void add_metadata(::flatbuffers::Offset<void> metadata) {
-    fbb_.AddOffset(ObjectDetectionRoot::VT_METADATA, metadata);
-  }
-  explicit ObjectDetectionRootBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<ObjectDetectionRoot> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<ObjectDetectionRoot>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<ObjectDetectionRoot> CreateObjectDetectionRoot(
+inline ::flatbuffers::Offset<ObjectDetectionTop> CreateObjectDetectionTopDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    SmartCamera::ObjectDetectionUnion metadata_type = SmartCamera::ObjectDetectionUnion_NONE,
-    ::flatbuffers::Offset<void> metadata = 0) {
-  ObjectDetectionRootBuilder builder_(_fbb);
-  builder_.add_metadata(metadata);
-  builder_.add_metadata_type(metadata_type);
-  return builder_.Finish();
+    ::flatbuffers::Offset<SmartCamera::ObjectDetectionData> perception = 0,
+    const std::vector<::flatbuffers::Offset<SmartCamera::CountData>> *area_count = nullptr) {
+  auto area_count__ = area_count ? _fbb.CreateVector<::flatbuffers::Offset<SmartCamera::CountData>>(*area_count) : 0;
+  return SmartCamera::CreateObjectDetectionTop(
+      _fbb,
+      perception,
+      area_count__);
 }
 
 inline bool VerifyBoundingBox(::flatbuffers::Verifier &verifier, const void *obj, BoundingBox type) {
@@ -595,62 +432,33 @@ inline bool VerifyBoundingBoxVector(::flatbuffers::Verifier &verifier, const ::f
   return true;
 }
 
-inline bool VerifyObjectDetectionUnion(::flatbuffers::Verifier &verifier, const void *obj, ObjectDetectionUnion type) {
-  switch (type) {
-    case ObjectDetectionUnion_NONE: {
-      return true;
-    }
-    case ObjectDetectionUnion_ObjectDetectionTop: {
-      auto ptr = reinterpret_cast<const SmartCamera::ObjectDetectionTop *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case ObjectDetectionUnion_AreaCountTop: {
-      auto ptr = reinterpret_cast<const SmartCamera::AreaCountTop *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    default: return true;
-  }
+inline const SmartCamera::ObjectDetectionTop *GetObjectDetectionTop(const void *buf) {
+  return ::flatbuffers::GetRoot<SmartCamera::ObjectDetectionTop>(buf);
 }
 
-inline bool VerifyObjectDetectionUnionVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
-  if (!values || !types) return !values && !types;
-  if (values->size() != types->size()) return false;
-  for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
-    if (!VerifyObjectDetectionUnion(
-        verifier,  values->Get(i), types->GetEnum<ObjectDetectionUnion>(i))) {
-      return false;
-    }
-  }
-  return true;
+inline const SmartCamera::ObjectDetectionTop *GetSizePrefixedObjectDetectionTop(const void *buf) {
+  return ::flatbuffers::GetSizePrefixedRoot<SmartCamera::ObjectDetectionTop>(buf);
 }
 
-inline const SmartCamera::ObjectDetectionRoot *GetObjectDetectionRoot(const void *buf) {
-  return ::flatbuffers::GetRoot<SmartCamera::ObjectDetectionRoot>(buf);
-}
-
-inline const SmartCamera::ObjectDetectionRoot *GetSizePrefixedObjectDetectionRoot(const void *buf) {
-  return ::flatbuffers::GetSizePrefixedRoot<SmartCamera::ObjectDetectionRoot>(buf);
-}
-
-inline bool VerifyObjectDetectionRootBuffer(
+inline bool VerifyObjectDetectionTopBuffer(
     ::flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<SmartCamera::ObjectDetectionRoot>(nullptr);
+  return verifier.VerifyBuffer<SmartCamera::ObjectDetectionTop>(nullptr);
 }
 
-inline bool VerifySizePrefixedObjectDetectionRootBuffer(
+inline bool VerifySizePrefixedObjectDetectionTopBuffer(
     ::flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<SmartCamera::ObjectDetectionRoot>(nullptr);
+  return verifier.VerifySizePrefixedBuffer<SmartCamera::ObjectDetectionTop>(nullptr);
 }
 
-inline void FinishObjectDetectionRootBuffer(
+inline void FinishObjectDetectionTopBuffer(
     ::flatbuffers::FlatBufferBuilder &fbb,
-    ::flatbuffers::Offset<SmartCamera::ObjectDetectionRoot> root) {
+    ::flatbuffers::Offset<SmartCamera::ObjectDetectionTop> root) {
   fbb.Finish(root);
 }
 
-inline void FinishSizePrefixedObjectDetectionRootBuffer(
+inline void FinishSizePrefixedObjectDetectionTopBuffer(
     ::flatbuffers::FlatBufferBuilder &fbb,
-    ::flatbuffers::Offset<SmartCamera::ObjectDetectionRoot> root) {
+    ::flatbuffers::Offset<SmartCamera::ObjectDetectionTop> root) {
   fbb.FinishSizePrefixed(root);
 }
 

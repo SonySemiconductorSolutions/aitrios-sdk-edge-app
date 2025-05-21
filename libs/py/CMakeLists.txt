@@ -28,10 +28,19 @@ set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
 
 # Base source files
+file(GLOB BINDING_SOURCES "src/bindings/*.cpp")
 set(SOURCE_FILES ${SOURCE_FILES}
   ${LIBS_DIR}/third_party/parson/parson.c
+  src/py_data_export.cpp
+  src/py_edge_app.cpp
   src/py_module.cpp
   src/py_sm.cpp
+  ${BINDING_SOURCES}
+)
+
+include_directories(
+  src/bindings
+  src/includes
 )
 
 # Allow manually setting of EVP_MOCK (OFF by default)

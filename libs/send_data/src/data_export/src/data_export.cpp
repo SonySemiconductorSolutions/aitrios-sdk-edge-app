@@ -381,6 +381,10 @@ EdgeAppLibDataExportResult DataExportAwait(EdgeAppLibDataExportFuture *future,
   EdgeAppLibDataExportResult output;
   if (future->result == EdgeAppLibDataExportResultEnqueued) {
     int res = 0;
+    if (timeout_ms >= 0) {
+      LOG_WARN("Replaced the timeout_ms to -1 to disable the timeout");
+      timeout_ms = -1;
+    }
     if (timeout_ms < 0) {
       LOG_DBG("pthread_cond_wait");
       do {

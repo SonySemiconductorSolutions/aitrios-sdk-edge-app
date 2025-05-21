@@ -103,15 +103,13 @@ TEST_F(DetectionUtilsTest, MakeDetectionFlatbufferTest) {
   uint8_t *buf_ptr = builder.GetBufferPointer();
   uint32_t buf_size = builder.GetSize();
 
-  auto object_detection_root = SmartCamera::GetObjectDetectionRoot(buf_ptr);
+  auto object_detection_root = SmartCamera::GetObjectDetectionTop(buf_ptr);
 
-  EXPECT_EQ(172, buf_size);
+  EXPECT_EQ(152, buf_size);
   EXPECT_EQ(res, kDataProcessorOk);
 
   auto obj_detection_data =
-      object_detection_root->metadata_as_ObjectDetectionTop()
-          ->perception()
-          ->object_detection_list();
+      object_detection_root->perception()->object_detection_list();
   for (int i = 0; i < obj_detection_data->size(); ++i) {
     auto general_object = obj_detection_data->Get(i);
 
@@ -381,29 +379,21 @@ TEST_F(DetectionUtilsFilterDetectionsTest, MakeAreaFlatbufferTest) {
   uint8_t *buf_ptr = builder.GetBufferPointer();
   uint32_t buf_size = builder.GetSize();
 
-  auto object_detection_root = SmartCamera::GetObjectDetectionRoot(buf_ptr);
+  auto object_detection_root = SmartCamera::GetObjectDetectionTop(buf_ptr);
 
-  EXPECT_EQ(284, buf_size);
+  EXPECT_EQ(264, buf_size);
   EXPECT_EQ(res, kDataProcessorOk);
 
-  auto obj_detection_data = object_detection_root->metadata_as_AreaCountTop()
-                                ->perception()
-                                ->object_detection_list();
+  auto obj_detection_data = object_detection_root->area_count();
+
   for (int i = 0; i < obj_detection_data->size(); ++i) {
     auto general_object = obj_detection_data->Get(i);
 
-    auto bbox = general_object->bounding_box_as_BoundingBox2d();
-
-    EXPECT_EQ(general_object->class_id(), expected_detection_data[i].class_id);
-    EXPECT_EQ(general_object->score(), detections->detection_data[i].score);
-    EXPECT_EQ(bbox->left(), detections->detection_data[i].bbox.left);
-    EXPECT_EQ(bbox->top(), detections->detection_data[i].bbox.top);
-    EXPECT_EQ(bbox->right(), detections->detection_data[i].bbox.right);
-    EXPECT_EQ(bbox->bottom(), detections->detection_data[i].bbox.bottom);
+    EXPECT_EQ(general_object->class_id(),
+              detections->detection_data[i].class_id);
   }
 
-  auto area_count_data =
-      object_detection_root->metadata_as_AreaCountTop()->area_count();
+  auto area_count_data = object_detection_root->area_count();
   for (int i = 0; i < 3; i++) {
     auto count_data = area_count_data->Get(i);
     EXPECT_EQ(count_data->class_id(), expected_area_count[i].class_id);

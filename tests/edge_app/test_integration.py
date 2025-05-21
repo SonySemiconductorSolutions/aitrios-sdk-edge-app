@@ -24,7 +24,7 @@ from utils import manage_python_edge_app
 from utils import print_dtdl_state_log
 from utils import print_valgrind_summary
 from utils import send_data
-from constants import APITEST_LAST_SCENARIO_ID, DTDL_LOG, INTEGRATION_TEST_INTERVAL_SECONDS, INTEGRATION_TEST_RETRY_NUM, INTEGRATION_TEST_LOG, APP_PATH, PYTHON_APP_PATH, VALGRIND_LOG
+from constants import APITEST_LAST_SCENARIO_ID, DTDL_LOG, INTEGRATION_TEST_INTERVAL_SECONDS, INTEGRATION_TEST_RETRY_NUM, INTEGRATION_TEST_LOG, APP_PATH, PYTHON_APP_PATH, VALGRIND_LOG, ACK_FILE, INJECT_FAIL
 from state_checker import DTDLStateChecker
 
 # buffer size depends on evp specification
@@ -140,6 +140,16 @@ def validate_posenet_custom_settings(data: dict, id_suffix: str) -> None:
     assert data["res_info"]["res_id"] == f"posenet_custom_settings{id_suffix}"
     assert data["custom_settings"]["ai_models"]["posenet"]["parameters"]["max_pose_detections"] == 50
 
+def change_gaze_custom_settings(data: dict, id_suffix: str) -> None:
+    data["req_info"]["req_id"] = f"gaze_custom_settings{id_suffix}"
+    data["custom_settings"]["ai_models"]["gaze"]["max_person"] = 6
+    send_data(data)
+    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+
+def validate_gaze_custom_settings(data: dict, id_suffix: str) -> None:
+    assert data["res_info"]["res_id"] == f"gaze_custom_settings{id_suffix}"
+    assert data["custom_settings"]["ai_models"]["gaze"]["max_person"] == 6
+
 def change_segmentation_custom_settings(data: dict, id_suffix: str) -> None:
     data["req_info"]["req_id"] = f"segmentation_custom_settings{id_suffix}"
     data["custom_settings"]["ai_models"]["segmentation"]["parameters"]["input_width"] = 4
@@ -249,6 +259,7 @@ CUSTOM_SETTINGS_PER_APP = {
     "classification": change_classification_custom_settings,
     "detection": change_detection_custom_settings,
     "posenet": change_posenet_custom_settings,
+    "gaze": change_gaze_custom_settings,
     "segmentation": change_segmentation_custom_settings,
     "apitest": change_apitest_custom_settings,
     "switch_dnn": change_switch_dnn_custom_settings,
@@ -260,6 +271,7 @@ VALIDATE_CUSTOM_SETTINGS_PER_APP = {
     "classification": validate_classification_custom_settings,
     "detection": validate_detection_custom_settings,
     "posenet": validate_posenet_custom_settings,
+    "gaze": validate_gaze_custom_settings,
     "segmentation": validate_segmentation_custom_settings,
     "apitest": validate_apitest_custom_settings,
     "switch_dnn": validate_switch_dnn_custom_settings,
@@ -316,11 +328,18 @@ def app(pytestconfig) -> str:
 def python_bindings(pytestconfig) -> bool:
     return pytestconfig.getoption("python_bindings")
 
-def test_valgrind(app: str, python_bindings: bool):
+@pytest.fixture(scope="session")
+def inject_fault(pytestconfig) -> bool:
+    return pytestconfig.getoption("inject_fault")
+
+
+def test_valgrind(app: str, python_bindings: bool, inject_fault: bool):
     if os.path.exists(DTDL_LOG):
         os.remove(DTDL_LOG)
     if os.path.exists(INTEGRATION_TEST_LOG):
         os.remove(INTEGRATION_TEST_LOG)
+    if os.path.exists(ACK_FILE):
+        os.remove(ACK_FILE)
     if app != "apitest":
         file_path = f"sample_apps/{app}/configuration/configuration.json"
     else:
@@ -354,6 +373,11 @@ def test_valgrind(app: str, python_bindings: bool):
             state_dict = checker.get_state()
             validate_codec_settings(state_dict, codec)
 
+            if (inject_fault == True):
+                # inject fault
+                with open(INJECT_FAIL, "w") as f:
+                    f.write("dummy")
+
             CUSTOM_SETTINGS_PER_APP[app](data, "1")
             state_dict = checker.get_state()
             VALIDATE_CUSTOM_SETTINGS_PER_APP[app](state_dict, "1")
@@ -379,6 +403,9 @@ def test_valgrind(app: str, python_bindings: bool):
             # So after iterate 2 times completed, state changes from running to idle.
             state_dict = get_and_validate_process_state(checker, State.IDLE, method, req_id)
             data["common_settings"]["process_state"] = 1
+
+            if os.path.exists(INJECT_FAIL):
+                os.remove(INJECT_FAIL)
 
             change_number_iterations(data, 0)
             state_dict = checker.get_state()

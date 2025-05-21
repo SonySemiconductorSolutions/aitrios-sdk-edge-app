@@ -94,8 +94,14 @@ IterateStatus Applying::Iterate() {
   if (res != 0) { /* LCOV_EXCL_START: error check */
     LOG_ERR("Invalid configuration moving to Idle");
     context->SetNextState(STATE_IDLE);
+    context->EnableNotification();
     return IterateStatus::Error;
-    /* LCOV_EXCL_STOP */
-  }
+  } else {
+    STATE previous_state =
+        (STATE)context->GetDtdlModel()->GetCommonSettings()->GetProcessState();
+    LOG_DBG("Restoring state %d", previous_state);
+    context->SetNextState(previous_state);
+    // no explicit notification, depends whether DTDL has been updated
+  } /* LCOV_EXCL_STOP */
   return IterateStatus::Ok;
 }

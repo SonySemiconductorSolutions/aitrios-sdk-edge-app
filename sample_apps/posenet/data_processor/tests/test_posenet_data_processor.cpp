@@ -281,6 +281,22 @@ TEST_F(ConfigureAnalyzeFixtureTests, AIModelsNotNullTest) {
   json_free_serialized_string((char *)config_mod);
 }
 
+TEST_F(ConfigureAnalyzeFixtureTests, AiModelBundleIdNotNullTest) {
+  JSON_Status stat = json_object_dotremove(
+      config_json_object, "ai_models.posenet.ai_model_bundle_id");
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorInvalidParamSetError);
+  JSON_Value *value = json_parse_string(output);
+  EXPECT_TRUE(value);
+  free(output);
+  json_value_free(value);
+
+  json_free_serialized_string((char *)config_mod);
+}
+
 TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeJsonTest) {
   JSON_Status stat = json_object_dotset_number(config_json_object,
                                                "metadata_settings.format", 1);

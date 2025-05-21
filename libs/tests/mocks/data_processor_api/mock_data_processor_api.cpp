@@ -26,6 +26,8 @@ static int DataProcessorConfigureCalled = 0;
 static DataProcessorResultCode DataProcessorConfigureReturn = kDataProcessorOk;
 static int DataProcessorAnalyzeCalled = 0;
 static DataProcessorResultCode DataProcessorAnalyzeReturn = kDataProcessorOk;
+static int DataProcessorFinalizeCalled = 0;
+static DataProcessorResultCode DataProcessorFinalizeReturn = kDataProcessorOk;
 static int DataProcessorJsonFormatCalled = 0;
 static DataProcessorResultCode DataProcessorJsonFormatReturn = kDataProcessorOk;
 static EdgeAppLibSendDataType DataProcessorGetDataTypeReturn =
@@ -73,6 +75,21 @@ void resetDataProcessorAnalyzeSuccess() {
   DataProcessorAnalyzeReturn = kDataProcessorOk;
 }
 void resetDataProcessorAnalyzeCalled() { DataProcessorAnalyzeCalled = 0; }
+
+DataProcessorResultCode DataProcessorFinalize() {
+  DataProcessorFinalizeCalled = 1;
+  return DataProcessorFinalizeReturn;
+}
+
+int wasDataProcessorFinalizeCalled() { return DataProcessorFinalizeCalled; }
+void setDataProcessorFinalizeFail() {
+  DataProcessorFinalizeReturn = kDataProcessorInvalidParam;
+}
+
+void resetDataProcessoFinalizeSuccess() {
+  DataProcessorFinalizeReturn = kDataProcessorOk;
+}
+void resetDataProcessorFinalizeCalled() { DataProcessorFinalizeCalled = 0; }
 
 DataProcessorResultCode DataProcessorJsonFormat(void *in_data, uint32_t in_size,
                                                 uint64_t timestamp,

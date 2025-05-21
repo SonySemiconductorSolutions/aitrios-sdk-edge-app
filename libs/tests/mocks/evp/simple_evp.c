@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "evp_c_sdk/sdk.h"
@@ -37,6 +39,7 @@
 #define STATE_TIMEOUT "timeout"
 #define STATE_INVALID "invalid"
 #define STATE_BIG "big"
+#define ACK_FILE "./data.ack"
 
 struct EVP_client {};
 
@@ -193,12 +196,28 @@ EVP_RESULT EVP_sendState(struct EVP_client *h, const char *topic,
   LOG_INFO("EVP_sendState: sending state");
   LOG_INFO("EVP_sendState: size %d, state %s", (int)statelen, (char *)state);
 
+  // monitor ack file to be removed by the integration test
+  struct stat st;
+  const int timeout_s = 5;  // 5 seconds timeout
+  struct timespec start, current;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+  while (stat(ACK_FILE, &st) == 0) {
+    usleep(100 * 1000);  // 100ms
+    clock_gettime(CLOCK_MONOTONIC, &current);
+    if ((current.tv_sec - start.tv_sec) > timeout_s) {
+      LOG_ERR("Timeout waiting for ACK_FILE to be removed");
+      abort();
+    }
+  }
   // store states in logs
   FILE *f = fopen("state.logs", "a");
   fwrite(state, statelen, 1, f);
   char newline = '\n';
   fwrite(&newline, 1, 1, f);
   fclose(f);
+  // create ack file
+  FILE *ack = fopen(ACK_FILE, "w");
+  if (ack) fclose(ack);
 
   // call evp state callback
   cb(EVP_STATE_CALLBACK_REASON_SENT, userData);
@@ -227,6 +246,13 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
       ((type == EVP_BLOB_TYPE_EVP_EXT) || (type == EVP_BLOB_TYPE_EVP))) {
     return EVP_NOTSUP;
   }
+
+  /* If there is sleep_time file, sleep 15s */
+  struct stat st;
+  if (stat("./sleep_time", &st) == 0) {
+    sleep(15);
+  }
+
   struct EVP_BlobResultEvp vp = {EVP_BLOB_RESULT_SUCCESS, 201, 0};
   cb(EVP_BLOB_CALLBACK_REASON_DONE, &vp, userData);
   return EVP_OK;

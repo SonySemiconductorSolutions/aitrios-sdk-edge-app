@@ -99,17 +99,17 @@ The  Data Export provides an interface for managing network communications and a
 
 ### API lists
 
-| Function                        | Description                                                   |
-| ------------------------------- | ------------------------------------------------------------- |
-| `SendDataSyncMeta`              | Sends post-processing result synchronously.                   |
-| `DataExportAwait`               | Waits for the completion of an asynchronous operation.        |
-| `DataExportCleanup`             | Cleans up resources associated with the provided future.      |
-| `DataExportSendData`            | Sends serialized data asynchronously.                         |
-| `DataExportSendState`           | Sends state data asynchronously.                              |
-| `DataExportStopSelf`            | Notifies the state machine to transition to 'Idle' state.     |
-| `DataExportIsEnabled`           | Checks whether sending data of the specified type is enabled. |
-| `DataExportGetPortSettings`     | Gets the current port settings in a JSON object.              |
-
+| Function                    | Description                                                   |
+|----------------------------|---------------------------------------------------------------|
+| `SendDataSyncMeta`         | Sends post-processing result synchronously.                   |
+| `DataExportAwait`          | Waits for the completion of an asynchronous operation.  
+                              Currently, only `-1` can be specified for the timeout parameter; other values will be replaced. |
+| `DataExportCleanup`        | Cleans up resources associated with the provided future.      |
+| `DataExportSendData`       | Sends serialized data asynchronously.                         |
+| `DataExportSendState`      | Sends state data asynchronously.                              |
+| `DataExportStopSelf`       | Notifies the state machine to transition to 'Idle' state.     |
+| `DataExportIsEnabled`      | Checks whether sending data of the specified type is enabled. |
+| `DataExportGetPortSettings`| Gets the current port settings in a JSON object.              |
 
 
 ## Usage Example
@@ -137,9 +137,7 @@ int onIterate() {
                            rawdata.address, rawdata.size, rawdata.timestamp);
 
     // Optional: Perform additional tasks or computations here
-    while (DataExportAwait(future, 1000) == EdgeAppLibDataExportResultEnqueued) {
-        // heavy computation
-    }
+    DataExportAwait(future, -1);
 
     // Cleaning up the resources associated with the future
     res = DataExportCleanup(future);

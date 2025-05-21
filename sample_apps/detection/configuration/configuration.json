@@ -57,21 +57,7 @@
                     "width": 2028,
                     "height": 1520
                 },
-                "image_rotation": 0,
-                "register_access": [
-                    {
-                        "bit_length": 0,
-                        "id": 0,
-                        "address": "AB54A98CEB1F0AD2",
-                        "data": "123"
-                    },
-                    {
-                        "bit_length": 1,
-                        "id": 0,
-                        "address": "AB54A98EEE391EEA",
-                        "data": "12345"
-                    }
-                ]
+                "image_rotation": 0
             },
             "port_settings": {
                 "metadata": {
@@ -83,9 +69,9 @@
                 },
                 "input_tensor": {
                     "method": 1,
-                    "storage_name": "",
+                    "storage_name": "${project_id}",
                     "endpoint": "",
-                    "path": "",
+                    "path": "${device_id}/image/${current_timestamp}",
                     "enabled": true
                 }
             },
@@ -97,31 +83,17 @@
         "custom_settings": {
             "ai_models": {
                 "detection": {
-                    "ai_model_bundle_id": "000001",
+                    "ai_model_bundle_id": "${network_id_1}",
                     "parameters": {
                         "max_detections": 10,
                         "threshold": 0.3,
                         "input_width": 320,
                         "input_height": 320,
-                        "bbox_order": "xyxy",
+                        "bbox_order": "yxyx",
                         "bbox_normalization": true,
                         "class_score_order": "cls_score"
                     }
                 }
-            },
-            "area": {
-                "coordinates": {
-                    "left": 10,
-                    "top": 15,
-                    "right": 610,
-                    "bottom": 415
-                },
-                "overlap": 0.5,
-                "class_id": [
-                    1,
-                    2,
-                    3
-                ]
             },
             "metadata_settings": {
                 "format": 0

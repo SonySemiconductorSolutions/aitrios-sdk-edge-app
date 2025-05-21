@@ -28,7 +28,7 @@
 #define PORTNAME_META "metadata"
 #define PORTNAME_INPUT "input"
 
-#define DATA_EXPORT_AWAIT_TIMEOUT 10000
+#define DATA_EXPORT_AWAIT_TIMEOUT -1
 #define SENSOR_GET_FRAME_TIMEOUT 5000
 
 EdgeAppLibSensorCore s_core = 0;

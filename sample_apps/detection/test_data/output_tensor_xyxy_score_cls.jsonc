@@ -1,0 +1,22 @@
+// Following list represents AI model's Output Tensor dummy raw data for
+// testing. x_min, y_min, x_max, y_max mean bounding box of detection in pixels.
+// The list has class and score of detection.
+// When AI model's detection num is 10,
+// following x_min, y_min, x_max, y_max, score, class have 10 values and
+// following num of detection is 10.
+[[
+    // x_min (0.15 * 299, etc.)
+    68, 172, 324, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+    // y_min (0.1 * 299, etc.)
+    240, 180, 152, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+    // x_max (0.55 * 299, etc.)
+    172, 248, 364, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+    // y_max (0.5 * 299, etc.)
+    356, 264, 216, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+    // score
+    0.92, 0.87, 0.07, 0.01, 0.02, 0.03, 0.04, 0.05, 0.051, 0.052,
+    // class
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    // num of detection
+    10
+  ]]

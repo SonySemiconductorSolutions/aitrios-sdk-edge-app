@@ -7,7 +7,7 @@ The following models have been verified:
 
 - Custom Vision models (e.g., SSD-based, available via "Console for AITRIOS")
 - SSD MobileNet V1/V2
-- YOLOv8n
+- YOLOv8n, YOLOv11n
 
 
 ## Initialize process
@@ -22,10 +22,10 @@ The following parameters defined under **`custom_settings`** are used in the sam
 This object contains two objects: **`ai_model_bundle_id`** and **`parameters`**, which are described next.
 
 - **`ai_model_bundle_id`**<br>
-  Description: ID to specify the AI ​​model to use. 6 digit HEX value string like '000000'. 
+  Description: ID to specify the AI model to use. 6 digit HEX value string like '000000'. 
 >**NOTE**
 >
->This value can be obtained after deploying the AI ​​model from the Console UI.
+>This value can be obtained after deploying the AI model from the Console UI.
   
 
 - **`parameters`**<br>
@@ -70,7 +70,7 @@ The default is `yxyx`.
   >The value of the parameter depends on the AI model. Normalized values will be converted to pixel values during the [Format](#3-format) stage.
   
   - **`class_score_order`**<br>
-  　Description: Specifies the order in which class ID and score appear in the output. For example, `class_score` means `(class_id, score)` and `score_class` means `(score, class_id)`.
+  　Description: Specifies the order in which class ID and score appear in the output. For example, `cls_score` means `(class_id, score)` and `score_cls` means `(score, class_id)`.
   >**NOTE**
   >
   >The value of the parameter depends on the AI model.
@@ -246,7 +246,7 @@ If **`area`** is included in Configuration, this sample "**Edge Application**" f
   >
   >**`detections`** only includes objects that are determined to be within **`area`** and match the specified **`class_id`**.
 
-**`MakeDetectionFlatbuffer`** and **`MakeAreaFlatbuffer`** take **`Detections`** as input and serialize them as defined in the Flatbuffers schema.
+**`MakeDetectionFlatbuffer`** and **`MakeAreaFlatbuffer`** take **`Detections`** as input and serialize them as defined in the FlatBuffers schema.
 The sample uses the following FlatBuffers schema  [**`objectdetection.fbs`**](./schemas/objectdetection.fbs):
 
 ```
