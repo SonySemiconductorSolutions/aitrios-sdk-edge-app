@@ -86,7 +86,7 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
       (object_params = json_object_dotget_object(object_model, "parameters")) ==
           nullptr) {  // LCOV_EXCL_BR_STOP
     const char *error_msg =
-        "Error accesing AI model parameters in JSON object.";
+        "Error accessing AI model parameters in JSON object.";
     LOG_ERR("%s", error_msg);
     *out_config_json = GetConfigureErrorJson(
         ResponseCodeInvalidArgument, error_msg,

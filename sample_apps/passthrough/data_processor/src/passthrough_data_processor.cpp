@@ -69,7 +69,7 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   JSON_Object *object_params = nullptr;
   if (object_model == nullptr) {
     const char *error_msg =
-        "Error accesing AI model parameters in JSON object.";
+        "Error accessing AI model parameters in JSON object.";
     LOG_ERR("%s", error_msg);
     *out_config_json = GetConfigureErrorJson(
         ResponseCodeInvalidArgument, error_msg,

@@ -168,26 +168,28 @@ TEST_F(EdgeAppLibDataExportApiTest, SendDataAwaitCleanupTestFailCallback) {
   EXPECT_TRUE(DataExportHasPendingOperations());
 }
 
-TEST_F(EdgeAppLibDataExportApiTest, SendDataAwaitCleanupTestAwaitTimeout) {
-  dummy_data = getDummyData(5);
-  setEvpBlobOperationNotCallbackCall();
-  EdgeAppLibDataExportFuture *future = DataExportSendData(
-      PORTNAME_META, EdgeAppLibDataExportMetadata, (void *)dummy_data.array,
-      dummy_data.size, dummy_data.timestamp);
-  EXPECT_EQ(wasEvpBlobOperationCalled(), 1);
-  EXPECT_EQ(future->result, EdgeAppLibDataExportResultEnqueued);
-  EdgeAppLibDataExportResult res;
-  res = DataExportAwait(future, 1);
-  EXPECT_EQ(res, EdgeAppLibDataExportResultTimeout);
-  EXPECT_EQ(future->result, EdgeAppLibDataExportResultEnqueued);
+// This test is disabled because timeout feature is disabled
 
-  future->is_processed = true;
-  res = DataExportCleanup(future);
-  EXPECT_EQ(res, EdgeAppLibDataExportResultSuccess);
-  EXPECT_TRUE(DataExportHasPendingOperations());
+// TEST_F(EdgeAppLibDataExportApiTest, SendDataAwaitCleanupTestAwaitTimeout) {
+//   dummy_data = getDummyData(5);
+//   setEvpBlobOperationNotCallbackCall();
+//   EdgeAppLibDataExportFuture *future = DataExportSendData(
+//       PORTNAME_META, EdgeAppLibDataExportMetadata, (void *)dummy_data.array,
+//       dummy_data.size, dummy_data.timestamp);
+//   EXPECT_EQ(wasEvpBlobOperationCalled(), 1);
+//   EXPECT_EQ(future->result, EdgeAppLibDataExportResultEnqueued);
+//   EdgeAppLibDataExportResult res;
+//   res = DataExportAwait(future, 1);
+//   EXPECT_EQ(res, EdgeAppLibDataExportResultTimeout);
+//   EXPECT_EQ(future->result, EdgeAppLibDataExportResultEnqueued);
 
-  free(dummy_data.array);
-}
+//   future->is_processed = true;
+//   res = DataExportCleanup(future);
+//   EXPECT_EQ(res, EdgeAppLibDataExportResultSuccess);
+//   EXPECT_TRUE(DataExportHasPendingOperations());
+
+//   free(dummy_data.array);
+// }
 
 TEST_F(EdgeAppLibDataExportApiTestCb, SendStateTest) {
   MockStateMachineContext *mock_context = new MockStateMachineContext;

@@ -88,18 +88,18 @@ Even if the Custom Parameters are not specified in the "**Console for AITRIOS**"
 
 ```json
 {
-    "input_width" : 449,
-    "input_height" : 449,
-    "output_width" : 29,
-    "output_height" : 29,
+    "input_width" : 481,
+    "input_height" : 353,
+    "output_width" : 31,
+    "output_height" : 23,
     "score_threshold" : 0.5,
     "iou_threshold" : 0.28,
     "nms_radius" : 20,
     "max_pose_detections" : 15,
-    "heatmap_index" : 2,
-    "offset_index" : 3,
-    "forward_displacement_index" : 1,
-    "backward_displacement_index" : 0
+    "heatmap_index" : 0,
+    "offset_index" : 1,
+    "forward_displacement_index" : 2,
+    "backward_displacement_index ": 3
 }
 
 ```

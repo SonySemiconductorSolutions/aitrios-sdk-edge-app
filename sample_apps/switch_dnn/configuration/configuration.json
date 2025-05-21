@@ -83,9 +83,9 @@
                 },
                 "input_tensor": {
                     "method": 1,
-                    "storage_name": "",
+                    "storage_name": "${project_id}",
                     "endpoint": "",
-                    "path": "",
+                    "path": "${device_id}/image/${current_timestamp}",
                     "enabled": true
                 }
             },
@@ -97,7 +97,7 @@
         "custom_settings": {
             "ai_models": {
                 "detection_bird": {
-                    "ai_model_bundle_id": "000001",
+                    "ai_model_bundle_id": "${network_id_1}",
                     "param": {
                         "max_detections": 5,
                         "threshold": 0.3,
@@ -106,7 +106,7 @@
                     }
                 },
                 "classification_bird": {
-                    "ai_model_bundle_id": "000002",
+                    "ai_model_bundle_id": "${network_id_2}",
                     "param": {
                         "max_predictions": 5
                     }

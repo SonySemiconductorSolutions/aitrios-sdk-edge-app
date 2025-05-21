@@ -117,7 +117,7 @@ create the app:
 
 The runtime needs to exit
 if the app is exiting
-and to stop the camera before exiting.
+and to stop the Edge Device before exiting.
 
 The loop can be exited
 when the `app.is_running` becomes `False`:

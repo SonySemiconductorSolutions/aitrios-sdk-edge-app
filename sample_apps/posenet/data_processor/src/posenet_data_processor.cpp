@@ -94,7 +94,7 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   if (object_model == nullptr || (object_params = json_object_dotget_object(
                                       object_model, "parameters")) == nullptr) {
     const char *error_msg =
-        "Error accesing AI model parameters in JSON object.";
+        "Error accessing AI model parameters in JSON object.";
     LOG_ERR("%s", error_msg);
     *out_config_json = GetConfigureErrorJson(
         ResponseCodeInvalidArgument, error_msg,
@@ -112,7 +112,9 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   }
   pthread_mutex_unlock(&data_processor_mutex);
 
-  SetEdgeAppLibNetwork(s_stream, object_model);
+  if (SetEdgeAppLibNetwork(s_stream, object_model) != 0) {
+    res = kDataProcessorInvalidParamSetError;
+  }
 
   // Get metadata settings
   JSON_Object *object_format =

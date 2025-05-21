@@ -150,3 +150,58 @@ TEST_F(ApplyingTest, Iterate) {
   // running as next state
   ASSERT_EQ(context->GetNextState(), STATE_RUNNING);
 }
+
+TEST_F(ApplyingTest, RecoverIdleOrRunning) {
+  STATE initial_states[] = {STATE_RUNNING, STATE_IDLE};
+  for (int i = 0; i < 2; ++i) {
+    STATE initial_state = initial_states[i];
+
+    // set Running or Idle in current state and DTDL
+    context->SetCurrentState(StateFactory::Create(initial_state));
+    // move current state to Applying
+    // keeps Idle or Running in DTDL as Applying is not part of DTDL
+    context->SetCurrentState(StateFactory::Create(STATE_APPLYING));
+    ASSERT_EQ(context->GetCurrentState()->GetEnum(), STATE_APPLYING);
+    ASSERT_EQ(context->GetNextState(), STATE_APPLYING);
+
+    char *config = "{\"common_settings\": {\"log_level\": 5}}";
+
+    context->SetPendingConfiguration((void *)config, strlen(config));
+    IterateStatus res = state->Iterate();
+    ASSERT_EQ(res, IterateStatus::Ok);
+    ASSERT_EQ(context->GetPendingConfiguration((void **)&config), 0);
+    ASSERT_EQ(config, nullptr);
+
+    // verify Applying state recovers the initial state in next state
+    ASSERT_EQ(context->GetCurrentState()->GetEnum(), STATE_APPLYING);
+    ASSERT_EQ(context->GetNextState(), initial_state);
+  }
+}
+
+TEST_F(ApplyingTest, RecoverIdleIfError) {
+  STATE initial_states[] = {STATE_RUNNING, STATE_IDLE};
+  for (int i = 0; i < 2; ++i) {
+    STATE initial_state = initial_states[i];
+
+    // set Running or Idle in current state and DTDL
+    context->SetCurrentState(StateFactory::Create(initial_state));
+    // move current state to Applying
+    // keeps Idle or Running in DTDL as Applying is not part of DTDL
+    context->SetCurrentState(StateFactory::Create(STATE_APPLYING));
+    ASSERT_EQ(context->GetCurrentState()->GetEnum(), STATE_APPLYING);
+    ASSERT_EQ(context->GetNextState(), STATE_APPLYING);
+
+    char *config = "{invalid json to make Applying fail}";
+
+    context->SetPendingConfiguration((void *)config, strlen(config));
+    IterateStatus res = state->Iterate();
+    ASSERT_EQ(res, IterateStatus::Error);
+    ASSERT_EQ(context->GetPendingConfiguration((void **)&config), 0);
+    ASSERT_EQ(config, nullptr);
+
+    // verify Applying state sets next state to Idle if there is an error
+    ASSERT_EQ(context->GetCurrentState()->GetEnum(), STATE_APPLYING);
+    ASSERT_EQ(context->GetNextState(), STATE_IDLE);
+    ASSERT_EQ(context->IsPendingNotification(), true);
+  }
+}

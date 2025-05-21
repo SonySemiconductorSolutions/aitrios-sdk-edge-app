@@ -41,7 +41,7 @@ class SimpleEdgeApp(EdgeApp):
         log("[PYTHON] on_create")
         return 0
 
-    def on_configure(self) -> int:
+    def on_configure(self, topic: str, config_str: str) -> int:
         log("[PYTHON] on_configure")
         return 0
 

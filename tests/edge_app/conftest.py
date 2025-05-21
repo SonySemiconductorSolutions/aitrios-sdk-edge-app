@@ -15,3 +15,4 @@
 def pytest_addoption(parser):
     parser.addoption("--app", action="store", default="classification")
     parser.addoption("--python-bindings", action="store_true")
+    parser.addoption("--inject-fault", action="store_true")

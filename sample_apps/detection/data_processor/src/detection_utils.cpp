@@ -354,7 +354,6 @@ AreaCount *CreateAreaCount(Detections **detections, Area area) {
         LOG_DBG("Class_id (%u) is detected in the area.",
                 (*detections)->detection_data[i].class_id);
 
-        // In the case of that class_ids is empty.
         bool found_class_id = false;
         for (int j = 0; j < CLASS_IDS_SIZE; j++) {
           if (count_result[j].class_id ==
@@ -530,14 +529,9 @@ DataProcessorResultCode MakeDetectionFlatbuffer(
 
     gdata_vector.push_back(general_data);
   }
-  auto out_data_top = SmartCamera::CreateObjectDetectionTop(
-      *builder, SmartCamera::CreateObjectDetectionData(
-                    *builder, builder->CreateVector(gdata_vector)));
-
-  auto out_data = SmartCamera::CreateObjectDetectionRoot(
-      *builder, SmartCamera::ObjectDetectionUnion_ObjectDetectionTop,
-      out_data_top.Union());
-
+  auto perception = SmartCamera::CreateObjectDetectionData(
+      *builder, builder->CreateVector(gdata_vector));
+  auto out_data = SmartCamera::CreateObjectDetectionTop(*builder, perception);
   builder->Finish(out_data);
 
   return kDataProcessorOk;
@@ -565,24 +559,17 @@ DataProcessorResultCode MakeAreaFlatbuffer(
   }
 
   std::vector<flatbuffers::Offset<SmartCamera::CountData>> cdata_vector;
-
   for (size_t i = 0; i < CLASS_IDS_SIZE; i++) {
     if (area_count[i].class_id == UINT16_MAX) break;
     auto count_data = SmartCamera::CreateCountData(
         *builder, area_count[i].class_id, area_count[i].count);
-
     cdata_vector.push_back(count_data);
   }
 
-  auto area_count_top = SmartCamera::CreateAreaCountTop(
-      *builder, builder->CreateVector(cdata_vector),
-      SmartCamera::CreateObjectDetectionData(
-          *builder, builder->CreateVector(gdata_vector)));
-
-  auto out_data = SmartCamera::CreateObjectDetectionRoot(
-      *builder, SmartCamera::ObjectDetectionUnion_AreaCountTop,
-      area_count_top.Union());
-
+  auto perception = SmartCamera::CreateObjectDetectionData(
+      *builder, builder->CreateVector(gdata_vector));
+  auto out_data = SmartCamera::CreateObjectDetectionTop(
+      *builder, perception, builder->CreateVector(cdata_vector));
   builder->Finish(out_data);
   return kDataProcessorOk;
 }

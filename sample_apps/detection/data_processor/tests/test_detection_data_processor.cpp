@@ -317,7 +317,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeJsonTest) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%d\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -360,18 +360,18 @@ TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeFlatbufferTest) {
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
-  auto object_detection_root = SmartCamera::GetObjectDetectionRoot(p_out_buf);
+  auto object_detection_root = SmartCamera::GetObjectDetectionTop(p_out_buf);
 
   std::vector<uint32_t> expected_class = {235, 95};
 
   std::vector<float> expected_score = {0.8, 0.6};
 
   int expected_bbox[8] = {45, 30, 164, 150, 105, 90, 224, 209};
+  size_t expected_num_of_detections = 2;
 
   auto obj_detection_data =
-      object_detection_root->metadata_as_ObjectDetectionTop()
-          ->perception()
-          ->object_detection_list();
+      object_detection_root->perception()->object_detection_list();
+  ASSERT_EQ(obj_detection_data->size(), expected_num_of_detections);
   for (int i = 0; i < obj_detection_data->size(); ++i) {
     auto general_object = obj_detection_data->Get(i);
 
@@ -385,7 +385,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeFlatbufferTest) {
     EXPECT_EQ(bbox->bottom(), expected_bbox[i * 4 + 3]);
   }
   free(p_out_buf);
-  EXPECT_EQ(172, p_out_size);
+  EXPECT_EQ(152, p_out_size);
 }
 
 TEST_F(ConfigureAnalyzeFixtureTests, NullTensorAnalyzeTest) {
@@ -464,7 +464,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, UndefinedDetectionFormatTest) {
   char *p_out_buf = NULL;
   uint32_t p_out_size = 0;
 
-  printf("out_size=%d\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorInvalidParam);
@@ -486,7 +486,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, UndefinedAreaCountFormatTest) {
   char *p_out_buf = NULL;
   uint32_t p_out_size = 0;
 
-  printf("out_size=%d\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorInvalidParam);
@@ -507,48 +507,37 @@ TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeAreaCountFlatbuffersTest) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%d\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
-  auto object_detection_root = SmartCamera::GetObjectDetectionRoot(p_out_buf);
+  auto object_detection_root = SmartCamera::GetObjectDetectionTop(p_out_buf);
 
   std::vector<uint32_t> expected_class = {235, 95};
-
-  std::vector<float> expected_score = {0.8, 0.6};
-
-  int expected_bbox[8] = {45, 30, 164, 150, 105, 90, 224, 209};
 
   AreaCount expected_area_count[2] = {{.class_id = 235, .count = 1},
                                       {.class_id = 95, .count = 1}};
   size_t expected_num_of_class = 2;
+  size_t expected_num_of_detections = 2;
 
-  auto obj_detection_data = object_detection_root->metadata_as_AreaCountTop()
-                                ->perception()
-                                ->object_detection_list();
+  auto obj_detection_data =
+      object_detection_root->perception()->object_detection_list();
+  ASSERT_EQ(obj_detection_data->size(), expected_num_of_detections);
   for (int i = 0; i < obj_detection_data->size(); ++i) {
     auto general_object = obj_detection_data->Get(i);
-
-    auto bbox = general_object->bounding_box_as_BoundingBox2d();
-
     EXPECT_EQ(general_object->class_id(), expected_class[i]);
-    EXPECT_EQ(general_object->score(), expected_score[i]);
-    EXPECT_EQ(bbox->left(), expected_bbox[i * 4]);
-    EXPECT_EQ(bbox->top(), expected_bbox[i * 4 + 1]);
-    EXPECT_EQ(bbox->right(), expected_bbox[i * 4 + 2]);
-    EXPECT_EQ(bbox->bottom(), expected_bbox[i * 4 + 3]);
   }
 
-  auto area_count_data =
-      object_detection_root->metadata_as_AreaCountTop()->area_count();
-  for (int i = 0; i < expected_num_of_class; i++) {
+  auto area_count_data = object_detection_root->area_count();
+  ASSERT_EQ(area_count_data->size(), expected_num_of_class);
+  for (int i = 0; i < area_count_data->size(); i++) {
     auto count_data = area_count_data->Get(i);
     EXPECT_EQ(count_data->class_id(), expected_area_count[i].class_id);
     EXPECT_EQ(count_data->count(), expected_area_count[i].count);
   }
   json_free_serialized_string((char *)config_mod);
   free(p_out_buf);
-  EXPECT_EQ(212, p_out_size);
+  EXPECT_EQ(192, p_out_size);
 }
 
 TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeAreaCountJsonTest) {
@@ -563,7 +552,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeAreaCountJsonTest) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -632,7 +621,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, EmptyClassIdJsonTest) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%d\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -696,7 +685,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorYXYXN) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -743,7 +732,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXYXYN) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -790,7 +779,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXXYYN) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -839,7 +828,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXYWHN) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -890,7 +879,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXYXY) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -939,7 +928,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorYXYX) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -990,7 +979,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXYWH) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -1041,7 +1030,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXXYY) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -1092,7 +1081,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXXYYScoreClass) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -1143,7 +1132,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorYXYXNScoreClass) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%ld\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
@@ -1177,6 +1166,213 @@ TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorYXYXNScoreClass) {
   free(p_out_buf);
 }
 
+TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXYXYScoreClass) {
+  output_tensor_path = "../../../test_data/output_tensor_xyxy_score_cls.jsonc";
+  LoadTensorData();
+
+  JSON_Status stat = json_object_dotset_number(config_json_object,
+                                               "metadata_settings.format", 1);
+  json_object_dotset_string(config_json_object, BBOX_ORDER_PROP, "xyxy");
+  json_object_dotset_boolean(config_json_object, BBOX_NORM_PROP, false);
+  json_object_dotset_string(config_json_object, CLASS_ORDER_PROP, "score_cls");
+  json_object_dotset_number(config_json_object, MAX_PREDICTIONS_PROP, 10);
+  json_object_dotset_number(config_json_object, THRESHOLD_PROP, 0.06);
+  json_object_dotset_number(config_json_object, INPUT_HEIGHT_PROP, 480);
+  json_object_dotset_number(config_json_object, INPUT_WIDTH_PROP, 480);
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  char *p_out_buf;
+  uint32_t p_out_size;
+
+  printf("out_size=%zu\n", out_size);
+  DataProcessorResultCode res =
+      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorOk);
+
+  char expected_json_str[1024];
+  snprintf(expected_json_str, sizeof(expected_json_str), R"([
+    {
+        "class_id": 0,
+        "score": 0.92,
+        "bounding_box": {"left": 68,"top": 240,"right": 172,"bottom": 356}
+    },
+    {
+        "class_id": 0,
+        "score": 0.87,
+        "bounding_box": {"left": 172, "top": 180, "right": 248, "bottom": 264}
+    },
+    {
+        "class_id": 0,
+        "score": 0.07,
+        "bounding_box": {"left": 324, "top": 152, "right": 364, "bottom": 216}
+    }
+  ])");
+  JSON_Value *expected_json = json_parse_string(expected_json_str);
+
+  ASSERT_NE(p_out_buf, nullptr);
+  ASSERT_GT(p_out_size, 0);
+
+  JSON_Value *out_json = json_parse_string(p_out_buf);
+  ASSERT_TRUE(json_value_equals(out_json, expected_json))
+      << "  Actual JSON: " << p_out_buf << '\n'
+      << "Expected JSON: " << expected_json_str;
+
+  json_value_free(expected_json);
+  json_value_free(out_json);
+  json_free_serialized_string((char *)config_mod);
+  free(p_out_buf);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXYXYScoreClassAreaFbs) {
+  output_tensor_path = "../../../test_data/output_tensor_xyxy_score_cls.jsonc";
+  LoadTensorData();
+  json_object_dotset_string(config_json_object, BBOX_ORDER_PROP, "xyxy");
+  json_object_dotset_boolean(config_json_object, BBOX_NORM_PROP, false);
+  json_object_dotset_string(config_json_object, CLASS_ORDER_PROP, "score_cls");
+  json_object_dotset_number(config_json_object, MAX_PREDICTIONS_PROP, 10);
+  json_object_dotset_number(config_json_object, THRESHOLD_PROP, 0.06);
+  json_object_dotset_number(config_json_object, INPUT_HEIGHT_PROP, 480);
+  json_object_dotset_number(config_json_object, INPUT_WIDTH_PROP, 480);
+
+  snprintf(area_config_str, sizeof(area_config_str), R"(
+    {
+      "coordinates": {
+          "left": 15,
+          "top": 10,
+          "right": 470,
+          "bottom": 470
+      },
+      "overlap": 0.5,
+      "class_id": []
+    })");
+  json_value_free(area_config_json);
+  area_config_json = json_parse_string(area_config_str);
+
+  JSON_Object *area_config_obj = json_value_get_object(area_config_json);
+  json_object_set_value(config_json_object, "area", area_config_json);
+  area_config_json = nullptr;
+
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  char *p_out_buf;
+  uint32_t p_out_size;
+
+  printf("out_size=%zu\n", out_size);
+  DataProcessorResultCode res =
+      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorOk);
+  auto object_detection_root = SmartCamera::GetObjectDetectionTop(p_out_buf);
+
+  std::vector<uint32_t> expected_class = {0, 0, 0};
+
+  AreaCount expected_area_count[1] = {{.class_id = 0, .count = 3}};
+  size_t expected_num_of_class = 1;
+  size_t expected_num_of_detections = 3;
+
+  auto obj_detection_data =
+      object_detection_root->perception()->object_detection_list();
+  ASSERT_EQ(obj_detection_data->size(), expected_num_of_detections);
+  for (int i = 0; i < obj_detection_data->size(); ++i) {
+    auto general_object = obj_detection_data->Get(i);
+
+    EXPECT_EQ(general_object->class_id(), expected_class[i]);
+  }
+
+  auto area_count_data = object_detection_root->area_count();
+  ASSERT_EQ(area_count_data->size(), expected_num_of_class);
+  for (int i = 0; i < area_count_data->size(); i++) {
+    auto count_data = area_count_data->Get(i);
+    EXPECT_EQ(count_data->class_id(), expected_area_count[i].class_id);
+    EXPECT_EQ(count_data->count(), expected_area_count[i].count);
+  }
+  json_free_serialized_string((char *)config_mod);
+  free(p_out_buf);
+  EXPECT_EQ(212, p_out_size);
+}
+
+TEST_F(ConfigureAnalyzeFixtureTests, CustomTensorXYXYScoreClassAreaJson) {
+  output_tensor_path = "../../../test_data/output_tensor_xyxy_score_cls.jsonc";
+  LoadTensorData();
+  json_object_dotset_number(config_json_object, "metadata_settings.format", 1);
+  json_object_dotset_string(config_json_object, BBOX_ORDER_PROP, "xyxy");
+  json_object_dotset_boolean(config_json_object, BBOX_NORM_PROP, false);
+  json_object_dotset_string(config_json_object, CLASS_ORDER_PROP, "score_cls");
+  json_object_dotset_number(config_json_object, MAX_PREDICTIONS_PROP, 10);
+  json_object_dotset_number(config_json_object, THRESHOLD_PROP, 0.06);
+  json_object_dotset_number(config_json_object, INPUT_HEIGHT_PROP, 480);
+  json_object_dotset_number(config_json_object, INPUT_WIDTH_PROP, 480);
+
+  snprintf(area_config_str, sizeof(area_config_str), R"(
+    {
+      "coordinates": {
+          "left": 15,
+          "top": 10,
+          "right": 470,
+          "bottom": 470
+      },
+      "overlap": 0.5,
+      "class_id": []
+    })");
+  json_value_free(area_config_json);
+  area_config_json = json_parse_string(area_config_str);
+
+  JSON_Object *area_config_obj = json_value_get_object(area_config_json);
+  json_object_set_value(config_json_object, "area", area_config_json);
+  area_config_json = nullptr;
+
+  const char *config_mod = json_serialize_to_string(config_json_val);
+  char *output = NULL;
+  DataProcessorConfigure((char *)config_mod, &output);
+  char *p_out_buf;
+  uint32_t p_out_size;
+
+  printf("out_size=%zu\n", out_size);
+  DataProcessorResultCode res =
+      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorOk);
+  char expected_json_str[1024];
+  snprintf(expected_json_str, sizeof(expected_json_str), R"(
+    {
+    "area_count":{
+        "0":3
+      },
+  "detections":[
+      {
+          "class_id": 0,
+          "score": 0.92,
+          "bounding_box": {"left": 68,"top": 240,"right": 172,"bottom": 356}
+      },
+      {
+          "class_id": 0,
+          "score": 0.87,
+          "bounding_box": {"left": 172, "top": 180, "right": 248, "bottom": 264}
+      },
+      {
+          "class_id": 0,
+          "score": 0.07,
+          "bounding_box": {"left": 324, "top": 152, "right": 364, "bottom": 216}
+      }
+          ]
+  }
+  )");
+  JSON_Value *expected_json = json_parse_string(expected_json_str);
+
+  ASSERT_NE(p_out_buf, nullptr);
+  ASSERT_GT(p_out_size, 0);
+
+  JSON_Value *out_json = json_parse_string(p_out_buf);
+  EXPECT_TRUE(json_value_equals(out_json, expected_json))
+      << "  Actual JSON: " << p_out_buf << '\n'
+      << "Expected JSON: " << expected_json_str;
+
+  json_value_free(expected_json);
+  json_value_free(out_json);
+  json_free_serialized_string((char *)config_mod);
+  free(p_out_buf);
+}
+
 TEST_F(ConfigureAnalyzeFixtureTests, EmptyClassIdFlatbuffersTest) {
   JSON_Object *area_config_obj = json_value_get_object(area_config_json);
   JSON_Value *empty_array_value = json_value_init_array();
@@ -1192,46 +1388,39 @@ TEST_F(ConfigureAnalyzeFixtureTests, EmptyClassIdFlatbuffersTest) {
   char *p_out_buf;
   uint32_t p_out_size;
 
-  printf("out_size=%d\n", out_size);
+  printf("out_size=%zu\n", out_size);
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
-  auto object_detection_root = SmartCamera::GetObjectDetectionRoot(p_out_buf);
+  auto object_detection_root = SmartCamera::GetObjectDetectionTop(p_out_buf);
 
   std::vector<uint32_t> expected_class = {235, 95};
-
-  std::vector<float> expected_score = {0.8, 0.6};
 
   int expected_bbox[8] = {45, 30, 164, 150, 105, 90, 224, 209};
 
   AreaCount expected_area_count[2] = {{.class_id = 235, .count = 1},
                                       {.class_id = 95, .count = 1}};
   size_t expected_num_of_class = 2;
+  size_t expected_num_of_detections = 2;
 
-  auto obj_detection_data = object_detection_root->metadata_as_AreaCountTop()
-                                ->perception()
-                                ->object_detection_list();
+  auto obj_detection_data =
+      object_detection_root->perception()->object_detection_list();
+
+  ASSERT_EQ(obj_detection_data->size(), expected_num_of_detections);
   for (int i = 0; i < obj_detection_data->size(); ++i) {
     auto general_object = obj_detection_data->Get(i);
 
-    auto bbox = general_object->bounding_box_as_BoundingBox2d();
-
     EXPECT_EQ(general_object->class_id(), expected_class[i]);
-    EXPECT_EQ(general_object->score(), expected_score[i]);
-    EXPECT_EQ(bbox->left(), expected_bbox[i * 4]);
-    EXPECT_EQ(bbox->top(), expected_bbox[i * 4 + 1]);
-    EXPECT_EQ(bbox->right(), expected_bbox[i * 4 + 2]);
-    EXPECT_EQ(bbox->bottom(), expected_bbox[i * 4 + 3]);
   }
 
-  auto area_count_data =
-      object_detection_root->metadata_as_AreaCountTop()->area_count();
-  for (int i = 0; i < expected_num_of_class; i++) {
+  auto area_count_data = object_detection_root->area_count();
+  ASSERT_EQ(area_count_data->size(), expected_num_of_class);
+  for (int i = 0; i < area_count_data->size(); i++) {
     auto count_data = area_count_data->Get(i);
     EXPECT_EQ(count_data->class_id(), expected_area_count[i].class_id);
     EXPECT_EQ(count_data->count(), expected_area_count[i].count);
   }
   json_free_serialized_string((char *)config_mod);
   free(p_out_buf);
-  EXPECT_EQ(212, p_out_size);
+  EXPECT_EQ(192, p_out_size);
 }
