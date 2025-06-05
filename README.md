@@ -16,7 +16,7 @@ This project requires external libraries such as **FlatBuffers**, **Parson**, **
 
 ### Install Local Console
 This Edge Application SDK is designed to connect to a Local Console. You need to set up the Local Console environment in advance by following the instructions here:
-[Local Console](https://github.com/SonySemiconductorSolutions/local-console)
+[Local Console](https://github.com/SonySemiconductorSolutions/local-console/releases/tag/v4.0.18-sss)
 
 ### Sample Application for Python on Raspberry Pi + AI Camera
 
