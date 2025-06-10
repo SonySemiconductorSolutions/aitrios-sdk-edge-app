@@ -69,6 +69,70 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 [draw]: sample_apps/draw
 [perfbench]: sample_apps/perfbench
 
+
+#### Execute Wasm Application in Place
+
+Before running this Edge Application, please ensure that **Netcat** is installed on your Target Device.
+Netcat is used to send configuration data to the application.  
+It’s also a good idea to install OpenCV for visualization.
+
+To install Netcat, run:
+
+   ```sh
+   sudo apt update
+   sudo apt install -y netcat-traditional libopencv-dev python3-opencv
+   ```
+
+##### Steps
+
+1. **Download and install senscord_libcamera.deb**  
+   Download the `senscord_libcamera.deb` package from the release page according to your device architecture and install it using:
+
+
+   ```sh
+   wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.1.6/senscord-libcamera_1.0.5_arm64.deb
+
+   sudo apt install ./senscord-libcamera_*.deb
+   ```
+
+
+   | Arch      | filename   |
+   |------------------|------------|
+   | arm64    | senscord-libcamera_1.0.5_arm64.deb |
+   | ubuntu 22.04    | senscord-libcamera_1.0.5_u22_amd64.deb |
+   | ubuntu 20.04    | senscord-libcamera_1.0.5_u20_arm64.deb |
+
+
+
+2. **Run the application**  
+    Execute the following command from another terminal.
+You can find sample configuration files in the sample_apps/"APPNAME"/configuration directory.
+   
+   To use the real frame from camera, use the script as default setting.
+   ```sh
+   cd /opt/senscord
+   ./run_iwasm.sh </path/to/your_edge_app.wasm>
+   ```
+   To use the captured frame, specify pc as a device
+   ```sh
+   cd /opt/senscord
+   ./run_iwasm.sh -d pc </path/to/your_edge_app.wasm>
+   ```
+
+3. **Start Inference**  
+    Execute the command from the other terminal. You can find the sample configuration from sample_apps/"APPNAME"/configuration. 
+   ```sh
+   cat configuration.json | nc localhost 8080
+   ```
+
+4. **Check the result**  
+   When you run this application, **two folders** will be automatically created:
+
+- **image**: Stores the full images or cropped images generated during the inference process.
+- **Inference**: Contains the output data (e.g., Output Tensors) from the AI inference.
+
+
+
 ## Get support
 - [Contact us](https://support.aitrios.sony-semicon.com/hc/en-us/requests/new)
 
