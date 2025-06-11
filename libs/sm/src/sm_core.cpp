@@ -39,12 +39,14 @@ IterateStatus StateMachine::LoopIterate() {
   }
 
   STATE current_state_enum = context->GetCurrentState()->GetEnum();
-  LOG_DBG("StateMachine::run: current_state_enum %d", current_state_enum);
-  if (current_state_enum == STATE_DESTROYING) return IterateStatus::Break;
+  if (current_state_enum == STATE_DESTROYING) {
+    LOG_WARN("State machine is being destroyed");
+    return IterateStatus::Break;
+  }
 
   STATE next_state_enum = context->GetNextState();
-  LOG_DBG("StateMachine::run: next_state_enum %d", next_state_enum);
   if (next_state_enum != current_state_enum) {
+    LOG_INFO("State transition: %d -> %d", current_state_enum, next_state_enum);
     State *state = StateFactory::Create(next_state_enum);
     STATE new_next_state_enum = context->GetNextState();
     if (new_next_state_enum != next_state_enum &&
