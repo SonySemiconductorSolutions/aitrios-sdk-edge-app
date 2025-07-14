@@ -50,6 +50,6 @@ RUN cd /opt \
 
 # Install SensCord libcamera package
 RUN cd /opt \
-    && wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_u22_amd64.deb \
-    && apt install ./senscord-libcamera_1.0.7_u22_amd64.deb \
-    && rm senscord-libcamera_1.0.7_u22_amd64.deb
+    && wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.1.6/senscord-libcamera_1.0.5_u22_amd64.deb \
+    && apt install ./senscord-libcamera_1.0.5_u22_amd64.deb \
+    && rm senscord-libcamera_1.0.5_u22_amd64.deb
