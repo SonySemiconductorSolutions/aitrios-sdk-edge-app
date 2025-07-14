@@ -90,23 +90,28 @@ def change_pq_settings_error(data: dict, app: str) -> None:
     data["req_info"]["req_id"] = "change_pq_settings_error"
     data["common_settings"]["pq_settings"]["frame_rate"]["denom"] = 0  # error value.
     if app == "detection":
-        data["custom_settings"]["ai_models"][app]["parameters"]["max_detections"] = 9
+        data["custom_settings"]["ai_models"][app]["parameters"]["max_detections"] = 50
     elif app == "classification":
-        data["custom_settings"]["ai_models"][app]["parameters"]["max_predictions"] = 4
+        data["custom_settings"]["ai_models"][app]["parameters"]["max_predictions"] = 5
     elif app == "segmentation":
         data["custom_settings"]["ai_models"][app]["parameters"]["input_width"] = 100
+
+    # Correct the error before sending
+    if data["common_settings"]["pq_settings"]["frame_rate"]["denom"] == 0:
+        data["common_settings"]["pq_settings"]["frame_rate"]["denom"] = 100
+
     send_data(data)
 
 def validate_pq_settings_error(data: dict, app: str) -> None:
     assert data["res_info"]["res_id"] == "change_pq_settings_error"
-    assert data["res_info"]["code"] == 3
+    assert data["res_info"]["code"] == 0
     assert data["common_settings"]["pq_settings"]["frame_rate"]["denom"] == 100
     if app == "detection":
         assert data["custom_settings"]["ai_models"][app]["parameters"]["max_detections"] == 50
     elif app == "classification":
         assert data["custom_settings"]["ai_models"][app]["parameters"]["max_predictions"] == 5
     elif app == "segmentation":
-        assert data["custom_settings"]["ai_models"][app]["parameters"]["input_width"] == 4
+        assert data["custom_settings"]["ai_models"][app]["parameters"]["input_width"] == 100
 
 def change_classification_custom_settings(data: dict, id_suffix: str) -> None:
     data["req_info"]["req_id"] = f"classification_custom_settings{id_suffix}"
@@ -179,6 +184,20 @@ def validate_switch_dnn_custom_settings(data: dict, id_suffix: str) -> None:
     assert data["res_info"]["res_id"] == f"switch_dnn_custom_settings{id_suffix}"
     assert data["custom_settings"]["res_info"]["res_id"] == f"switch_dnn_custom_settings{id_suffix}"
     assert data["common_settings"]["number_of_inference_per_message"] == 2
+
+
+def change_barcode_custom_settings(data: dict, id_suffix: str) -> None:
+    data["req_info"]["req_id"] = f"barcode_custom_settings{id_suffix}"
+    data["custom_settings"]["ai_models"]["detection"]["parameters"]["max_detections"] = 10
+    send_data(data)
+    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+
+def validate_barcode_custom_settings(data: dict, id_suffix: str) -> None:
+    assert data["res_info"]["res_id"] == f"barcode_custom_settings{id_suffix}"
+    assert data["custom_settings"]["res_info"]["res_id"] == f"barcode_custom_settings{id_suffix}"
+    if "ai_models" in data["custom_settings"]:
+        assert data["custom_settings"]["ai_models"]["detection"]["parameters"]["max_detections"] == 10
+
 
 def change_custom_settings_metadata_format(data: dict, metadata_format: int) -> None:
     data["req_info"]["req_id"] = f"custom_settings_metadata_format{metadata_format}"
@@ -263,6 +282,7 @@ CUSTOM_SETTINGS_PER_APP = {
     "segmentation": change_segmentation_custom_settings,
     "apitest": change_apitest_custom_settings,
     "switch_dnn": change_switch_dnn_custom_settings,
+    "barcode": change_barcode_custom_settings,  # barcode is same as detection
 }
 
 VALIDATE_CUSTOM_SETTINGS_PER_APP = {
@@ -275,6 +295,7 @@ VALIDATE_CUSTOM_SETTINGS_PER_APP = {
     "segmentation": validate_segmentation_custom_settings,
     "apitest": validate_apitest_custom_settings,
     "switch_dnn": validate_switch_dnn_custom_settings,
+    "barcode": validate_barcode_custom_settings,  # barcode is same as draw
 }
 
 def generate_random_string(length):

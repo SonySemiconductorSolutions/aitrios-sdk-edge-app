@@ -28,4 +28,17 @@ void sendMetadata(EdgeAppLibSensorFrame *frame);
 EdgeAppLibDataExportResult sendState(const std::string &topic,
                                      const std::string &state);
 
-std::string getPortSettings();
+std::string getPortSettingsStr();
+
+std::string getWorkspaceDirectory();
+
+std::string formatTimestamp(uint64_t timestamp);
+
+std::string getFileSuffix(EdgeAppLibDataExportDataType dataType);
+
+EdgeAppLibDataExportResult sendFile(EdgeAppLibDataExportDataType dataType,
+                                    const std::string &filePath,
+                                    const std::string &url, int timeout_ms);
+
+EdgeAppLibDataExportResult sendTelemetry(void *data, int datalen,
+                                         int timeout_ms);

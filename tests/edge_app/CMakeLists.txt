@@ -28,6 +28,7 @@ if(EVP_MOCK EQUAL 1)
   set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread")
   set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
     ${MOCKS_DIR}/evp/simple_evp.c
+    ${MOCKS_DIR}/evp/pytest_support.c
   )
 endif()
 
@@ -58,6 +59,7 @@ if(MOCK EQUAL 1)
     ${MOCKS_DIR}/sensor/testing_utils.cpp
     ${MOCKS_DIR}/device/mock_device.cpp
     ${MOCKS_DIR}/log/mock_log.cpp
+    ${MOCKS_DIR}/nn/mock_wasi_nn.c
   )
   include_directories(
     ${SAMPLE_APP_DIR}/utils/include

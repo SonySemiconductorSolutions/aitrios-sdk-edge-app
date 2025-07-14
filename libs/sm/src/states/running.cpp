@@ -26,6 +26,9 @@
 #include "sm_context.hpp"
 #include "states/state_defs.h"
 #include "utils.hpp"
+#ifdef EVP_REMOTE_SDK
+#include "../../../py/src/py_shared_state.hpp"
+#endif  // EVP_REMOTE_SDK
 
 using EdgeAppLib::DataExportHasPendingOperations;
 
@@ -63,14 +66,31 @@ Running::~Running() {
 }
 
 IterateStatus Running::Iterate() {
+#ifdef EVP_REMOTE_SDK
+  pthread_mutex_lock(&shared_state.mutex);
+  while (shared_state.operation_in_progress) {
+    pthread_cond_wait(&shared_state.cond, &shared_state.mutex);
+  }
+  shared_state.process_event_in_progress = true;
+  pthread_mutex_unlock(&shared_state.mutex);
+  EVP_RESULT result = EVP_processEvent(context->evp_client, 100);
+#else   // EVP_REMOTE_SDK
   EVP_RESULT result =
       EVP_processEvent(context->evp_client, EVP_PROCESSEVENT_TIMEOUT_MS);
+#endif  // EVP_REMOTE_SDK
 
   if (result == EVP_SHOULDEXIT) {
     LOG_INFO("Exiting the main loop due to EVP_SHOULDEXIT");
     context->SetNextState(STATE_DESTROYING);
     return IterateStatus::Ok;
   }
+
+#ifdef EVP_REMOTE_SDK
+  pthread_mutex_lock(&shared_state.mutex);
+  shared_state.process_event_in_progress = false;
+  pthread_cond_signal(&shared_state.cond);
+  pthread_mutex_unlock(&shared_state.mutex);
+#endif  // EVP_REMOTE_SDK
 
   return IterateStatus::Ok;
 }

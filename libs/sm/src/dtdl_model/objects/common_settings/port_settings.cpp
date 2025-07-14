@@ -47,26 +47,14 @@ PortSettings::PortSettings()
 }
 
 int PortSettings::Apply(JSON_Object *obj) {
-  bool is_updated = false;
   if (json_object_has_value(obj, METADATA)) {
     JSON_Object *json_metadata = json_object_get_object(obj, METADATA);
-    if (!json_value_equals(
-            json_object_get_wrapping_value(json_metadata),
-            json_object_get_wrapping_value(metadata.GetJsonObject()))) {
-      metadata.Apply(json_metadata);
-      is_updated = true;
-    }
+    metadata.Apply(json_metadata);
   }
   if (json_object_has_value(obj, INPUT_TENSOR)) {
     JSON_Object *json_input_tensor = json_object_get_object(obj, INPUT_TENSOR);
-    if (!json_value_equals(
-            json_object_get_wrapping_value(json_input_tensor),
-            json_object_get_wrapping_value(input_tensor.GetJsonObject()))) {
-      input_tensor.Apply(json_input_tensor);
-      is_updated = true;
-    }
+    input_tensor.Apply(json_input_tensor);
   }
-  if (!is_updated) return 0;
 
   StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
   context->EnableNotification();

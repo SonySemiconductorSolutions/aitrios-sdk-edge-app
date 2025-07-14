@@ -136,7 +136,7 @@ static std::map<std::string, MapValue> property_map;
 #define MOCK_DATA "[]"
 #endif
 
-static EdgeAppLibSensorFrame latest_frame = 0;
+static EdgeAppLibSensorFrame latest_frame = 10;
 static EdgeAppLibSensorChannel latest_channel_id = 0;
 static std::map<EdgeAppLibSensorFrame, std::vector<EdgeAppLibSensorChannel>>
     map_frame_channels;
@@ -229,7 +229,8 @@ int32_t SensorFrameGetChannelFromChannelId(EdgeAppLibSensorFrame frame,
     return EdgeAppLibSensorFrameGetChannelFromChannelIdSuccess;
   }
   if (channel_id != (uint32_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE &&
-      channel_id != (uint32_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT) {
+      channel_id != (uint32_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT &&
+      channel_id != (uint32_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_RAW_IMAGE) {
     return -1;
   }
   *channel = latest_channel_id++;
@@ -246,10 +247,11 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
 
   uint64_t channel_id = map_channel_channel_id[channel];
   if (channel_id == (uint64_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE) {
-    float out_data_aux[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    raw_data->address = (float *)malloc(sizeof(out_data_aux));
-    raw_data->type = strdup("float");
-    raw_data->size = 10;
+    uint8_t out_data_aux[15] = {0, 1, 2,  3,  4,  5,  6, 7,
+                                8, 9, 10, 11, 12, 13, 14};
+    raw_data->address = (uint8_t *)malloc(sizeof(out_data_aux));
+    raw_data->type = strdup("image");
+    raw_data->size = 15;
     raw_data->timestamp = 10;
     memcpy(raw_data->address, out_data_aux, sizeof(out_data_aux));
 
@@ -264,6 +266,20 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
       LOG_INFO("EsfMemoryManagerPread success");
       raw_data->address = malloc(raw_data->size);
     }
+    return EdgeAppLibSensorChannelGetRawDataSuccess;
+  }
+  if (channel_id == (uint64_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_RAW_IMAGE) {
+    uint8_t out_data_aux[15] = {0, 1, 2,  3,  4,  5,  6, 7,
+                                8, 9, 10, 11, 12, 13, 14};
+    raw_data->address = (uint8_t *)malloc(sizeof(out_data_aux));
+    raw_data->type = strdup("image");
+    raw_data->size = 15;
+    raw_data->timestamp = 10;
+    memcpy(raw_data->address, out_data_aux, sizeof(out_data_aux));
+    struct EdgeAppLibSensorRawData *raw_data_cpy =
+        (struct EdgeAppLibSensorRawData *)malloc(sizeof(*raw_data));
+    memcpy(raw_data_cpy, raw_data, sizeof(*raw_data));
+    map_channel_data[channel] = raw_data_cpy;
     return EdgeAppLibSensorChannelGetRawDataSuccess;
   }
   if (channel_id == (uint64_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT) {
@@ -471,6 +487,16 @@ int32_t SensorChannelGetProperty(EdgeAppLibSensorChannel channel,
       subframe->current_num = EdgeAppLibSensorChannelSubFrameCurrentNum;
       subframe->division_num = EdgeAppLibSensorChannelSubFrameDivisionNum;
     }
+  } else if (strncmp(property_key, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                     strlen(property_key)) == 0) {
+    EdgeAppLibSensorImageProperty *image_property =
+        (EdgeAppLibSensorImageProperty *)value;
+    image_property->width = 1;
+    image_property->height = 5;
+    image_property->stride_bytes = 3;  // 1 * 3
+
+    snprintf(image_property->pixel_format, sizeof(image_property->pixel_format),
+             "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
   }
 
   return EdgeAppLibSensorChannelGetPropertySuccess;

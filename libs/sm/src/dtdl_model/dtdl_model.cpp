@@ -82,10 +82,18 @@ int DtdlModel::Apply(JSON_Object *obj) {
   if (json_object_has_value(obj, COMMON_SETTINGS)) {
     ret = GetCommonSettings()->Apply(
         json_object_get_object(obj, COMMON_SETTINGS));
+    if (ret != 0) {
+      LOG_ERR("Failed to apply common settings");
+    }
   }
-  if (ret == 0 && json_object_has_value(obj, CUSTOM_SETTINGS))
+  if (json_object_has_value(obj, CUSTOM_SETTINGS)) {
     ret = GetCustomSettings()->Apply(
         json_object_get_object(obj, CUSTOM_SETTINGS));
+    if (ret != 0) {
+      LOG_ERR("Failed to apply custom settings");
+    }
+  }
+
   return ret;
 }
 

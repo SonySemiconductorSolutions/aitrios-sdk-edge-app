@@ -14,7 +14,7 @@
 
 # Identify wasi-sdk version using clang
 # https://github.com/WebAssembly/wasi-sdk/issues/372
-set(WASI_SDK_RECVER "18.1.2")
+set(WASI_SDK_RECVER "18.1.2-wasi-sdk")
 
 execute_process(
     COMMAND ${CMAKE_C_COMPILER} --version
@@ -23,11 +23,9 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 if (NOT ${WASI_SDK_VER} STREQUAL ${WASI_SDK_RECVER})
-  message(WARNING "Use recommended version of wasi-sdk: 22")
+  message(WARNING "Use recommended version of wasi-sdk: 24")
 endif()
 
-set(MAX_MEMORY 10485760)
-set(INITIAL_MEMORY 2097152)
 
 if (DEFINED MAX_MEMORY)
   math(EXPR MAX_MEMORY_DIVISIBLE_BY_65536 "${MAX_MEMORY} % 65536")
@@ -54,15 +52,12 @@ if (DEFINED INITIAL_MEMORY)
     endif()
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -Xclang -fmerge-functions -g")
-else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -flto -Xclang -fmerge-functions")
-endif()
+add_compile_options(-Oz $<$<NOT:$<CONFIG:Debug>>:-flto> -Xclang -fmerge-functions -g)
 
 # -fno-exceptions
 #   For our target (wasm), C++ exceptions are not available in general.
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
 
 # -Wl,--export=__main_argc_argv
 #   A workaround for wasi-libc bug.
@@ -81,6 +76,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 #   although the current WAMR implementation doesn't
 #   look at the export properly, it's better to avoid
 #   relying on the bug.
+#
+# -Wl,-mllvm,-inline-threshold=5
+#   Set the threshold for inline cost analysis explicitly as
+#   it affects the binary size much. 5 is what's usually used for -Oz.
+#   (Ideally, I suppose LLVM bitcode should carry the optimization
+#   level so that it's available for the linker. But it isn't the case
+#   right now.)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
   -Wl,--allow-undefined \
   -Wl,--export=malloc,--export=free \
@@ -88,6 +90,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
   -Wl,--export=__main_argc_argv \
   -Wl,--export-table \
   -Wl,--max-memory=${MAX_MEMORY} \
+  -Wl,-mllvm,-inline-threshold=5 \
   ${ADDITIONAL_FLAGS} \
 ")
 

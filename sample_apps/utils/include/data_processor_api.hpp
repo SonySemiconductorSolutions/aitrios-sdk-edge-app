@@ -92,10 +92,8 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
  *
  * @param in_data Output tensor as an array of floats.
  * @param in_size Output tensor array of floats size(bytes).
- * @param out_data Pointer of postprocessed FlatBuffer (classification,
- * detection, etc.).
- * @param out_size Pointer of postprocessed FlatBuffer size.
- * memory
+ * @param out_data Pointer of postprocessed data (JSON or FlatBuffers).
+ * @param out_size Pointer of postprocessed data size.
  * @return DataProcessorResultCode
  */
 DataProcessorResultCode DataProcessorAnalyze(float *in_data, uint32_t in_size,
@@ -125,8 +123,8 @@ EdgeAppLibSendDataType DataProcessorGetDataType();
  * @param in_data Pointer of output tensor buffer.
  * @param in_size Pointer of output tensor buffer size.
  * @param timestamp Timestamp of output tensor.
- * @param out_data Pointer of output tensor with Json format.
- * @param out_size Pointer of output tensor with Json format's size.
+ * @param out_data Pointer of output tensor with JSON format.
+ * @param out_size Pointer of output tensor with JSON format's size.
  * memory
  * @return DataProcessorResultCode
  */

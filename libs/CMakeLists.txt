@@ -18,11 +18,13 @@ add_subdirectory(draw/src)
 add_subdirectory(sensor/src)
 add_subdirectory(send_data/src/data_export/src)
 add_subdirectory(send_data/src/)
+add_subdirectory(receive_data/src/)
 add_subdirectory(sm/src)
+add_subdirectory(nn/src)
 
 # circular dependency sensor <-> sm
 target_link_libraries(sensor sm)
 
 add_library(edge_app_lib INTERFACE)
 
-target_link_libraries(edge_app_lib INTERFACE common sm data_export send_data log draw)
+target_link_libraries(edge_app_lib INTERFACE common sm data_export send_data log draw nn receive_data)

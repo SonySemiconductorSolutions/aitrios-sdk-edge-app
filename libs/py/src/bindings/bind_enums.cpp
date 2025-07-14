@@ -55,4 +55,9 @@ void bind_enums(pybind11::module_ &m) {
       .value("DataLoss", ResponseCodeDataLoss)
       .value("Unauthenticated", ResponseCodeUnauthenticated)
       .export_values();
+
+  pybind11::enum_<EdgeAppLibDataExportDataType>(m, "DataExportDataType")
+      .value("Raw", EdgeAppLibDataExportRaw)
+      .value("Metadata", EdgeAppLibDataExportMetadata)
+      .export_values();
 }

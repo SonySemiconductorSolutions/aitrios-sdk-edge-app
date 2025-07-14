@@ -95,6 +95,10 @@ static void DataExportCleanupOrUnlock(EdgeAppLibDataExportFuture *future) {
   if (future->is_processed && future->is_cleanup_requested) {
     LOG_DBG("Deleting future: callback and user requested.");
     pthread_mutex_unlock(&future->mutex);
+    if (future->is_cleanup_sent_data && future->module_vars.blob_buff) {
+      free(future->module_vars.blob_buff);
+      future->module_vars.blob_buff = nullptr;
+    }
     pthread_mutex_destroy(&future->mutex);
     pthread_cond_destroy(&future->cond);
     free(future);
@@ -225,7 +229,7 @@ EdgeAppLibDataExportFuture *DataExportSendData(
   }
 
   // Release sent data inside DataExportCleanupOrUnlock
-  future->is_cleanup_sent_data = (datatype == EdgeAppLibDataExportRaw);
+  future->is_cleanup_sent_data = (datatype != EdgeAppLibDataExportMetadata);
 
   if (map_set((void *)&(future->module_vars), future) == -1) {
     // TODO: add more meaningful result
@@ -426,10 +430,6 @@ EdgeAppLibDataExportResult DataExportCleanup(
   LOG_INFO("Cleaning up things");
   pthread_mutex_lock(&future->mutex);
   future->is_cleanup_requested = true;
-  if (future->is_cleanup_sent_data && future->module_vars.blob_buff) {
-    free(future->module_vars.blob_buff);
-    future->module_vars.blob_buff = nullptr;
-  }
   DataExportCleanupOrUnlock(future);
   LOG_INFO("Exit Clean");
   return EdgeAppLibDataExportResultSuccess;
@@ -493,6 +493,8 @@ void DataExportFileSuffix(char *buffer, size_t buffer_size,
     }
   } else if (datatype == EdgeAppLibDataExportMetadata) {
     extension = "txt";
+  } else {
+    extension = "bmp";
   }
   if (extension) {
     snprintf(buffer, buffer_size, ".%s", extension);

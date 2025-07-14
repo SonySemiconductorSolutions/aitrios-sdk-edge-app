@@ -39,7 +39,6 @@ python3 sample_apps/classification/python/imx500_classification_local_console_de
 
 ### Sample Application for C/C++
 
-Currently, C/C++ applications do not run on the Raspberry Pi with the AI Camera.
 
 #### Build apps
 
@@ -69,68 +68,82 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 [draw]: sample_apps/draw
 [perfbench]: sample_apps/perfbench
 
+---
 
-#### Execute Wasm Application in Place
+#### Run and Debug apps
 
-Before running this Edge Application, please ensure that **Netcat** is installed on your Target Device.
+You can run and debug the built Edge Application **without deploying it to the Edge device** by following way:
+
+Target devices: **Ubuntu(amd64), Raspberry Pi (aarch64)**
+
+Before running this Edge Application, please ensure that **Netcat** is installed on your Target Device.  
 Netcat is used to send configuration data to the application.  
-It’s also a good idea to install OpenCV for visualization.
 
-To install Netcat, run:
+```sh
+sudo apt update
+sudo apt install -y netcat-traditional
+```
 
-   ```sh
-   sudo apt update
-   sudo apt install -y netcat-traditional libopencv-dev python3-opencv
-   ```
+#### Steps 
 
-##### Steps
+##### 1. Download and Install `senscord_libcamera.deb`
 
-1. **Download and install senscord_libcamera.deb**  
-   Download the `senscord_libcamera.deb` package from the release page according to your device architecture and install it using:
+Download the package according to your Ubuntu version:
+
+- **For Ubuntu 22.04 (amd64)**  
+  ```sh
+  wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_u22_amd64.deb
+  sudo apt install ./senscord-libcamera_*.deb
+  ```
+
+- **For Ubuntu 20.04 (amd64, Codespaces)**  
+  ```sh
+  wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_u20_amd64.deb
+  sudo apt install ./senscord-libcamera_*.deb
+  ```
+
+- **For Raspberry Pi AI camera (aarch64)**  
+  ```sh
+  wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_arm64.deb
+  sudo apt install ./senscord-libcamera_*.deb
+  ```
 
 
-   ```sh
-   wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.1.6/senscord-libcamera_1.0.5_arm64.deb
+##### 2. Run Edge Application
 
-   sudo apt install ./senscord-libcamera_*.deb
-   ```
+If the **Target Device is a Ubuntu**, run the following command:
+
+  ```sh
+  /opt/senscord/run_iwasm.sh -d pc /path/to/your_edge_app.wasm
+  ```
+
+If the **Target Device is a Raspberry Pi AI camera**
+
+  ```sh
+  /opt/senscord/run_iwasm.sh /path/to/your_edge_app.wasm
+  ```
 
 
-   | Arch      | filename   |
-   |------------------|------------|
-   | arm64    | senscord-libcamera_1.0.5_arm64.deb |
-   | ubuntu 22.04    | senscord-libcamera_1.0.5_u22_amd64.deb |
-   | ubuntu 20.04    | senscord-libcamera_1.0.5_u20_arm64.deb |
+Then Edge Application waits the command to start inference
+
+##### 3. Start Inference
+
+In another terminal:
+
+```sh
+cat configuration.json | nc localhost 8080
+```
+You can use the sample configuration file in the `sample_apps/$NAME_OF_APP/configuration` directory.
 
 
+### 4. Check the Results
 
-2. **Run the application**  
-    Execute the following command from another terminal.
-You can find sample configuration files in the sample_apps/"APPNAME"/configuration directory.
-   
-   To use the real frame from camera, use the script as default setting.
-   ```sh
-   cd /opt/senscord
-   ./run_iwasm.sh </path/to/your_edge_app.wasm>
-   ```
-   To use the captured frame, specify pc as a device
-   ```sh
-   cd /opt/senscord
-   ./run_iwasm.sh -d pc </path/to/your_edge_app.wasm>
-   ```
-
-3. **Start Inference**  
-    Execute the command from the other terminal. You can find the sample configuration from sample_apps/"APPNAME"/configuration. 
-   ```sh
-   cat configuration.json | nc localhost 8080
-   ```
-
-4. **Check the result**  
-   When you run this application, **two folders** will be automatically created:
+When you run the application at step 2, **two folders** will be automatically created under your current directory:
 
 - **image**: Stores the full images or cropped images generated during the inference process.
 - **Inference**: Contains the output data (e.g., Output Tensors) from the AI inference.
 
+---
 
 
 ## Get support

@@ -14,7 +14,6 @@
 
 import sys
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Iterator, Tuple, List, Dict, Any
 import inspect
 import json
@@ -33,12 +32,14 @@ from edge_app_sdk import (
     get_configure_error_json,
     DataProcessorResultCode,
     ResponseCode,
+    SendDataType,
 )
 
 # Constants
 GET_FRAME_TIMEOUT = 5000
 BBOX_ORDER_SIZE = 32
 CLS_SCORE_SIZE = 32
+DATA_EXPORT_TIMEOUT = 3000
 
 # Default values for detection parameters
 DEFAULT_MAX_DETECTIONS = 2
@@ -105,7 +106,7 @@ class ConfigurationManager:
         )
         self.area: Dict[str, Any] = {}
         self.send_area_counts = False
-        self.metadata_format = 1
+        self.metadata_format = SendDataType.Json
 
     def validate_model_config(self, config: Dict[str, Any]) -> Tuple[bool, str, str]:
         if "ai_models" not in config or self.model_name not in config["ai_models"]:
@@ -174,7 +175,7 @@ class ConfigurationManager:
 
     def update_metadata_settings(self, config: Dict[str, Any]) -> None:
         if "metadata_settings" in config:
-            self.metadata_format = config["metadata_settings"].get("format", 1)
+            self.metadata_format = config["metadata_settings"].get("format", SendDataType.Json)
 
     def process_configuration(self, config_str: str) -> Tuple[int, str]:
         try:
@@ -288,21 +289,26 @@ class DetectionProcessor:
         return inference_results
 
     def process_frame(self, frame: SensorFrame) -> None:
-        image = frame.get_inputs()
+        image, timestamp = frame.get_inputs()
         if image is None:
             log("No image data found in the frame")
             return
 
-        now = datetime.now()
-        timestamp = now.strftime('%Y%m%d%H%M%S%f')[:-3]
-        filename = timestamp
+        if timestamp is None:
+            log("No timestamp found in the frame")
+            return
 
-        send_image(image, timestamp, filename)
+        send_image(image, timestamp, DATA_EXPORT_TIMEOUT)
 
         detections = self.extract_detection(frame)
         inference_results = self.parse_detections(image, detections)
 
-        send_inference(inference_results, timestamp, filename)
+        send_inference(
+            inference_results,
+            self.config_manager.metadata_format,
+            timestamp,
+            DATA_EXPORT_TIMEOUT
+        )
 
 class DetectionEdgeApp(EdgeApp):
     """Edge app implementation for object detection."""

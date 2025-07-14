@@ -21,6 +21,7 @@
 #include "data_export_private.h"
 #include "evp_c_sdk/sdk.h"
 #include "log.h"
+#include "receive_data_private.h"
 #include "sm.h"
 #include "sm_context.hpp"
 #include "states/state_defs.h"
@@ -38,6 +39,12 @@ IterateStatus Creating::Iterate() {
   if ((ade_res = DataExportInitialize(context, context->evp_client)) !=
       EdgeAppLibDataExportResultSuccess) {
     StateHandleError(AITRIOS_DATA_EXPORT_INITIALIZE, int(ade_res));
+    return IterateStatus::Error;
+  }
+
+  EdgeAppLibReceiveDataResult are_res = EdgeAppLibReceiveDataResultFailure;
+  if ((are_res = EdgeAppLibReceiveDataInitialize(context->evp_client)) !=
+      EdgeAppLibReceiveDataResultSuccess) {
     return IterateStatus::Error;
   }
 

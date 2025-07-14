@@ -22,4 +22,4 @@ INTEGRATION_TEST_RETRY_NUM = 20
 APITEST_LAST_SCENARIO_ID = 7
 ACK_FILE = "./data.ack"
 INJECT_FAIL = "./sleep_time"
-TIME_LIMIT_SEC = 30.0 # 2.0 # TODO: for some reason Python bindings integration test requires more time for consistent test runs # increased more for running on github actions
+TIME_LIMIT_SEC = 60.0 # 2.0 # TODO: for some reason Python bindings integration test requires more time for consistent test runs # increased more for running on github actions

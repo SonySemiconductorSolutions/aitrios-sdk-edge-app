@@ -1,0 +1,6 @@
+#!/usr/bin/make -f
+
+export DEB_PYTHON_INSTALL_LAYOUT=deb
+
+%:
+	dh $@ --buildsystem=pybuild --with python3

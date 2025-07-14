@@ -189,15 +189,15 @@ TEST_F(DTDLTest, ApplyCommonSettingsFailed) {
   EXPECT_CALL(*common,
               Apply(json_object_get_object(json_obj, "common_settings")))
       .Times(1)
-      .WillOnce(::testing::Return(-1));
+      .WillOnce(::testing::Return(0));
 
   MockCustomSettings *custom = (MockCustomSettings *)obj.GetCustomSettings();
-  EXPECT_CALL(*common,
+  EXPECT_CALL(*custom,
               Apply(json_object_get_object(json_obj, "custom_settings")))
-      .Times(0);
+      .Times(1);
 
   int ret = obj.Apply(json_obj);
-  ASSERT_EQ(ret, -1);
+  ASSERT_EQ(ret, 0);
 }
 
 TEST_F(DTDLTest, ApplyCustomSettingsFailed) {

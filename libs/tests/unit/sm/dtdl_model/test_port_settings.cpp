@@ -152,6 +152,72 @@ TEST_F(PortSettingsTest, PortSettingsSetModeError) {
   json_value_free(value);
 }
 
+TEST_F(PortSettingsTest, PortSettingsSetModeSensorInputDisabled) {
+  JSON_Value *value = json_parse_string(TEST_PORT_SETTINGS_11);
+  JSON_Object *object = json_object(value);
+
+  PortSettings ps;
+  ps.Apply(object);
+
+  // both enabled -> 1
+  AssertStreamChannelsITOT();
+
+  // Disable sensor input data type property
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+  EdgeAppLibSensorStream stream = context->GetSensorStream();
+  EdgeAppLibSensorInputDataTypeProperty enabled = {};
+  EdgeAppLib::SensorInputDataTypeEnableChannel(
+      &enabled, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT, true);
+  EdgeAppLib::SensorInputDataTypeEnableChannel(
+      &enabled, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, false);
+  int32_t result = EdgeAppLib::SensorStreamSetProperty(
+      stream, AITRIOS_SENSOR_INPUT_DATA_TYPE_PROPERTY_KEY, &enabled,
+      sizeof(enabled));
+  ASSERT_EQ(result, 0);
+
+  AssertStreamChannelsOT();
+
+  ps.Apply(object);
+  // both enabled -> 1
+  AssertStreamChannelsITOT();
+
+  ps.Delete();
+  json_value_free(value);
+}
+
+TEST_F(PortSettingsTest, PortSettingsSetModeSensorMetadataDisabled) {
+  JSON_Value *value = json_parse_string(TEST_PORT_SETTINGS_11);
+  JSON_Object *object = json_object(value);
+
+  PortSettings ps;
+  ps.Apply(object);
+
+  // both enabled -> 1
+  AssertStreamChannelsITOT();
+
+  // Disable sensor metadata type property
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+  EdgeAppLibSensorStream stream = context->GetSensorStream();
+  EdgeAppLibSensorInputDataTypeProperty enabled = {};
+  EdgeAppLib::SensorInputDataTypeEnableChannel(
+      &enabled, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT, false);
+  EdgeAppLib::SensorInputDataTypeEnableChannel(
+      &enabled, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE, true);
+  int32_t result = EdgeAppLib::SensorStreamSetProperty(
+      stream, AITRIOS_SENSOR_INPUT_DATA_TYPE_PROPERTY_KEY, &enabled,
+      sizeof(enabled));
+  ASSERT_EQ(result, 0);
+
+  AssertStreamChannelsIT();
+
+  ps.Apply(object);
+  // both enabled -> 1
+  AssertStreamChannelsITOT();
+
+  ps.Delete();
+  json_value_free(value);
+}
+
 TEST_F(PortSettingsTest, ApplyStreamChannelsError) {
   JSON_Value *value = json_parse_string(TEST_PORT_SETTINGS_21);
   JSON_Object *object = json_object(value);
