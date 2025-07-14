@@ -69,3 +69,14 @@ int SetEdgeAppLibNetwork(EdgeAppLibSensorStream stream, JSON_Object *json) {
            ai_model_bundle.ai_model_bundle_id);
   return 0;
 }
+
+__attribute__((weak)) char *GetConfigureErrorJsonSm(ResponseCode code,
+                                                    const char *message,
+                                                    const char *res_id) {
+  char *config_error = nullptr;
+  asprintf(
+      &config_error,
+      "{\"res_info\": {\"res_id\":\"%s\",\"code\": %d,\"detail_msg\":\"%s\"}}",
+      res_id, code, message);
+  return config_error;
+}

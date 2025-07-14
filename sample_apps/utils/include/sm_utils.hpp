@@ -17,9 +17,11 @@
 #ifndef AITRIOS_SM_UTILS_H
 #define AITRIOS_SM_UTILS_H
 
+#include "data_export.h"
 #include "parson.h"
+#include "send_data.h"
 #include "sensor.h"
-
+#include "sm.h"
 /**
  * @brief Prints error details from the EdgeAppLib sensor.
  *
@@ -30,5 +32,10 @@
 void PrintSensorError();
 
 int SetEdgeAppLibNetwork(EdgeAppLibSensorStream stream, JSON_Object *json);
+
+void GenerateBmpHeader54(uint8_t header[54], uint32_t width, uint32_t height);
+__attribute__((weak)) char *GetConfigureErrorJsonSm(ResponseCode code,
+                                                    const char *message,
+                                                    const char *res_id);
 
 #endif  // AITRIOS_SM_UTILS_H

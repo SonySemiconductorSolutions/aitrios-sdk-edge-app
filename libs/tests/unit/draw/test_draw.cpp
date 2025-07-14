@@ -102,3 +102,150 @@ TEST_F(EdgeAppLibDrawApiTest, DrawRectangle_Failure) {
   ret = DrawRectangle(&uninitialized_draw_buffer, 10, 10, 90, 90, TEST_COLOR);
   ASSERT_EQ(ret, -1);
 }
+
+TEST_F(EdgeAppLibDrawApiTest, CropCenterRegion_RGB8) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 4;
+  src.height = 4;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.size = 4 * 4 * 3;
+  src.address = new uint8_t[src.size];
+
+  // Fill source with known RGB values
+  auto *src_ptr = reinterpret_cast<uint8_t *>(src.address);
+  for (uint32_t y = 0; y < src.height; ++y) {
+    for (uint32_t x = 0; x < src.width; ++x) {
+      size_t idx = (y * src.width + x) * 3;
+      src_ptr[idx + 0] = 100;  // R
+      src_ptr[idx + 1] = 150;  // G
+      src_ptr[idx + 2] = 200;  // B
+    }
+  }
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 2;
+  dst.height = 2;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.size = 2 * 2 * 3;
+  dst.address = new uint8_t[dst.size];
+
+  // Crop center region: (1,1)-(2,2)
+  ASSERT_EQ(CropRectangle(&src, &dst, 1, 1, 2, 2), 0);
+
+  // Validate all cropped pixels have the expected RGB values
+  auto *dst_ptr = reinterpret_cast<uint8_t *>(dst.address);
+  for (uint32_t y = 0; y < dst.height; ++y) {
+    for (uint32_t x = 0; x < dst.width; ++x) {
+      size_t idx = (y * dst.width + x) * 3;
+      EXPECT_EQ(dst_ptr[idx + 0], 100);
+      EXPECT_EQ(dst_ptr[idx + 1], 150);
+      EXPECT_EQ(dst_ptr[idx + 2], 200);
+    }
+  }
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, CropOutOfBoundsClamped_RGB8) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 3;
+  src.height = 3;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.size = 3 * 3 * 3;
+  src.address = new uint8_t[src.size];
+
+  auto *src_ptr = reinterpret_cast<uint8_t *>(src.address);
+  for (size_t i = 0; i < src.size; ++i) {
+    src_ptr[i] = 123;  // All channels = 123
+  }
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 1;
+  dst.height = 1;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.size = 1 * 1 * 3;
+  dst.address = new uint8_t[dst.size];
+
+  // Crop area clearly out of bounds → should clamp to (2,2)-(2,2)
+  ASSERT_EQ(CropRectangle(&src, &dst, 5, 5, 10, 10), 0);
+
+  auto *dst_ptr = reinterpret_cast<uint8_t *>(dst.address);
+  EXPECT_EQ(dst_ptr[0], 123);  // R
+  EXPECT_EQ(dst_ptr[1], 123);  // G
+  EXPECT_EQ(dst_ptr[2], 123);  // B
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, NullSourceBufferPointer) {
+  // Destination buffer with valid allocation
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 2;
+  dst.height = 2;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.size = 2 * 2 * 3;
+  dst.address = new uint8_t[dst.size];
+
+  // Passing nullptr as source buffer
+  ASSERT_EQ(CropRectangle(nullptr, &dst, 0, 0, 1, 1), -1);
+
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, NullDestinationBufferPointer) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 2;
+  src.height = 2;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.size = 2 * 2 * 3;
+  src.address = new uint8_t[src.size];
+
+  // Passing nullptr as destination buffer
+  ASSERT_EQ(CropRectangle(&src, nullptr, 0, 0, 1, 1), -1);
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, NullBufferAddress) {
+  // Valid struct but null address
+  EdgeAppLibDrawBuffer src{};
+  src.width = 2;
+  src.height = 2;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.size = 0;
+  src.address = nullptr;
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 2;
+  dst.height = 2;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.size = 2 * 2 * 3;
+  dst.address = new uint8_t[dst.size];
+
+  ASSERT_EQ(CropRectangle(&src, &dst, 0, 0, 1, 1), -1);
+
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, UnknownFormat) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 2;
+  src.height = 2;
+  src.format = static_cast<EdgeAppLibDrawFormat>(999);  // Invalid format
+  src.size = 2 * 2 * 3;
+  src.address = new uint8_t[src.size];
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 2;
+  dst.height = 2;
+  dst.format = static_cast<EdgeAppLibDrawFormat>(999);
+  dst.size = 2 * 2 * 3;
+  dst.address = new uint8_t[dst.size];
+
+  ASSERT_EQ(CropRectangle(&src, &dst, 0, 0, 1, 1), -1);
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}

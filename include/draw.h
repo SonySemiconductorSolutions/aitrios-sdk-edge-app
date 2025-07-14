@@ -85,6 +85,26 @@ int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
                       uint32_t top, uint32_t right, uint32_t bottom,
                       struct EdgeAppLibColor color);
 
+/**
+ * @brief Crop a rectangle from an image buffer.
+ *
+ * @param[in] src Source image buffer to crop from.
+ * @param[out] dst Destination image buffer to store the cropped rectangle.
+ * @param[in] left Left side coordinate of the rectangle in pixels.
+ * @param[in] top Top side coordinate of the rectangle in pixels.
+ * @param[in] right Right side coordinate of the rectangle in pixels.
+ * @param[in] bottom Bottom side coordinate of the rectangle in pixels.
+ *
+ * @return Zero for success or negative value for failure
+ *
+ * @details If the rectangle is not fully inside the image bounds, the rectangle
+ * is clamped to the image bounds.
+ */
+
+int32_t CropRectangle(const struct EdgeAppLibDrawBuffer *src,
+                      struct EdgeAppLibDrawBuffer *dst, uint32_t left,
+                      uint32_t top, uint32_t right, uint32_t bottom);
+
 #ifdef __cplusplus
 }
 #endif

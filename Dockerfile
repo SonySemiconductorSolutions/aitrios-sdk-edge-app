@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -21,6 +21,7 @@ RUN apt-get update \
        wget \
        ca-certificates \
        cmake \
+       libjpeg-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -46,3 +47,9 @@ RUN cd /opt \
     && tar zxvf binaryen-version_117-${ARCH}-linux.tar.gz \
     && ln -s binaryen-version_117 binaryen \
     && rm binaryen-version_117-${ARCH}-linux.tar.gz
+
+# Install SensCord libcamera package
+RUN cd /opt \
+    && wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_u22_amd64.deb \
+    && apt install ./senscord-libcamera_1.0.7_u22_amd64.deb \
+    && rm senscord-libcamera_1.0.7_u22_amd64.deb

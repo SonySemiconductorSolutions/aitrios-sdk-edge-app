@@ -31,10 +31,10 @@ the Aitrios SDK,
 Wege Agent and
 Wedge SDK installed:
 
-* Clone Aitrios edgeapp SDK [repo](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app-dev)
-  `git clone git@github.com:SonySemiconductorSolutions/aitrios-sdk-edge-app-dev.git`
+* Clone Aitrios edgeapp SDK [repo](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app)
+  `git clone git@github.com:SonySemiconductorSolutions/aitrios-sdk-edge-app.git`
   The package needs to be installed in the system:
-  `sudo pip install aitrios-sdk-edge-app-dev/libs/python --break-system-package`
+  `sudo pip install aitrios-sdk-edge-app/libs/python --break-system-package`
 * Download and install Wedge Python SDK from
   [debian package](https://github.com/midokura/wedge-agent-oss-playground/releases/download/releases%2Fv1.37.0/python3-wedge_0.2-1_arm64.deb):
 * Download and install Wedge Agent from

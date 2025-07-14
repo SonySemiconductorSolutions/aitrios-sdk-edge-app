@@ -19,6 +19,7 @@
 #include "data_export.h"
 #include "data_export_private.h"
 #include "log.h"
+#include "receive_data_private.h"
 #include "sensor.h"
 #include "sm.h"
 #include "sm_context.hpp"
@@ -64,6 +65,11 @@ IterateStatus Destroying::Iterate() {
   if ((ade_res = DataExportUnInitialize()) !=
       EdgeAppLibDataExportResultSuccess) {
     StateHandleError(AITRIOS_DATA_EXPORT_UNINITIALIZE, int(ade_res));
+    return IterateStatus::Error;
+  }
+  EdgeAppLibReceiveDataResult are_res = EdgeAppLibReceiveDataResultFailure;
+  if ((are_res = EdgeAppLibReceiveDataUnInitialize()) !=
+      EdgeAppLibReceiveDataResultSuccess) {
     return IterateStatus::Error;
   }
   context->SetNextState(STATE_EXITING);

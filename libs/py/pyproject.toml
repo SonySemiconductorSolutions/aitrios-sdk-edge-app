@@ -4,8 +4,13 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "edge_app_sdk"
-version = "0.2.0"
+version = "0.3.0"
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "requests",
+]
 
 [tool.scikit-build.cmake.define]
 SENSCORD_INSTALL_PATH = {env="SENSCORD_INSTALL_PATH"}
-EVP_MOCK_TEST = {env="EVP_MOCK_TEST"}
+EVP_MOCK = {env="EVP_MOCK"}

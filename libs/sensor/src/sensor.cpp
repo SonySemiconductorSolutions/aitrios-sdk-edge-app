@@ -247,9 +247,10 @@ static int32_t DataAccess(EdgeAppLibSensorChannel channel,
 }
 
 static bool IsInferenceMetaChannel(uint32_t channel_id) {
-  // Check if the given channel ID corresponds to an inference meta channel
-  return channel_id == AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT;
+  return channel_id == AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT ||
+         channel_id == AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_RAW_IMAGE;
 }
+
 /**
  * The same as senscord_frame_get_channel_from_channel_id
  */

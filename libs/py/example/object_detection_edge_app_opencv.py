@@ -149,7 +149,7 @@ def detection(frame) -> Tuple[Detections, List[str]]:
     return filtered_detections, labels
 
 def process_frame(frame) -> None:
-    image = frame.get_inputs()
+    image, _ = frame.get_inputs()
     if image is None:
         log("[Python] No image data found in the frame")
         return

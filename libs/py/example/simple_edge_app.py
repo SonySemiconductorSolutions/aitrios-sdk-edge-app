@@ -31,7 +31,7 @@ IN_INTEGRATION_TEST = False
 
 def log(msg: str):
     if not IN_INTEGRATION_TEST:
-        print(msg)
+        print(msg, flush=True)
 
 
 class SimpleEdgeApp(EdgeApp):
@@ -97,11 +97,6 @@ class SimpleEdgeApp(EdgeApp):
                 log(f"[PYTHON]  {s.image_crop=}")
             except EdgeAppError:
                 log("[PYTHON] image_crop property not supported")
-
-            try:
-                log(f"[PYTHON]  {s.ai_model_bundle_id=}")
-            except EdgeAppError:
-                log("[PYTHON] ai_model_bundle_id property not supported")
 
         return 0
 

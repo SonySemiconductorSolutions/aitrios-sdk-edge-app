@@ -29,6 +29,13 @@ from ._edge_app_sdk import (
     get_port_settings,
     DataExportResult,
     ResponseCode,
+    get_workspace_directory,
+    format_timestamp,
+    DataExportDataType,
+    get_file_suffix,
+    send_file,
+    send_telemetry,
+    SendDataType,
 )
 
 from .data_export import send_image
@@ -87,4 +94,5 @@ __all__ = [
     "get_configure_error_json",
     "set_edge_app_lib_network",
     "DataProcessorResultCode",
+    "SendDataType",
 ]

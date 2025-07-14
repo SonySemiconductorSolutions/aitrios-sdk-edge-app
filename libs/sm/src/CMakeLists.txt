@@ -48,5 +48,5 @@ target_include_directories(sm PRIVATE
 add_subdirectory(dtdl_model)
 
 target_link_libraries(sm
-  common data_export dtdl_model
+  common data_export dtdl_model receive_data
 )

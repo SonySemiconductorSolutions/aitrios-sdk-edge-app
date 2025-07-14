@@ -31,7 +31,8 @@ using namespace EdgeAppLib;
 void bind_sensor_frame(py::module_ &m) {
   py::class_<PySensorFrame>(m, "SensorFrame")
       .def("get_inputs",
-           [](PySensorFrame frame) -> py::array_t<uint8_t> {
+           [](PySensorFrame frame)
+               -> std::tuple<py::array_t<uint8_t>, uint64_t> {
              EdgeAppLibSensorChannel channel = 0;
              int channel_id = AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE;
              int32_t ret = SensorFrameGetChannelFromChannelId(
@@ -56,8 +57,10 @@ void bind_sensor_frame(py::module_ &m) {
 
              std::vector<ssize_t> shape{image_property.height,
                                         image_property.width, 3};
-             return py::array_t<uint8_t>(
-                 shape, static_cast<uint8_t *>(raw_data.address));
+             return std::make_tuple(
+                 py::array_t<uint8_t>(shape,
+                                      static_cast<uint8_t *>(raw_data.address)),
+                 raw_data.timestamp);
            })
       .def("get_outputs",
            [](PySensorFrame frame) -> py::typing::List<py::array_t<float>> {

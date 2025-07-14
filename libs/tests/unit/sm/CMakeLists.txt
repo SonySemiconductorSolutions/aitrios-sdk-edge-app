@@ -28,6 +28,7 @@ include_directories(
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/send_data/src/data_export/include
+  ${LIBS_DIR}/receive_data/include
   ${LIBS_DIR}/common/include
   ${LIBS_DIR}/depend/edge_app
   ${SM_ROOT_DIR}/include
@@ -54,6 +55,7 @@ add_library(sm STATIC
   ${MOCKS_DIR}/evp/mock_evp.cpp
   ${MOCKS_DIR}/event_functions/mock_sm.cpp
   ${MOCKS_DIR}/data_export/mock_data_export.cpp
+  ${MOCKS_DIR}/receive_data/mock_receive_data.cpp
   ${LIBS_DIR}/common/src/context.cpp
   ${SM_SRC_DIR}/callbacks/configuration.cpp
   ${SM_SRC_DIR}/states/state.cpp

@@ -35,6 +35,7 @@ set(SOURCE_FILES ${SOURCE_FILES}
   src/py_edge_app.cpp
   src/py_module.cpp
   src/py_sm.cpp
+  src/py_shared_state.cpp
   ${BINDING_SOURCES}
 )
 
@@ -66,8 +67,9 @@ if(SENSCORD_MOCK)
     ${MOCKS_DIR}/sensor/testing_utils.cpp
     ${MOCKS_DIR}/device/mock_device.cpp
     ${MOCKS_DIR}/log/mock_log.cpp
+    ${MOCKS_DIR}/evp/pytest_support.c
   )
-  add_compile_definitions(PYTHON_MODULE MOCK_PASSTHROUGH)
+  add_compile_definitions(EVP_REMOTE_SDK PYTHON_MODULE MOCK_PASSTHROUGH)
 
   include_directories(
     ${SAMPLE_APP_DIR}/include
@@ -90,7 +92,7 @@ elseif(EVP_MOCK)
     ${MOCKS_DIR}/device/mock_device.cpp
     src/py_mocks.cpp
   )
-  add_compile_definitions(PYTHON_MODULE)
+  add_compile_definitions(EVP_REMOTE_SDK PYTHON_MODULE)
 
 else()
   message(WARNING "##### Both SensCord and EVP Agent real.")
@@ -99,7 +101,7 @@ else()
     ${MOCKS_DIR}/device/mock_device.cpp
     src/py_mocks.cpp
   )
-  add_compile_definitions(PYTHON_MODULE)
+  add_compile_definitions(EVP_REMOTE_SDK PYTHON_MODULE)
 endif()
 
 

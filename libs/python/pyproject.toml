@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app-dev"
+homepage = "https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app"
 
 [tool.setuptools.dynamic]
 version = {file = ["VERSION"]}

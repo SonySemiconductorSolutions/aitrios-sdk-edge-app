@@ -40,6 +40,10 @@ MOSAIC_SCALE = 0.1
 CONFIDENCE_THRESHOLD = 0.5
 
 
+def log(msg: str):
+    print(msg, flush=True)
+
+
 # Person detection
 def detection(frame) -> Tuple[Detections, List[str]]:
     outputs = frame.get_outputs()
@@ -91,7 +95,7 @@ def apply_privacymask(image: np.ndarray, detections: Detections) -> np.ndarray:
 
 
 def process_frame(frame) -> None:
-    image = frame.get_inputs()
+    image, _ = frame.get_inputs()
 
     # Person detection
     detections, labels = detection(frame)
@@ -108,7 +112,7 @@ def process_frame(frame) -> None:
 
 class PrivacyMaskEdgeApp(EdgeApp):
     def on_iterate(self) -> int:
-        print("[Python] on_iterate")
+        log("[Python] on_iterate")
         try:
             s = stream()
             frame = s.get_frame(GET_FRAME_TIMEOUT)
@@ -116,7 +120,7 @@ class PrivacyMaskEdgeApp(EdgeApp):
             s.release_frame(frame)
 
         except EdgeAppError as e:
-            print("[PYTHON] Failed to get frame: {e}")
+            log("[PYTHON] Failed to get frame: {e}")
             return -1
 
         return 0
@@ -124,7 +128,7 @@ class PrivacyMaskEdgeApp(EdgeApp):
 
 def main():
     exit_code = run_sm(PrivacyMaskEdgeApp)
-    print(f"[PYTHON] {exit_code=}")
+    log(f"[PYTHON] {exit_code=}")
     sys.exit(exit_code)
 
 if __name__ == "__main__":

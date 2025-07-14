@@ -1,0 +1,23 @@
+Source: python3-edge-app-sdk
+Section: python
+Priority: optional
+Maintainer: None <None>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ python3-all,
+ pybuild-plugin-pyproject,
+ python3-setuptools,
+ ninja-build
+Standards-Version: 4.6.2
+Homepage: None
+
+Package: python3-edge-app-sdk
+Architecture: arm64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ ${python3:Depends},
+Description: Edge App SDK for Python
+ Edge App SDK for Python

@@ -23,10 +23,14 @@
 #include "data_processor_api.hpp"
 #include "dcpu_param_parser.h"
 #include "log.h"
+#include "receive_data.h"
 #include "sensor.h"
 #include "sm_utils.hpp"
 
 #define PORTNAME_META "metadata"
+
+#define MODEL_URL "http://0.0.0.0:8000/network.pkg"
+#define DOWNLOAD_FILENAME "./network.pkg"
 
 #define PORTNAME_INPUT "input"
 #define DATA_EXPORT_AWAIT_TIMEOUT -1
@@ -324,6 +328,7 @@ int onIterate() {
     PrintSensorError();
     return -1;
   }
+
   return 0;
 }
 
@@ -385,6 +390,22 @@ int onStart() {
       return -1;
     }
   }
+
+  EdgeAppLibReceiveDataInfo info;
+  info.filename = strdup(DOWNLOAD_FILENAME);
+  info.filenamelen = strlen(DOWNLOAD_FILENAME);
+  info.url = strdup(MODEL_URL);
+  info.urllen = strlen(MODEL_URL);
+  EdgeAppLibReceiveDataResult ret2 = EdgeAppLibReceiveData(&info, -1);
+  if (ret2 != EdgeAppLibReceiveDataResultSuccess) {
+    LOG_ERR("EdgeAppLibReceiveDatafailed with EdgeAppLibReceiveDataResult: %d",
+            ret2);
+    return -1;
+  }
+  LOG_INFO("EdgeAppLibReceiveData, download AI model from %s to local %s\n",
+           info.url, info.filename);
+  free(info.filename);
+  free(info.url);
 
   return 0;
 }
