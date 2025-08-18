@@ -30,16 +30,18 @@ base_header=\
 # See the License for the specific language governing permissions and
 # limitations under the License."
 
-c_header=$(echo -e "$base_header" | sed 's@#@ *@')
-c_header=$(echo -e "/****************************************************************************
+c_header=$(echo "$base_header" | sed 's@#@ *@')
+c_header=$(echo "/****************************************************************************
 $c_header
  ****************************************************************************/")
 
-sh_header=$(echo -e "#!/bin/bash\n$base_header")
+sh_header=$(printf "#!/bin/sh\n%s\n" "$base_header")
+bash_header=$(printf "#!/bin/bash\n%s\n" "$base_header")
 
-c_header_lines="$(echo -e "$c_header" | wc -l)"
-base_header_lines="$(echo -e "$base_header" | wc -l)"
-sh_header_lines="$(echo -e "$sh_header" | wc -l)"
+base_header_lines="$(echo "$base_header" | wc -l)"
+c_header_lines="$(echo "$c_header" | wc -l)"
+sh_header_lines="$(echo "$sh_header" | wc -l)"
+bash_header_lines="$(echo "$bash_header" | wc -l)"
 
 add_header_if_missing() {
   local header="$1"
@@ -49,10 +51,10 @@ add_header_if_missing() {
   if [ -f "$file" ]; then
     first_lines=$(head -n "$header_lines" "$file")
     if [ "$first_lines" != "$header" ]; then
-      sed -i --quiet '/^#!\/bin\/bash$/!p' "$file"
-      echo -e "$header\n" > "$file.tmp"
-      chmod "$(stat -c "%a" "$file")" "$file.tmp"
-      cat "$file" >> "$file.tmp"
+      # copy and truncate to preserve the file attributes
+      cp "$file" "$file.tmp"
+      printf '%s\n\n' "$header" > "$file.tmp"
+      sed -n '/^#!\/bin\/.*sh$/!p' "$file" >> "$file.tmp"
       mv "$file.tmp" "$file"
       echo "Header added to $file"
     else
@@ -64,6 +66,21 @@ add_header_if_missing() {
 }
 
 for x in "$@"; do
+  if echo "$x" | grep -q "third_party"; then
+    echo "Skipping $x (third_party)"
+    continue
+  fi
+
+  if echo "$x" | grep -q "wasi-libmalloc"; then
+    echo "Skipping $x (wasi-libmalloc)"
+    continue
+  fi
+
+  if [ "$(basename "$x")" = "check_license.sh" ]; then
+    echo "Skipping $x (check_license.sh)"
+    continue
+  fi
+
   name=$(basename "$x")
   file_extension="${name##*.}"
   case "$file_extension" in
@@ -71,7 +88,11 @@ for x in "$@"; do
       add_header_if_missing "$base_header" "$base_header_lines" "$x"
       ;;
     sh)
-      add_header_if_missing "$sh_header" "$sh_header_lines" "$x"
+      if grep bash "$x" > /dev/null; then
+        add_header_if_missing "$bash_header" "$bash_header_lines" "$x"
+      else
+        add_header_if_missing "$sh_header" "$sh_header_lines" "$x"
+      fi
       ;;
     c|cpp|h|hpp|fbs)
       add_header_if_missing "$c_header" "$c_header_lines" "$x"
