@@ -18,10 +18,45 @@
 
 #include "log.h"
 
-static bool IsValidDrawBuffer(const struct EdgeAppLibDrawBuffer *buffer) {
-  return buffer != nullptr && buffer->address != nullptr &&
-         buffer->format != AITRIOS_DRAW_FORMAT_UNDEFINED &&
-         buffer->size == (buffer->width * buffer->height * 3);
+static bool IsValidDrawBuffer(struct EdgeAppLibDrawBuffer *buffer) {
+  if (buffer == nullptr) {
+    LOG_ERR("IsValidDrawBuffer: Buffer is null");
+    return false;
+  }
+  if (buffer->width == 0 || buffer->height == 0) {
+    LOG_ERR("IsValidDrawBuffer: Invalid dimensions %ux%u", buffer->width,
+            buffer->height);
+    return false;
+  }
+  if (buffer->format < AITRIOS_DRAW_FORMAT_RGB8 ||
+      buffer->format > AITRIOS_DRAW_FORMAT_RGB8_PLANAR) {
+    LOG_ERR("IsValidDrawBuffer: Invalid format %d", buffer->format);
+    return false;
+  }
+  // To ensure compatibility with the legacy draw functions,
+  if (buffer->stride_byte == 0) {
+    if (buffer->format == AITRIOS_DRAW_FORMAT_RGB8) {
+      buffer->stride_byte = static_cast<uint32_t>(buffer->width) *
+                            3;  // RGB format, 3 bytes per pixel
+    }
+    if (buffer->format == AITRIOS_DRAW_FORMAT_RGB8_PLANAR) {
+      buffer->stride_byte = static_cast<uint32_t>(
+          buffer->width);  // Planar format, 1 byte per pixel
+    }
+  }
+
+  uint32_t expected_size = (buffer->format == AITRIOS_DRAW_FORMAT_RGB8_PLANAR)
+                               ? buffer->stride_byte * buffer->height * 3
+                               : buffer->stride_byte * buffer->height;
+
+  if (buffer->size != expected_size) {
+    LOG_ERR("IsValidDrawBuffer: Buffer size mismatch");
+    LOG_ERR("Expected size: %u, Actual size: %u", expected_size, buffer->size);
+    LOG_ERR("Stride: %u, Height: %u", buffer->stride_byte, buffer->height);
+    return false;
+  }
+  return buffer->address != nullptr &&
+         buffer->format != AITRIOS_DRAW_FORMAT_UNDEFINED;
 }
 
 template <enum EdgeAppLibDrawFormat>
@@ -49,17 +84,17 @@ struct FormatTraits<AITRIOS_DRAW_FORMAT_RGB8_PLANAR> {
 
   static void PixelComponents(struct EdgeAppLibDrawBuffer *buffer, uint8_t **r,
                               uint8_t **g, uint8_t **b) {
-    uint32_t width = buffer->width;
+    uint32_t stride = buffer->stride_byte;
     uint32_t height = buffer->height;
-    *r = (uint8_t *)buffer->address + (width * height * 0);
-    *g = (uint8_t *)buffer->address + (width * height * 1);
-    *b = (uint8_t *)buffer->address + (width * height * 2);
+    *r = (uint8_t *)buffer->address + (stride * height * 0);
+    *g = (uint8_t *)buffer->address + (stride * height * 1);
+    *b = (uint8_t *)buffer->address + (stride * height * 2);
   }
 };
 
 template <enum EdgeAppLibDrawFormat FMT>
-static int PixelOffset(uint32_t width, int x, int y) {
-  return (y * width + x) * FormatTraits<FMT>::kPixelComponentStride;
+static int PixelOffset(uint32_t stride_bytes, int x, int y) {
+  return (y * stride_bytes + x * FormatTraits<FMT>::kPixelComponentStride);
 }
 
 template <enum EdgeAppLibDrawFormat FMT>
@@ -69,14 +104,14 @@ static void DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
   uint8_t *r, *g, *b;
   FormatTraits<FMT>::PixelComponents(buffer, &r, &g, &b);
 
-  uint32_t width = buffer->width;
+  uint32_t stride = buffer->stride_byte;
 
-#define PIXEL_PUT(x, y)                    \
-  {                                        \
-    int i = PixelOffset<FMT>(width, x, y); \
-    r[i] = color.red;                      \
-    g[i] = color.green;                    \
-    b[i] = color.blue;                     \
+#define PIXEL_PUT(x, y)                     \
+  {                                         \
+    int i = PixelOffset<FMT>(stride, x, y); \
+    r[i] = color.red;                       \
+    g[i] = color.green;                     \
+    b[i] = color.blue;                      \
   }
 
   // Draw horizontal lines
@@ -104,14 +139,15 @@ static void CropRectangle(const struct EdgeAppLibDrawBuffer *src,
                                      &src_g, &src_b);
   FormatTraits<FMT>::PixelComponents(dst, &dst_r, &dst_g, &dst_b);
 
-  uint32_t src_width = src->width;
+  uint32_t src_stride = src->stride_byte;
+  uint32_t dst_stride = dst->stride_byte;
   uint32_t crop_width = right - left + 1;
   uint32_t crop_height = bottom - top + 1;
 
   for (uint32_t y = 0; y < crop_height; ++y) {
     for (uint32_t x = 0; x < crop_width; ++x) {
-      int src_index = PixelOffset<FMT>(src_width, left + x, top + y);
-      int dst_index = PixelOffset<FMT>(dst->width, x, y);
+      int src_index = PixelOffset<FMT>(src_stride, left + x, top + y);
+      int dst_index = PixelOffset<FMT>(dst_stride, x, y);
 
       dst_r[dst_index] = src_r[src_index];
       dst_g[dst_index] = src_g[src_index];
@@ -154,7 +190,7 @@ int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
   return 0;
 }
 
-int32_t CropRectangle(const struct EdgeAppLibDrawBuffer *src,
+int32_t CropRectangle(struct EdgeAppLibDrawBuffer *src,
                       struct EdgeAppLibDrawBuffer *dst, uint32_t left,
                       uint32_t top, uint32_t right, uint32_t bottom) {
   if (!IsValidDrawBuffer(src) || !IsValidDrawBuffer(dst)) {

@@ -290,11 +290,11 @@ class DetectionProcessor:
 
     def process_frame(self, frame: SensorFrame) -> None:
         image, timestamp = frame.get_inputs()
-        if image is None:
+        if image is None or image.size == 0:
             log("No image data found in the frame")
             return
 
-        if timestamp is None:
+        if timestamp == 0:
             log("No timestamp found in the frame")
             return
 

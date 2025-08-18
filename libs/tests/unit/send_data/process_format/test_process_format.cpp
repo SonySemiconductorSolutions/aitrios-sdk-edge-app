@@ -428,13 +428,20 @@ TEST_F(ProcessFormatTest, ProcessFormatMeta_Error_OutNull) {
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatInputRawMap) {
-  void *in_data = malloc(1024);
+  uint32_t in_size = 300 * 300 * 3;  // RGB24
+  void *in_data = malloc(in_size);
   MemoryRef data = {MEMORY_MANAGER_MAP_TYPE, in_data};
+  EdgeAppLibImageProperty image_property = {};
+  image_property.height = 300;
+  image_property.width = 300;
+  image_property.stride_bytes = 300 * 3;  // RGB24
+  strncpy(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+          sizeof(image_property.pixel_format));
   int32_t image_size = 0;
   void *image = nullptr;
 
-  auto result = ProcessFormatInput(data, 1024, kProcessFormatImageTypeRaw, 0,
-                                   &image, &image_size);
+  auto result = ProcessFormatInput(data, in_size, kProcessFormatImageTypeRaw,
+                                   &image_property, 0, &image, &image_size);
   EXPECT_EQ(result, kProcessFormatResultOk);
 
   free(in_data);
@@ -448,9 +455,15 @@ TEST_F(ProcessFormatTest, ProcessFormatInputRawFileIO) {
   data.u.esf_handle = in_data;
   int32_t image_size = 0;
   void *image = nullptr;
-
-  auto result = ProcessFormatInput(data, 1024, kProcessFormatImageTypeRaw, 0,
-                                   &image, &image_size);
+  EdgeAppLibImageProperty image_property = {};
+  image_property.height = 300;
+  image_property.width = 300;
+  image_property.stride_bytes = 300 * 3;
+  strncpy(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+          sizeof(image_property.pixel_format));
+  auto result =
+      ProcessFormatInput(data, 300 * 300 * 3, kProcessFormatImageTypeRaw,
+                         &image_property, 0, &image, &image_size);
   EXPECT_EQ(result, kProcessFormatResultOk);
   EXPECT_NE(image, nullptr);
   free(image);
@@ -463,9 +476,16 @@ TEST_F(ProcessFormatTest, ProcessFormatInputRawFileIO_PreadFail) {
   data.u.esf_handle = in_data;
   int32_t image_size = 0;
   void *image = nullptr;
+  EdgeAppLibImageProperty image_property = {};
+  image_property.height = 300;
+  image_property.width = 300;
+  image_property.stride_bytes = 300 * 3;
+  strncpy(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+          sizeof(image_property.pixel_format));
   setEsfMemoryManagerPreadFail();
-  auto result = ProcessFormatInput(data, 1024, kProcessFormatImageTypeRaw, 0,
-                                   &image, &image_size);
+  auto result =
+      ProcessFormatInput(data, 300 * 300 * 3, kProcessFormatImageTypeRaw,
+                         &image_property, 0, &image, &image_size);
   EXPECT_EQ(result, kProcessFormatResultOther);
   resetEsfMemoryManagerPreadSuccess();
 }
@@ -475,34 +495,33 @@ TEST_F(ProcessFormatTest, ProcessFormatInputInvalidParams) {
   MemoryRef in_data = {0, nullptr};
   int32_t image_size = 0;
   void *image = nullptr;
-
-  auto result = ProcessFormatInput(in_data, 1024, kProcessFormatImageTypeRaw, 0,
-                                   &image, &image_size);
+  EdgeAppLibImageProperty image_property = {};
+  image_property.height = 300;
+  image_property.width = 300;
+  image_property.stride_bytes = 300 * 3;
+  strncpy(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+          sizeof(image_property.pixel_format));
+  auto result =
+      ProcessFormatInput(in_data, 300 * 300 * 3, kProcessFormatImageTypeRaw,
+                         &image_property, 0, &image, &image_size);
   EXPECT_EQ(result, kProcessFormatResultInvalidParam);
-}
-
-// Test for get property failure
-TEST_F(ProcessFormatTest, ProcessFormatInputGetPropertyFail) {
-  MemoryRef in_data = {0, nullptr};
-  int32_t image_size = 0;
-  void *image = nullptr;
-  setEdgeAppLibSensorStreamGetPropertyFail();
-  auto result = ProcessFormatInput(in_data, 1024, kProcessFormatImageTypeRaw, 0,
-                                   &image, &image_size);
-  EXPECT_EQ(result, kProcessFormatResultInvalidParam);
-  resetEdgeAppLibSensorStreamGetPropertySuccess();
 }
 
 // Test for Unsupported Data Type
 TEST_F(ProcessFormatTest, ProcessFormatInputInvalidType) {
-  void *in_data = malloc(1024);
+  void *in_data = malloc(300 * 300 * 3);
   MemoryRef data = {MEMORY_MANAGER_MAP_TYPE, in_data};
   void *image = nullptr;
   int32_t image_size = 0;
-
-  auto result =
-      ProcessFormatInput(data, 1024, static_cast<ProcessFormatImageType>(999),
-                         0, &image, &image_size);
+  EdgeAppLibImageProperty image_property = {};
+  image_property.height = 300;
+  image_property.width = 300;
+  image_property.stride_bytes = 300 * 3;
+  strncpy(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+          sizeof(image_property.pixel_format));
+  auto result = ProcessFormatInput(data, 300 * 300 * 3,
+                                   static_cast<ProcessFormatImageType>(999),
+                                   &image_property, 0, &image, &image_size);
   EXPECT_EQ(result, kProcessFormatResultInvalidParam);
 
   free(in_data);
@@ -510,11 +529,10 @@ TEST_F(ProcessFormatTest, ProcessFormatInputInvalidType) {
 
 // Test for End-to-End Success Case
 TEST_F(ProcessFormatTest, ProcessFormatInputWithMapped_RGB8_Planer) {
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
-
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
@@ -523,15 +541,9 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithMapped_RGB8_Planer) {
   int32_t image_size = 0;
   MemoryRef data = {MEMORY_MANAGER_MAP_TYPE, in_data};
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
-
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 3,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
-
-  EXPECT_EQ(result, kProcessFormatResultOk);
-  EXPECT_NE(image, nullptr);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 3,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
   EXPECT_GT(image_size, 0);
 
   free(image);
@@ -539,7 +551,7 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithMapped_RGB8_Planer) {
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatInputWithMapped_RGB24) {
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300 * 3;
@@ -552,12 +564,9 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithMapped_RGB24) {
   int32_t image_size = 0;
   MemoryRef data = {MEMORY_MANAGER_MAP_TYPE, in_data};
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
-
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultOk);
   EXPECT_NE(image, nullptr);
@@ -572,7 +581,7 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_RGB24) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300 * 3;
@@ -584,9 +593,9 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_RGB24) {
   MemoryRef data;
   data.type = MEMORY_MANAGER_FILE_TYPE;
   data.u.esf_handle = in_data;
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultOk);
   EXPECT_NE(image, nullptr);
@@ -612,9 +621,15 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_RGB_PLANER) {
   MemoryRef data;
   data.type = MEMORY_MANAGER_FILE_TYPE;
   data.u.esf_handle = in_data;
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 3,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  EdgeAppLibImageProperty image_property = {};
+  image_property.height = 300;
+  image_property.width = 300;
+  image_property.stride_bytes = 300 * 3;
+  strncpy(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+          sizeof(image_property.pixel_format));
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 3,
+      kProcessFormatImageTypeJpeg, &image_property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultOk);
   EXPECT_NE(image, nullptr);
@@ -624,7 +639,7 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_RGB_PLANER) {
 }
 
 TEST_F(ProcessFormatTest, ProcessFormatInputWithMapped_UnsupportedFormat) {
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300 * 3;
@@ -635,13 +650,9 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithMapped_UnsupportedFormat) {
   void *image = nullptr;
   int32_t image_size = 0;
   MemoryRef data = {MEMORY_MANAGER_MAP_TYPE, in_data};
-
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
-
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultInvalidParam);
   EXPECT_EQ(image, nullptr);
@@ -656,21 +667,19 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_invalideSize) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_FILE_TYPE;
   data.u.esf_handle = in_data;
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 1,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 1,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultMemoryError);
   EXPECT_EQ(image, nullptr);
@@ -684,22 +693,20 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_JpegEncodefail) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_FILE_TYPE;
   data.u.esf_handle = in_data;
   setEsfCodecJpegEncodeFail();
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 3,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 3,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultOther);
   EXPECT_EQ(image, nullptr);
@@ -711,20 +718,18 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_NullImage) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_FILE_TYPE;
   data.u.esf_handle = in_data;
-  auto result = ProcessFormatInput(data, 0, kProcessFormatImageTypeJpeg, 0,
-                                   &image, &image_size);
+  auto result = ProcessFormatInput(data, 0, kProcessFormatImageTypeJpeg,
+                                   &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultMemoryError);
 }
@@ -734,22 +739,20 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithHandle_JpegEncodeReleasefail) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_FILE_TYPE;
   data.u.esf_handle = in_data;
   setEsfCodecJpegEncodeReleaseFail();
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 3,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 3,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultOther);
   resetEsfCodecJpegEncodeReleaseSuccess();
@@ -760,21 +763,19 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithMap_NullImage) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_MAP_TYPE;
   data.u.p = in_data;
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 3,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 3,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultInvalidParam);
   EXPECT_EQ(image, nullptr);
@@ -785,22 +786,20 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithMap_JpegEncodefail) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_MAP_TYPE;
   data.u.p = in_data;
   setEsfCodecJpegEncodeFail();
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 3,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 3,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultOther);
   EXPECT_EQ(image, nullptr);
@@ -813,21 +812,19 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithMap_WrongSize) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_MAP_TYPE;
   data.u.p = in_data;
   auto result =
-      ProcessFormatInput(data, property.height, kProcessFormatImageTypeJpeg, 0,
-                         &image, &image_size);
+      ProcessFormatInput(data, property.height, kProcessFormatImageTypeJpeg,
+                         &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultMemoryError);
   EXPECT_EQ(image, nullptr);
@@ -840,22 +837,20 @@ TEST_F(ProcessFormatTest, ProcessFormatInputWithFileIO_PreadFail) {
   void *image = nullptr;
   int32_t image_size = 0;
 
-  EdgeAppLibSensorImageProperty property = {};
+  EdgeAppLibImageProperty property = {};
   property.height = 300;
   property.width = 300;
   property.stride_bytes = 300;
   strncpy(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
           sizeof(property.pixel_format));
 
-  SensorStreamSetProperty(GetSensorStream(), AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                          &property, sizeof(property));
   MemoryRef data;
   data.type = MEMORY_MANAGER_FILE_TYPE;
   data.u.esf_handle = in_data;
   setEsfMemoryManagerPreadFail();
-  auto result =
-      ProcessFormatInput(data, property.height * property.stride_bytes * 3,
-                         kProcessFormatImageTypeJpeg, 0, &image, &image_size);
+  auto result = ProcessFormatInput(
+      data, property.height * property.stride_bytes * 3,
+      kProcessFormatImageTypeJpeg, &property, 0, &image, &image_size);
 
   EXPECT_EQ(result, kProcessFormatResultOther);
   resetEsfMemoryManagerPreadSuccess();

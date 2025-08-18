@@ -1,0 +1,99 @@
+site_name: AITRIOS Edge App SDK Development Guide
+site_description: AITRIOS SDK Edge App Development Documentation
+site_author: Sony Semiconductor Solutions Corporation
+repo_url: https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app
+repo_name: SonySemiconductorSolutions/aitrios-sdk-edge-app
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer 
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app
+      name: GitHub
+      attributes:
+        target: _blank
+        rel: noopener
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+extra_css:
+    - stylesheets/extra.css
+
+
+nav:
+  - Home: README.md
+  - Get Started: get_started/index.md
+  - API: 
+    - Overview: api/index.md 
+    - EdgeAppCore: api/EdgeAppCore_API_specification.md
+    - EdgeAppLib: api/EdgeAppLib_API_specification.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - pymdownx.details
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-]+'
+      prebuild_index: true
+      use_directory_urls: false
+  - i18n:
+      default_language: en
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: ja
+          name: 日本語
+          build: true

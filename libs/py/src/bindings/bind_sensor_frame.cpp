@@ -38,7 +38,7 @@ void bind_sensor_frame(py::module_ &m) {
              int32_t ret = SensorFrameGetChannelFromChannelId(
                  frame.handle, channel_id, &channel);
              if (ret != 0) {
-               throw PyEdgeAppError("SensorFrameGetChannelFromChannelId", ret);
+               return std::make_tuple(py::array_t<uint8_t>(), 0);
              }
 
              EdgeAppLibSensorRawData raw_data{};

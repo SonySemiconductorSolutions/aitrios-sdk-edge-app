@@ -37,6 +37,9 @@
 class PqSettings : public JsonObject {
  public:
   PqSettings();
+  ~PqSettings() {
+    if (_gamma_param) free(_gamma_param);
+  }
 
   void InitializeValues();
   int Verify(JSON_Object *obj);
@@ -48,6 +51,8 @@ class PqSettings : public JsonObject {
   int ApplyEvCompensationVal(double ev_compensation_val);
   int ApplyAeAntiFlickerMode(double ae_anti_flicker_mode);
   int ApplyWhiteBalanceMode(double white_balance_mode);
+  int ApplyGammaMode(double gamma_mode);
+  int ApplyGammaParameter(const char *gamma_parameter);
 
   void StoreDigitalZoom(float digital_zoom);
   void StoreExposureMode(int mode);
@@ -55,6 +60,8 @@ class PqSettings : public JsonObject {
   void StoreEvCompensationVal(float ev_compensation_val);
   void StoreAeAntiFlickerMode(int ae_anti_flicker_mode);
   void StoreWhiteBalanceMode(int white_balance_mode);
+  void StoreGammaMode(int gamma_mode);
+  void StoreGammaParameter(uint8_t *bin, uint32_t bin_size);
 
   UT_ATTRIBUTE CameraImageSize *GetCameraImageSize();
   UT_ATTRIBUTE CameraImageFlip *GetCameraImageFlip();
@@ -86,6 +93,8 @@ class PqSettings : public JsonObject {
   float _ev_compensation_val = NAN;
   float _ae_anti_flicker_mode = NAN;
   float _white_balance_mode = NAN;
+  float _gamma_mode = NAN;
+  EdgeAppLibSensorInferenceGammaParameterProperty *_gamma_param = NULL;
 };
 
 #endif /* DTDL_MODEL_OBJECTS_COMMON_SETTINGS_PQ_SETTINGS_HPP */

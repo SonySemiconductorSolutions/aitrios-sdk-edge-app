@@ -51,8 +51,7 @@ using namespace EdgeAppLib;
  * @return A future representing the asynchronous operation of sending the input
  * tensor.
  */
-static EdgeAppLibDataExportFuture *sendInputTensor(
-    EdgeAppLibSensorFrame *frame) {
+static int32_t sendInputTensor(EdgeAppLibSensorFrame *frame) {
   LOG_TRACE("Inside sendInputTensor.");
 
   EdgeAppLibSensorChannel channel = 0;
@@ -65,7 +64,7 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
         "sending "
         "input tensor.",
         ret);
-    return nullptr;
+    return -1;
   }
 
   struct EdgeAppLibSensorRawData data = {0};
@@ -74,7 +73,7 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
         "EdgeAppLibSensorChannelGetRawData : ret=%d. Skipping sending input "
         "tensor.",
         ret);
-    return nullptr;
+    return -1;
   }
 
   /*
@@ -87,6 +86,8 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
            channel, AITRIOS_SENSOR_SUB_FRAME_PROPERTY_KEY, &subframe,
            sizeof(struct EdgeAppLibSensorSubFrameProperty))) < 0) {
     LOG_WARN("SensorChannelGetProperty - SubFrame: ret=%d", ret);
+    subframe.current_num = 1;
+    subframe.division_num = 1;  // Default to a single subframe if not set
   } else {
     LOG_INFO("SensorChannelGetProperty - SubFrame: current=%d, division=%d",
              subframe.current_num, subframe.division_num);
@@ -96,19 +97,24 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
        * - No timestamp is associated.
        * - Data size is 0 bytes.
        */
-      return nullptr;
-    } else {
-      /*
-       * Includes current_num and division_num for processing valid subframes.
-       */
-      return DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
-                                data.address, data.size, data.timestamp,
-                                subframe.current_num, subframe.division_num);
+      return -1;
     }
   }
+  /*
+   * Includes current_num and division_num for processing valid subframes.
+   */
 
-  return DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
-                            data.address, data.size, data.timestamp);
+  EdgeAppLibSensorImageProperty image_property = {0};
+  ret = SensorChannelGetProperty(channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                                 &image_property, sizeof(image_property));
+  if (ret != 0) {
+    LOG_ERR("SensorChannelGetProperty failed for input image: %d", ret);
+  }
+
+  return SendDataSyncImage(data.address, data.size,
+                           (EdgeAppLibImageProperty *)&image_property,
+                           data.timestamp, DATA_EXPORT_AWAIT_TIMEOUT,
+                           subframe.current_num, subframe.division_num);
 }
 
 /**
@@ -241,15 +247,12 @@ int onIterate() {
     return SensorGetLastErrorCause() == AITRIOS_SENSOR_ERROR_TIMEOUT ? 0 : -1;
   }
 
-  EdgeAppLibDataExportFuture *future =
-      inputTensorEnabled ? sendInputTensor(&frame) : nullptr;
-  if (metadataEnabled) {
-    sendMetadata(&frame);
+  if (inputTensorEnabled) {
+    sendInputTensor(&frame);
   }
 
-  if (future) {
-    DataExportAwait(future, DATA_EXPORT_AWAIT_TIMEOUT);
-    DataExportCleanup(future);
+  if (metadataEnabled) {
+    sendMetadata(&frame);
   }
 
   if ((ret = SensorReleaseFrame(s_stream, frame)) < 0) {

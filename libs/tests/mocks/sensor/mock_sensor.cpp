@@ -261,9 +261,15 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
     map_channel_data[channel] = raw_data_cpy;
     EsfMemoryManagerHandle handle = (EsfMemoryManagerHandle)DUMMY_HANDLE;
     size_t size = 0;
+#if defined(MOCK_PASSTHROUGH) || defined(MOCK_BARCODE) || defined(MOCK_LP_RECOG)
+    setEsfMemoryManagerPreadFail();
+#endif
     if (EsfMemoryManagerPread(handle, (void *)raw_data->address, raw_data->size,
                               0, &size) == 0) {
       LOG_INFO("EsfMemoryManagerPread success");
+      // We need to assume the size of the raw data is smaller if the input
+      // tensor is encoded
+      raw_data->size = raw_data->size / 2;
       raw_data->address = malloc(raw_data->size);
     }
     return EdgeAppLibSensorChannelGetRawDataSuccess;

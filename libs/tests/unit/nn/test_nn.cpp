@@ -24,8 +24,8 @@ using namespace EdgeAppLib;
 
 class EdgeApplibNNTest : public ::testing::Test {
  protected:
-  graph g{};
-  graph_execution_context ctx{};
+  EdgeAppLibGraph g{};
+  EdgeAppLibGraphContext ctx{};
   uint8_t input_data[12]{};
   uint32_t dims[4]{1, 2, 2, 3};  // 1x2x2x3
   float output[10]{};
@@ -37,37 +37,52 @@ class EdgeApplibNNTest : public ::testing::Test {
 };
 
 TEST_F(EdgeApplibNNTest, LoadModelSuccess) {
-  auto result = LoadModel("dummy_model.onnx", &g, cpu);
-  EXPECT_EQ(result, success);
+  auto result = LoadModel("dummy_model.onnx", &g, EDGEAPP_TARGET_CPU);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
 }
 
 TEST_F(EdgeApplibNNTest, InitContextSuccess) {
-  LoadModel("dummy_model.onnx", &g, cpu);
+  LoadModel("dummy_model.onnx", &g, EDGEAPP_TARGET_CPU);
   auto result = InitContext(g, &ctx);
-  EXPECT_EQ(result, success);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
 }
 
 TEST_F(EdgeApplibNNTest, SetInputSuccess) {
-  LoadModel("dummy_model.onnx", &g, cpu);
+  LoadModel("dummy_model.onnx", &g, EDGEAPP_TARGET_CPU);
   InitContext(g, &ctx);
-  auto result = SetInput(ctx, input_data, dims);
-  EXPECT_EQ(result, success);
+  const float mean_values[] = {0.0f, 0.0f, 0.0f};
+  const size_t mean_size = 3;
+  const float norm_values[] = {1.0f, 1.0f, 1.0f};
+  const size_t norm_size = 3;
+  auto result = SetInput(ctx, input_data, dims, mean_values, mean_size,
+                         norm_values, norm_size);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
 }
 
 TEST_F(EdgeApplibNNTest, ComputeSuccess) {
-  LoadModel("dummy_model.onnx", &g, cpu);
+  LoadModel("dummy_model.onnx", &g, EDGEAPP_TARGET_CPU);
   InitContext(g, &ctx);
-  SetInput(ctx, input_data, dims);
+  const float mean_values[] = {0.0f, 0.0f, 0.0f};
+  const size_t mean_size = 3;
+  const float norm_values[] = {1.0f, 1.0f, 1.0f};
+  const size_t norm_size = 3;
+  SetInput(ctx, input_data, dims, mean_values, mean_size, norm_values,
+           norm_size);
   auto result = Compute(ctx);
-  EXPECT_EQ(result, success);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
 }
 
 TEST_F(EdgeApplibNNTest, GetOutputSuccess) {
-  LoadModel("dummy_model.onnx", &g, cpu);
+  LoadModel("dummy_model.onnx", &g, EDGEAPP_TARGET_CPU);
   InitContext(g, &ctx);
-  SetInput(ctx, input_data, dims);
+  const float mean_values[] = {0.0f, 0.0f, 0.0f};
+  const size_t mean_size = 3;
+  const float norm_values[] = {1.0f, 1.0f, 1.0f};
+  const size_t norm_size = 3;
+  SetInput(ctx, input_data, dims, mean_values, mean_size, norm_values,
+           norm_size);
   Compute(ctx);
   auto result = GetOutput(ctx, 0, output, &output_size);
-  EXPECT_EQ(result, success);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
   EXPECT_EQ(output_size, 10u);
 }

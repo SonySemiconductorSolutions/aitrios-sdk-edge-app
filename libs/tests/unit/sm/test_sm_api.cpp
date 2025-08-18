@@ -263,6 +263,18 @@ TEST_F(StateMachineApiTest, EdgeAppLibSensorImageRotationProperty) {
             rotation_angle);
 }
 
+TEST_F(StateMachineApiTest, EdgeAppLibSensorInferenceGammaModeProperty) {
+  EdgeAppLibSensorInferenceGammaMode gamma_mode =
+      AITRIOS_SENSOR_INFERENCE_GAMMA_MODE_AUTO;
+
+  EdgeAppLibSensorInferenceGammaModeProperty prop = {gamma_mode};
+  updateProperty(stream, AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY, &prop,
+                 sizeof(prop));
+  ASSERT_EQ(json_object_dotget_number(json_obj,
+                                      "common_settings.pq_settings.gamma_mode"),
+            gamma_mode);
+}
+
 TEST_F(StateMachineApiTest, UnknownProperty) {
   updateProperty(stream, "my-unknown-property", NULL, 0);
 }

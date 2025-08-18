@@ -1,0 +1,30 @@
+{
+    "res_info": {
+        "res_id": "GENERATED_STRING-lprec",
+        "code": 7,
+        "detail_msg": "GENERATED_STRING-lptest"
+    },
+    "ai_models_imx500": {
+        "lp_detection": {
+            "ai_model_bundle_id": "GENERATED_STRING-lpdetect",
+            "parameters": {
+                "max_detections": 2,
+                "threshold": 0.3,
+                "input_width": 300,
+                "input_height": 300,
+                "bbox_normalization": true
+            }
+        }
+    },
+    "ai_models_cpu": {
+        "lp_recognition": {
+            "ai_model_path": "/opt/senscord/share/tflite_models/LPR.tflite",
+            "parameters": {
+                "threshold": 0.5
+            }
+        }
+    },
+    "metadata_settings": {
+        "format": 1
+    }
+}

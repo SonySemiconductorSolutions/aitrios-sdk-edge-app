@@ -27,6 +27,7 @@ include(${ROOT_DIR}/cmake/gtest.cmake)
 include_directories(
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
+  ${LIBS_DIR}/third_party/base64.c
   ${LIBS_DIR}/send_data/src/data_export/include
   ${LIBS_DIR}/receive_data/include
   ${LIBS_DIR}/common/include
@@ -46,6 +47,7 @@ add_library(sensor
 target_include_directories(sensor PUBLIC
   ${LIBS_DIR}/tests/mocks/sensor
   ${LIBS_DIR}/tests/mocks/device
+  ${LIBS_DIR}/third_party/base64.c
 )
 
 add_subdirectory(${LIBS_DIR}/common/src ${CMAKE_BINARY_DIR}/common)
@@ -57,6 +59,7 @@ add_library(sm STATIC
   ${MOCKS_DIR}/data_export/mock_data_export.cpp
   ${MOCKS_DIR}/receive_data/mock_receive_data.cpp
   ${LIBS_DIR}/common/src/context.cpp
+  ${LIBS_DIR}/third_party/base64.c/base64.c
   ${SM_SRC_DIR}/callbacks/configuration.cpp
   ${SM_SRC_DIR}/states/state.cpp
   ${SM_SRC_DIR}/states/state_factory.cpp
@@ -83,7 +86,7 @@ add_library(fixtures
 add_subdirectory(dtdl_model)
 
 macro(add_test_executable TEST_NAME)
-  add_executable(${TEST_NAME} ${TEST_NAME}.cpp ${ARGN})
+  add_executable(${TEST_NAME} ${TEST_NAME}.cpp ${LIBS_DIR}/third_party/base64.c/base64.c ${ARGN})
   target_link_libraries(${TEST_NAME} sm fixtures dtdl_model sm GTest::gtest_main GTest::gmock_main)
   gtest_discover_tests(${TEST_NAME})
 endmacro()

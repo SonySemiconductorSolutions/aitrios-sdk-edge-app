@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        app: [passthrough, draw, classification, detection, posenet, segmentation, switch_dnn]
+        app: [passthrough, draw, classification, detection, posenet, segmentation, switch_dnn, lp_recog]
     steps:
     - name: Checkout
       uses: actions/checkout@v4

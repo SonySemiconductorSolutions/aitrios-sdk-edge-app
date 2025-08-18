@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "evp_c_sdk/sdk.h"
@@ -117,41 +116,47 @@ static void *entrypoint(void *args) {
 
     pthread_mutex_lock(&evp.mutex);
     if (operations.buffer[operations.next].config == NULL) {
-      char *aux = (char *)malloc(EVP_MQTT_SEND_BUFF_SIZE);
+      char *aux = (char *)malloc(EVP_MQTT_SEND_BUFF_SIZE + 1);
       // assuming we receive all data at one call
       int config_len = recv(new_socket, aux, EVP_MQTT_SEND_BUFF_SIZE, 0);
-      // delete the edge_app top layer: {"edge_app":{...}} → {...}
-      char *json_start = strstr(aux, "\"" DTDL_TOPIC "\"");
-      if (json_start) {
-        json_start = strchr(json_start, '{');
+      assert(config_len >= 0 && config_len <= EVP_MQTT_SEND_BUFF_SIZE);
+      if (config_len > 0) {
+        aux[config_len] = '\0';
+        // delete the edge_app top layer: {"edge_app":{...}} → {...}
+        char *json_start = strstr(aux, "\"" DTDL_TOPIC "\"");
         if (json_start) {
-          int brace = 1;
-          char *p = json_start + 1;
-          while (*p && brace > 0) {
-            if (*p == '{')
-              brace++;
-            else if (*p == '}')
-              brace--;
-            p++;
-          }
-          if (brace == 0) {
-            size_t inner_len = p - json_start;
-            char *inner_json = (char *)malloc(inner_len + 1);
-            memcpy(inner_json, json_start, inner_len);
-            inner_json[inner_len] = '\0';
-            free(aux);
-            aux = inner_json;
-            config_len = inner_len;
+          json_start = strchr(json_start, '{');
+          if (json_start) {
+            int brace = 1;
+            char *p = json_start + 1;
+            while (*p && brace > 0) {
+              if (*p == '{')
+                brace++;
+              else if (*p == '}')
+                brace--;
+              p++;
+            }
+            if (brace == 0) {
+              size_t inner_len = p - json_start;
+              char *inner_json = (char *)malloc(inner_len + 1);
+              memcpy(inner_json, json_start, inner_len);
+              inner_json[inner_len] = '\0';
+              free(aux);
+              aux = inner_json;
+              config_len = inner_len;
+            }
           }
         }
+        operations.buffer[operations.next] =
+            (RingBufferElement){.config = aux, .config_len = config_len};
+        operations.next = (operations.next + 1) % PENDING_OPERATIONS;
+        pthread_mutex_unlock(&evp.mutex);
+        LOG_INFO("Received: %d", config_len);
+      } else {
+        free(aux);
+        pthread_mutex_unlock(&evp.mutex);
+        LOG_ERR("recv failed or no data received");
       }
-      operations.buffer[operations.next] =
-          (RingBufferElement){.config = aux, .config_len = config_len};
-      operations.next = (operations.next + 1) % PENDING_OPERATIONS;
-      pthread_mutex_unlock(&evp.mutex);
-      assert(config_len < EVP_MQTT_SEND_BUFF_SIZE);
-      assert(config_len > 0);
-      LOG_INFO("Received: %d", config_len);
     } else {
       LOG_ERR("Buffer too small");
     }
@@ -266,6 +271,7 @@ EVP_blobOperation_wrapper(wasm_exec_env_t exec_env, struct EVP_client *h,
   uint32_t handle = (uint32_t)((uintptr_t)h & 0xFFFFFFFF);
   uint32_t userDataHandle = (uint32_t)((uintptr_t)userData & 0xFFFFFFFF);
   uint32_t cb_handle = (uint32_t)((uintptr_t)cb & 0xFFFFFFFF);
+  uint32_t request_handle = (uint32_t)((uintptr_t)request & 0xFFFFFFFF);
 
   // Allocate memory for EVP_BlobResultEvp in WASM memory so WASM can access it
   wasm_module_inst_t module_inst = wasm_runtime_get_module_inst(exec_env);
@@ -307,20 +313,17 @@ EVP_blobOperation_wrapper(wasm_exec_env_t exec_env, struct EVP_client *h,
     }
   }
 
-  // Get current time for filename(Native can not get the filename from wasm
-  // because it's saved in stack.)
-  struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  struct tm tm;
-  localtime_r(&ts.tv_sec, &tm);
+  void *ext_request =
+      wasm_runtime_addr_app_to_native(module_inst, request_handle);
+  uint32_t remote_name_offset = *(uint32_t *)ext_request;
+  const char *remote_name_native =
+      (const char *)wasm_runtime_addr_app_to_native(module_inst,
+                                                    remote_name_offset);
 
-  char filename[256];
-  // Use UTC time instead of local time
-  gmtime_r(&ts.tv_sec, &tm);
-  snprintf(filename, sizeof(filename),
-           "image/%04d%02d%02d%02d%02d%02d%03ld.jpg", tm.tm_year + 1900,
-           tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
-           ts.tv_nsec / 1000000);
+  const char *last_slash = strrchr(remote_name_native, '/');
+  char filename[512];
+  const char *basename = last_slash ? last_slash + 1 : remote_name_native;
+  snprintf(filename, sizeof(filename), "image/%s", basename);
 
   // Save vars_blob_buff as jpg file
   FILE *fp = fopen(filename, "wb");

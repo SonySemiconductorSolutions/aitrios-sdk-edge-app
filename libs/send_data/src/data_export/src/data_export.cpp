@@ -28,6 +28,7 @@
 #include "log.h"
 #include "map.hpp"
 #include "memory_manager.hpp"
+#include "process_format.hpp"
 #include "sdk.h"
 #include "sm_api.hpp"
 #include "sm_types.h"
@@ -216,11 +217,54 @@ EdgeAppLibDataExportResult DataExportUnInitialize() {
 
 EdgeAppLibDataExportFuture *DataExportSendData(
     char *portname, EdgeAppLibDataExportDataType datatype, void *data,
-    int datalen, uint64_t timestamp, uint32_t current, uint32_t division) {
+    int datalen, uint64_t timestamp, uint32_t current, uint32_t division,
+    EdgeAppLibImageProperty *image_property) {
   LOG_TRACE("Entering SendData");
 
   if (!DataExportIsEnabled(datatype)) {
     return nullptr;
+  }
+
+  // Handle JPEG encoding for raw image data when image_property is provided
+  void *processed_data = data;
+  int processed_datalen = datalen;
+  bool needs_cleanup = false;
+
+  if (image_property != nullptr && datatype == EdgeAppLibDataExportRaw) {
+    // Check if data needs JPEG encoding (raw image data is larger than encoded)
+    if ((datalen > 0) &&
+        (datalen >= image_property->stride_bytes * image_property->height)) {
+      LOG_DBG(
+          "Data length suggests raw image data. Processing for JPEG encoding.");
+
+      JSON_Object *json_object = getCodecSettings();
+      int codec_number = json_object_get_number(json_object, "format");
+
+      void *codec_buffer = nullptr;
+      int32_t codec_size = 0;
+      MemoryRef codec_memory_ref = {};
+      codec_memory_ref.type = MEMORY_MANAGER_MAP_TYPE;
+      codec_memory_ref.u.p = data;
+
+      ProcessFormatResult ret = ProcessFormatInput(
+          codec_memory_ref, datalen, (ProcessFormatImageType)codec_number,
+          image_property, timestamp, &codec_buffer, &codec_size);
+
+      if (ret != kProcessFormatResultOk) {
+        LOG_ERR("ProcessFormatInput failed. Exit with return %d.", ret);
+        if (codec_buffer != nullptr) {
+          free(codec_buffer);
+        }
+        return nullptr;
+      }
+
+      processed_data = codec_buffer;
+      processed_datalen = codec_size;
+      needs_cleanup = true;
+      LOG_DBG("JPEG encoding completed. Size: %d -> %d", datalen, codec_size);
+    } else {
+      LOG_DBG("Data length suggests already encoded data. Using as-is.");
+    }
   }
 
   EdgeAppLibDataExportFuture *future = InitializeFuture();
@@ -229,7 +273,8 @@ EdgeAppLibDataExportFuture *DataExportSendData(
   }
 
   // Release sent data inside DataExportCleanupOrUnlock
-  future->is_cleanup_sent_data = (datatype != EdgeAppLibDataExportMetadata);
+  future->is_cleanup_sent_data =
+      (datatype != EdgeAppLibDataExportMetadata) || needs_cleanup;
 
   if (map_set((void *)&(future->module_vars), future) == -1) {
     // TODO: add more meaningful result
@@ -237,12 +282,12 @@ EdgeAppLibDataExportFuture *DataExportSendData(
     future->result = EdgeAppLibDataExportResultDenied;
     future->is_processed = true;
     /* Set buff for cleanup */
-    future->module_vars.blob_buff = (char *)data;
+    future->module_vars.blob_buff = (char *)processed_data;
     return future;
   }
 
   future->result = EdgeAppLibDataExportResultEnqueued;
-  LOG_DBG("Sending data %p, %d", data, datalen);
+  LOG_DBG("Sending data %p, %d", processed_data, processed_datalen);
   METHOD sendMethod;
   JSON_Object *object = getPortSettings();
   JSON_Object *port_setting = NULL;
@@ -256,8 +301,8 @@ EdgeAppLibDataExportFuture *DataExportSendData(
   }
   future->module_vars.localStore.filename = NULL;
   future->module_vars.blob_buff_offset = 0;
-  future->module_vars.blob_buff_size = datalen;
-  future->module_vars.blob_buff = (char *)data;
+  future->module_vars.blob_buff_size = processed_datalen;
+  future->module_vars.blob_buff = (char *)processed_data;
   future->module_vars.localStore.io_cb = blob_io_cb;
   future->module_vars.localStore.blob_len = future->module_vars.blob_buff_size;
   future->module_vars.identifier = 0x12345678;
@@ -337,7 +382,7 @@ EdgeAppLibDataExportFuture *DataExportSendData(
   } else if (sendMethod == METHOD_MQTT) {
     /* Inference Result telemetry send entry info */
     struct EVP_telemetry_entry telemetry_entry = {
-        .key = g_placeholder_telemetry_key, .value = (char *)data};
+        .key = g_placeholder_telemetry_key, .value = (char *)processed_data};
     result = EVP_sendTelemetry(
         evp_client_, &telemetry_entry, 1,
         (EVP_TELEMETRY_CALLBACK)DataExportTelemetryDoneCallback,
@@ -361,6 +406,10 @@ EdgeAppLibDataExportFuture *DataExportSendData(
     future->is_processed = true;
     future->result = EdgeAppLibDataExportResultFailure;
     map_pop((void *)&(future->module_vars));
+    // Clean up allocated codec buffer on error
+    if (needs_cleanup && processed_data != data) {
+      free(processed_data);
+    }
   }
 
   LOG_TRACE("Exit SendData");

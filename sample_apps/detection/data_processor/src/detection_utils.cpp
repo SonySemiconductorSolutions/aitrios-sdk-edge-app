@@ -66,11 +66,7 @@ DataProcessorResultCode ExtractBboxOrder(
     JSON_Object *json, DataProcessorCustomParam *detection_param_pr) {
   char aux[BBOX_ORDER_SIZE] = {0};
   memset(detection_param_pr->bbox_order, 0, BBOX_ORDER_SIZE);
-  if (GetValueString(json, "bbox_order", aux) == 0) {
-    if (strlen(aux) >= BBOX_ORDER_SIZE) {
-      LOG_ERR("Bbox Order name is too long");
-      return kDataProcessorOutOfRange;
-    }
+  if (GetValueString(json, "bbox_order", aux, BBOX_ORDER_SIZE) == 0) {
     strncpy(detection_param_pr->bbox_order, aux, strlen(aux));
     return kDataProcessorOk;
   }
@@ -83,7 +79,7 @@ DataProcessorResultCode ExtractClassOrder(
     JSON_Object *json, DataProcessorCustomParam *detection_param_pr) {
   char aux[CLS_SCORE_SIZE] = {0};
   memset(detection_param_pr->class_score_order, 0, CLS_SCORE_SIZE);
-  if (GetValueString(json, "class_score_order", aux) == 0) {
+  if (GetValueString(json, "class_score_order", aux, CLS_SCORE_SIZE) == 0) {
     if (strlen(aux) >= CLS_SCORE_SIZE) {
       LOG_ERR("Class Score order name is too long");
       return kDataProcessorOutOfRange;

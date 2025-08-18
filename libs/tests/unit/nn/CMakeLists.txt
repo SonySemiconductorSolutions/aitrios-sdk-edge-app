@@ -30,6 +30,16 @@ add_subdirectory (
   ${CMAKE_CURRENT_BINARY_DIR}/nn
 )
 
+add_subdirectory (
+  ${LIBS_DIR}/draw/src
+  ${CMAKE_CURRENT_BINARY_DIR}/draw
+)
+
+add_subdirectory (
+  ${LIBS_DIR}/log/src
+  ${CMAKE_CURRENT_BINARY_DIR}/log
+)
+
 add_executable(test_nn
   test_nn.cpp
   ${MOCKS_DIR}/nn/mock_wasi_nn.c
@@ -42,6 +52,7 @@ target_link_libraries(test_nn
 target_include_directories(test_nn PUBLIC
   ${ROOT_DIR}/include
   ${LIBS_DIR}/depend/edge_app
+  ${LIBS_DIR}/third_party/wasi_nn
   ${NN_TEST_DIR}
 )
 

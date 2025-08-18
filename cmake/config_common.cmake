@@ -94,6 +94,9 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
   ${ADDITIONAL_FLAGS} \
 ")
 
-if (NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+# Link wasi-libmalloc to monitor the wasm linear memory usage for Debug build
+if (MEMORY_PROF)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+    -Wl,-L/opt/wasi-libmalloc/sysroot/lib/wasm32-wasi-threads -lmalloc \
+  ")
 endif()

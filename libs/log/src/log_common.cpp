@@ -25,13 +25,16 @@ void log_function(LogLevel level, const char *file, int line, const char *fmt,
 #else   // MOCK_INTEGRATION_TEST
   if (1) {
 #endif  // MOCK_INTEGRATION_TEST
-    char buf[LOGBUGSIZE];
+    char buf[LOGBUGSIZE] = {0};
     va_list args;
     va_start(args, fmt);
-    char full_fmt[LOGBUGSIZE];
+    char full_fmt[LOGBUGSIZE] = {0};
     snprintf(full_fmt, LOGBUGSIZE, "[%s:%d] %s", FILENAME(file), line, fmt);
-    vsnprintf(buf, LOGBUGSIZE, full_fmt, args);
+    vsnprintf(buf, LOGBUGSIZE - 1, full_fmt, args);
     va_end(args);
+    // Ensure null termination
+    buf[LOGBUGSIZE - 1] = '\0';
+
     const char *context = "";
     switch (level) {
       case kCriticalLevel:

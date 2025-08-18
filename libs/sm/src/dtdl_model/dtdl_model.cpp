@@ -16,6 +16,9 @@
 
 #include "dtdl_model/dtdl_model.hpp"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "log.h"
 
 static const char *REQ_INFO = "req_info";
@@ -98,7 +101,52 @@ int DtdlModel::Apply(JSON_Object *obj) {
 }
 
 char *DtdlModel::Serialize() {
-  return json_serialize_to_string(json_object_get_wrapping_value(json_obj));
+  // Get the JSON value to serialize
+  JSON_Value *value = json_object_get_wrapping_value(json_obj);
+  if (value == NULL) {
+    return NULL;
+  }
+
+  // Calculate required buffer size with safety margin
+  size_t required_size = json_serialization_size(value);
+  if (required_size == 0) {
+    return NULL;
+  }
+
+  // Add substantial safety margin to prevent buffer overflow
+  // This addresses the buffer overflow issue seen in valgrind
+  size_t safe_size = required_size + 512;  // Large safety margin
+
+  // Allocate buffer with safe size
+  char *buffer = (char *)malloc(safe_size);
+  if (buffer == NULL) {
+    return NULL;
+  }
+
+  // Initialize buffer to ensure null termination
+  memset(buffer, 0, safe_size);
+
+  // Perform serialization to buffer with size check
+  JSON_Status status = json_serialize_to_buffer(value, buffer, safe_size);
+  if (status != JSONSuccess) {
+    free(buffer);
+    return NULL;
+  }
+
+  // Double check buffer integrity to prevent overflow
+  // Use safe string length check with manual bounds checking
+  size_t actual_length = 0;
+  for (size_t i = 0; i < safe_size - 1 && buffer[i] != '\0'; i++) {
+    actual_length++;
+  }
+
+  if (actual_length >= safe_size - 1) {
+    // Buffer overflow detected or string not properly terminated
+    free(buffer);
+    return NULL;
+  }
+
+  return buffer;
 }
 
 ReqInfo *DtdlModel::GetReqInfo() { return &req_info; }

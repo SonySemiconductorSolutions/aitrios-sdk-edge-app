@@ -24,7 +24,7 @@ set(TESTS_DIR ${ROOT_DIR}/tests)
 set(LIBS_DIR ${ROOT_DIR}/libs)
 
 # Define a list of possible apps
-set(APPS_LIST "passthrough" "classification" "detection" "posenet" "segmentation" "switch_dnn" "draw" "perfbench" "apitest")
+set(APPS_LIST "passthrough" "classification" "detection" "posenet" "segmentation" "switch_dnn" "draw" "perfbench" "apitest" "lp_recog")
 
 if(NOT DEFINED APPS_SELECTION)
   set(APPS_SELECTION "passthrough")
@@ -34,11 +34,11 @@ if (APPS_SELECTION IN_LIST APPS_LIST)
   message(STATUS "App selected: ${APPS_SELECTION}")
 else()
   message(FATAL_ERROR
-    "Please if you are defining the `APPS_SELECTION` flag select one of the following: passthrough, classification, detection, posenet, segmentation, switch_dnn, draw, perfbench or apitest"
+    "Please if you are defining the `APPS_SELECTION` flag select one of the following: passthrough, classification, detection, posenet, segmentation, switch_dnn, draw, perfbench, lp_recog or apitest"
   )
 endif()
 
-if (APPS_SELECTION STREQUAL "barcode")
+if (APPS_SELECTION STREQUAL "barcode" OR APPS_SELECTION STREQUAL "lp_recog")
   set(MAX_MEMORY 52428800)
   set(INITIAL_MEMORY 52428800)
 else()

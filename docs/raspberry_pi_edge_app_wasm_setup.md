@@ -22,17 +22,19 @@ sudo reboot now
 ```
 
 
-## Get the released senscord-libcamera debian package from release
+## Install senscord-libcamera
 
 ```
-wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_arm64.deb
-sudo apt install senscord-libcamera_1.0.7_arm64.deb
+wget http://midokura.github.io/debian/evp-archive-keyring_bookworm_arm64.deb
+sudo dpkg -i ./evp-archive-keyring_bookworm_arm64.deb
+sudo apt update
+sudo apt install senscord-libcamera
 ```
 Once extracted, related files are located under `/opt/senscord`
 
 ## Download the official EdgeApp Wasm from the release page
 
-[EdgeApp public repo](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/sample_edge_app_detection_wasm_v2_1.2.1.zip)
+[EdgeApp public repo](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.1.1/sample_edge_app_detection_wasm_v2_1.1.1.zip)
 
 ## Start MQTT broker and HTTP server
 
@@ -76,7 +78,7 @@ export EVP_DATA_DIR=$EVP_DATA_PATH
 # export EVP_MQTT_TLS_CLIENT_CERT=/home/pi/evp_data/client-cert.pem
 # export EVP_MQTT_TLS_CLIENT_KEY=/home/pi/evp_data/client-key.pem
 export EVP_IOT_PLATFORM=tb
-./share/senscord/setup_env.sh ./bin/evp_agent -l ./lib/libsenscord_wamr.so -l ./lib/libesf-device-wamr.so
+./share/senscord/setup_env_cam.sh ./bin/evp_agent -l ./lib/libsenscord_wamr.so -l ./lib/libesf-device-wamr.so
 ```
 then execute
 ```

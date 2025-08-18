@@ -32,6 +32,7 @@
 #include "data_export_types.h"
 
 struct json_object_t;
+struct EdgeAppLibImageProperty;
 
 namespace EdgeAppLib {
 #ifdef __cplusplus
@@ -90,6 +91,10 @@ EdgeAppLibDataExportResult DataExportCleanup(
  * @param data The serialized data to upload.
  * @param datalen The length of the serialized data.
  * @param timestamp The timestamp of the processed frame in nanoseconds.
+ * @param current Current frame number (for multi-frame data).
+ * @param division Total number of frames (for multi-frame data).
+ * @param image_property Optional image properties for JPEG encoding. When
+ * provided for EdgeAppLibDataExportRaw data, enables JPEG encoding.
  *
  * @return Reference to the future representing the asynchronous operation.
  *         Returns NULL on failure or when disabled.
@@ -97,7 +102,7 @@ EdgeAppLibDataExportResult DataExportCleanup(
 EdgeAppLibDataExportFuture *DataExportSendData(
     char *portname, EdgeAppLibDataExportDataType datatype, void *data,
     int datalen, uint64_t timestamp, uint32_t current = 1,
-    uint32_t division = 1);
+    uint32_t division = 1, EdgeAppLibImageProperty *image_property = 0);
 
 /**
  * @brief Send state asynchronously.

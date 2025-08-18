@@ -27,6 +27,7 @@ target_include_directories(process_format PUBLIC
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/base64.c
+  ${LIBS_DIR}/depend/edge_app
 )
 
 target_link_libraries(process_format

@@ -64,6 +64,7 @@ struct EdgeAppLibDrawBuffer {
   enum EdgeAppLibDrawFormat format; /**< image pixel format */
   uint32_t width;                   /**< image width in pixels */
   uint32_t height;                  /**< image height in pixels */
+  uint32_t stride_byte;             /**< image stride in bytes */
 };
 
 /**
@@ -101,7 +102,7 @@ int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
  * is clamped to the image bounds.
  */
 
-int32_t CropRectangle(const struct EdgeAppLibDrawBuffer *src,
+int32_t CropRectangle(struct EdgeAppLibDrawBuffer *src,
                       struct EdgeAppLibDrawBuffer *dst, uint32_t left,
                       uint32_t top, uint32_t right, uint32_t bottom);
 

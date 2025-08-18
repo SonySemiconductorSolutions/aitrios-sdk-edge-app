@@ -17,15 +17,15 @@
 #ifndef EDGEAPP_CORE_H_
 #define EDGEAPP_CORE_H_
 
+#ifdef __cplusplus
 #include <cstddef>
 #include <cstdint>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <cstdlib>
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 #include "data_export.h"
-#include "log.h"
 #include "nn.h"
 #include "sensor.h"
 
@@ -45,11 +45,19 @@ typedef enum { edge_cpu, edge_gpu, edge_npu, edge_imx500 } EdgeAppCoreTarget;
 struct EdgeAppCoreModelInfo {
   const char *model_name;    ///< Name of the model
   EdgeAppCoreTarget target;  ///< Target for the tensor
+  const std::vector<float> *mean_values;
+  const std::vector<float> *norm_values;
 };
 
 #define MAX_GRAPH_CONTEXTS 8
 #define MAX_OUTPUT_TENSORS_SIZE 2822400 * 2  // 4 MB for output tensors
 #define MAX_OUTPUT_TENSOR_NUM 4
+
+enum TensorMemoryOwner {
+  Unknown,
+  Sensor,  // memory ownership is with Sensor/host
+  App      // memory ownership is with the application
+};
 
 // Structure to hold temporary tensor information
 // This is used to manage input tensors
@@ -59,37 +67,20 @@ struct TempTensorInfo {
   uint32_t width = 0;
   uint32_t height = 0;
   uint64_t timestamp = 0;  ///< Timestamp for the tensor
+  TensorMemoryOwner memory_owner =
+      TensorMemoryOwner::Unknown;  ///< Memory ownership of the tensor
 };
 
 typedef struct {
   EdgeAppLibSensorCore *sensor_core;     /**< Sensor core. */
   EdgeAppLibSensorStream *sensor_stream; /**< Sensor stream. */
-  graph_execution_context *graph_ctx; /**< Multiple graph execution contexts. */
-  EdgeAppCoreTarget target;           /**< Target for each graph context. */
+  EdgeAppLibGraphContext *graph_ctx; /**< Multiple graph execution contexts. */
+  EdgeAppCoreTarget target;          /**< Target for each graph context. */
   TempTensorInfo temp_input;
   uint32_t model_idx; /**< Count of loaded models. */
+  const std::vector<float> *mean_values;
+  const std::vector<float> *norm_values;
 } EdgeAppCoreCtx;
-
-inline execution_target ToExecutionTarget(EdgeAppCoreTarget target) {
-  switch (target) {
-    case edge_cpu:
-      return cpu;
-    case edge_gpu:
-      return gpu;
-    default:
-      return cpu;
-  }
-}
-#ifdef __cplusplus
-}
-#endif
-
-// ------------------------------ C++ only ------------------------------
-#ifdef __cplusplus
-
-#include <memory>
-#include <type_traits>
-#include <vector>
 
 namespace EdgeAppCore {
 
@@ -120,6 +111,7 @@ struct Tensor {
   size_t size;
   uint64_t timestamp;
   char name[64] = {0};  ///< Optional name for the tensor
+  TensorMemoryOwner memory_owner = TensorMemoryOwner::Unknown;
 
   template <typename T>
   T *DataAs() {
@@ -151,9 +143,8 @@ class AutoFrame {
   // Destructor ensures frame is released
   ~AutoFrame() {
     if (stream_ && frame_) {
-      LOG_WARN("Releasing frame: %llu", frame_);
       if (EdgeAppLib::SensorReleaseFrame(*stream_, frame_) < 0) {
-        LOG_ERR("SensorReleaseFrame failed.");
+        abort();  // Handle error appropriately
       }
       frame_ = 0;  // Reset frame to avoid double release
     }

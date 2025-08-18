@@ -198,6 +198,23 @@ def validate_barcode_custom_settings(data: dict, id_suffix: str) -> None:
     if "ai_models" in data["custom_settings"]:
         assert data["custom_settings"]["ai_models"]["detection"]["parameters"]["max_detections"] == 10
 
+def change_lp_recog_custom_settings(data: dict, id_suffix: str) -> None:
+    data["req_info"]["req_id"] = f"lp_recog_custom_settings{id_suffix}"
+    # Add lp_recog specific settings - it uses ai_models_imx500 and ai_models_cpu
+    if "ai_models_imx500" in data["custom_settings"]:
+        data["custom_settings"]["ai_models_imx500"]["lp_detection"]["parameters"]["max_detections"] = 10
+    if "ai_models_cpu" in data["custom_settings"]:
+        data["custom_settings"]["ai_models_cpu"]["lp_recognition"]["parameters"]["threshold"] = 0.8
+    send_data(data)
+    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+
+def validate_lp_recog_custom_settings(data: dict, id_suffix: str) -> None:
+    assert data["res_info"]["res_id"] == f"lp_recog_custom_settings{id_suffix}"
+    assert data["custom_settings"]["res_info"]["res_id"] == f"lp_recog_custom_settings{id_suffix}"
+    if "ai_models_imx500" in data["custom_settings"]:
+        assert data["custom_settings"]["ai_models_imx500"]["lp_detection"]["parameters"]["max_detections"] == 10
+    if "ai_models_cpu" in data["custom_settings"]:
+        assert data["custom_settings"]["ai_models_cpu"]["lp_recognition"]["parameters"]["threshold"] == 0.8
 
 def change_custom_settings_metadata_format(data: dict, metadata_format: int) -> None:
     data["req_info"]["req_id"] = f"custom_settings_metadata_format{metadata_format}"
@@ -236,20 +253,39 @@ def validate_codec_settings(data: dict, format: int) -> None:
 def get_and_validate_process_state(checker: DTDLStateChecker, state: int, method: int, res_id: str = None) -> dict:
     if res_id == None:
         res_id = "change_process_state" + str(state)
+
+    last_data = None
     for i in range(INTEGRATION_TEST_RETRY_NUM):
-        data = checker.get_state()
-        if data["res_info"]["res_id"] == res_id and data["common_settings"]["process_state"] == state:
-            assert data["common_settings"]["port_settings"]["input_tensor"]["method"] == method
-            assert data["common_settings"]["port_settings"]["metadata"]["method"] == method
-            # Pass
-            return data
+        try:
+            data = checker.get_state()
+            last_data = data
+
+            # Check if we have the expected state
+            if (data["res_info"]["res_id"] == res_id and
+                data["common_settings"]["process_state"] == state):
+                assert data["common_settings"]["port_settings"]["input_tensor"]["method"] == method
+                assert data["common_settings"]["port_settings"]["metadata"]["method"] == method
+                # Success
+                return data
+
+        except Exception as e:
+            print(f"[WARNING] Error getting state (attempt {i+1}/{INTEGRATION_TEST_RETRY_NUM}): {e}")
+            if i == INTEGRATION_TEST_RETRY_NUM - 1:
+                raise
 
         if i == INTEGRATION_TEST_RETRY_NUM - 1:
-            # Failed. So raise assertion.
-            assert data["res_info"]["res_id"] == res_id
-            assert data["common_settings"]["process_state"] == state
+            # Failed. So raise assertion with detailed info.
+            print(f"[ERROR] Failed to validate state after {INTEGRATION_TEST_RETRY_NUM} attempts")
+            print(f"Expected: res_id='{res_id}', state={state}, method={method}")
+            if last_data:
+                print(f"Got: res_id='{last_data['res_info']['res_id']}', "
+                      f"state={last_data['common_settings']['process_state']}")
+            assert last_data["res_info"]["res_id"] == res_id, f"Expected res_id '{res_id}', got '{last_data['res_info']['res_id']}'"
+            assert last_data["common_settings"]["process_state"] == state, f"Expected state {state}, got {last_data['common_settings']['process_state']}"
 
-        time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+        # Exponential backoff with jitter
+        wait_time = min(INTEGRATION_TEST_INTERVAL_SECONDS * (1.5 ** i), 5.0)
+        time.sleep(wait_time)
 
 def validate_code(data: dict, code: int) -> None:
     assert data["res_info"]["code"] == code
@@ -283,6 +319,7 @@ CUSTOM_SETTINGS_PER_APP = {
     "apitest": change_apitest_custom_settings,
     "switch_dnn": change_switch_dnn_custom_settings,
     "barcode": change_barcode_custom_settings,  # barcode is same as detection
+    "lp_recog": change_lp_recog_custom_settings,  # lp_recog is similar to detection
 }
 
 VALIDATE_CUSTOM_SETTINGS_PER_APP = {
@@ -296,6 +333,7 @@ VALIDATE_CUSTOM_SETTINGS_PER_APP = {
     "apitest": validate_apitest_custom_settings,
     "switch_dnn": validate_switch_dnn_custom_settings,
     "barcode": validate_barcode_custom_settings,  # barcode is same as draw
+    "lp_recog": validate_lp_recog_custom_settings,  # lp_recog is similar to detection
 }
 
 def generate_random_string(length):
@@ -355,6 +393,10 @@ def inject_fault(pytestconfig) -> bool:
 
 
 def test_valgrind(app: str, python_bindings: bool, inject_fault: bool):
+    # Clean up environment before starting test
+    from utils import cleanup_test_environment
+    cleanup_test_environment()
+
     if os.path.exists(DTDL_LOG):
         os.remove(DTDL_LOG)
     if os.path.exists(INTEGRATION_TEST_LOG):

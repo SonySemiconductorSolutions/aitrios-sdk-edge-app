@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include "apitest_util.h"
@@ -181,8 +182,8 @@ DataProcessorResultCode DataProcessorJsonFormat(void *in_data, uint32_t in_size,
   int num =
       strftime(output_timestamp, sizeof(output_timestamp), "%Y%m%d%H%M%S", &tm);
   if (num > 0) {
-    snprintf(output_timestamp + num, sizeof(output_timestamp) - num, "%03lu",
-             milliseconds);
+    snprintf(output_timestamp + num, sizeof(output_timestamp) - num,
+             "%03" PRIu64, milliseconds);
   }
   int tensor_out_size = b64e_size((unsigned int)in_size) + 1;
   unsigned char *tensor_out =

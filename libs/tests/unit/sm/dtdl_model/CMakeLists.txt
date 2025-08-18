@@ -19,6 +19,7 @@ set(COMMON_SRC
   ${SM_SRC_DIR}/sm_configurator.cpp
   ${MOCKS_DIR}/data_export/mock_data_export.cpp
   ${MOCKS_DIR}/event_functions/mock_sm.cpp
+  ${LIBS_DIR}/third_party/base64.c/base64.c
 )
 
 macro(add_test_executable TEST_NAME)

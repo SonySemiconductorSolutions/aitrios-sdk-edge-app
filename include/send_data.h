@@ -52,7 +52,21 @@ extern "C" {
  */
 EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
                                           EdgeAppLibSendDataType datatype,
-                                          uint64_t timestamp, int timeout_ms);
+                                          uint64_t timestamp,
+                                          int timeout_ms = -1);
+
+/** @param data The serialized data to upload.
+ * @param datalen The length of the serialized data.
+ * @param image_property The image properties, such as width, height, and
+ * pixel format.
+ * @param timestamp The timestamp of the processed frame in nanoseconds.
+ * @param timeout_ms Timeout in milliseconds. -1 to wait until operation ends.
+ * @return Result of the synchronous operation.
+ */
+EdgeAppLibSendDataResult SendDataSyncImage(
+    void *data, int datalen, EdgeAppLibImageProperty *image_property,
+    uint64_t timestamp, int timeout_ms = -1, uint32_t current = 1,
+    uint32_t division = 1);
 
 #ifdef __cplusplus
 }

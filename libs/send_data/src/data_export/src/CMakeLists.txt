@@ -28,8 +28,9 @@ target_include_directories(data_export PUBLIC
   ${LIBS_DIR}/depend/edge_app/evp_c_sdk
   ${LIBS_DIR}/sm/src
   ${LIBS_DIR}/third_party/parson
+  ${LIBS_DIR}/send_data/src/process_format
 )
 
 target_link_libraries(data_export
-  common log sm
+  common log sm process_format
 )

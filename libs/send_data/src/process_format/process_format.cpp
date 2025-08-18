@@ -80,46 +80,39 @@ static ProcessFormatResult HandleRawFormat(MemoryRef in_data, size_t in_size,
  * @param enc_param Pointer to a structure to store JPEG encoding parameters.
  * @return true if the parameters are successfully initialized, false otherwise.
  */
-static bool InitializeJpegEncodingParameters(EsfCodecJpegInfo *enc_info,
-                                             EsfCodecJpegEncParam *enc_param) {
-  // Retrieve the current sensor stream
-  EdgeAppLibSensorStream stream = GetSensorStream();
-  EdgeAppLibSensorImageProperty property = {};
-
-  // Get image properties from the sensor stream
-  int32_t ret = EdgeAppLib::SensorStreamGetProperty(
-      stream, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY, &property, sizeof(property));
-  if (ret != 0) {
-    LOG_ERR("SensorStreamGetProperty failed for %s",
-            AITRIOS_SENSOR_IMAGE_PROPERTY_KEY);
-    return false;
+static bool InitializeJpegEncodingParameters(
+    EsfCodecJpegInfo *enc_info, EsfCodecJpegEncParam *enc_param,
+    EdgeAppLibImageProperty *image_property) {
+  if (!enc_info || !enc_param || !image_property) {
+    LOG_ERR("Invalid input arguments.");
+    return false;  // Return false if any pointer is null
   }
-
-  enc_info->width = property.width;
-  enc_info->height = property.height;
-  enc_info->stride = property.stride_bytes;
-  enc_param->width = property.width;
-  enc_param->height = property.height;
-  enc_param->stride = property.stride_bytes;
+  enc_info->width = image_property->width;
+  enc_info->height = image_property->height;
+  enc_info->stride = image_property->stride_bytes;
+  enc_param->width = image_property->width;
+  enc_param->height = image_property->height;
+  enc_param->stride = image_property->stride_bytes;
   enc_param->quality = enc_info->quality = 80;
 
   // Set input format and calculate output buffer size based on pixel format
-  if (strncmp(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+  if (strncmp(image_property->pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
               strlen(AITRIOS_SENSOR_PIXEL_FORMAT_RGB24)) == 0) {
     enc_info->input_fmt = kJpegInputRgbPacked_8;
     enc_param->input_fmt = kJpegInputRgbPacked_8;
     enc_param->out_buf.output_buf_size =
-        property.stride_bytes * property.height;
-  } else if (strncmp(property.pixel_format,
+        image_property->stride_bytes * image_property->height;
+  } else if (strncmp(image_property->pixel_format,
                      AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
                      strlen(AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR)) == 0) {
     enc_info->input_fmt = kJpegInputRgbPlanar_8;
     enc_param->input_fmt = kJpegInputRgbPlanar_8;
     enc_param->out_buf.output_buf_size =
-        property.stride_bytes * property.height * 3;
+        image_property->stride_bytes * image_property->height * 3;
   } else {
-    LOG_ERR("Unsupported pixel format: %s",
-            property.pixel_format);  // Log an error for unsupported formats
+    LOG_ERR(
+        "Unsupported pixel format: %s",
+        image_property->pixel_format);  // Log an error for unsupported formats
     return false;
   }
 
@@ -130,22 +123,26 @@ static bool InitializeJpegEncodingParameters(EsfCodecJpegInfo *enc_info,
  * @brief Handles JPEG format encoding for raw input data.
  * @param in_data      Input memory reference containing raw data.
  * @param in_size      Size of the input raw data.
+ * @param image_property Pointer to the image property structure containing
  * @param image        Pointer to store the encoded JPEG image.
  * @param image_size   Pointer to store the size of the encoded JPEG image.
  */
-static ProcessFormatResult HandleJpegFormat(MemoryRef in_data, size_t in_size,
-                                            void **image, int32_t *image_size) {
+static ProcessFormatResult HandleJpegFormat(
+    MemoryRef in_data, size_t in_size, EdgeAppLibImageProperty *image_property,
+    void **image, int32_t *image_size) {
   EsfCodecJpegInfo enc_info = {};
   EsfCodecJpegEncParam enc_param = {};
 
   // Validate input arguments
-  if (!image || !image_size) {
+  if (!image || !image_size || !image_property ||
+      (in_data.type == MEMORY_MANAGER_MAP_TYPE && in_data.u.p == nullptr)) {
     LOG_ERR("Invalid input arguments.");
     return kProcessFormatResultInvalidParam;
   }
 
   // Initialize JPEG encoding parameters
-  if (!InitializeJpegEncodingParameters(&enc_info, &enc_param)) {
+  if (!InitializeJpegEncodingParameters(&enc_info, &enc_param,
+                                        image_property)) {
     LOG_ERR("Failed to initialize JPEG encoding parameters.");
     return kProcessFormatResultInvalidParam;
   }
@@ -155,7 +152,6 @@ static ProcessFormatResult HandleJpegFormat(MemoryRef in_data, size_t in_size,
     LOG_ERR("Invalid output buffer size.");
     return kProcessFormatResultMemoryError;
   }
-
   EsfCodecJpegError jpeg_err;
   if (in_data.type == MEMORY_MANAGER_MAP_TYPE) {
     // Set input and allocate output buffer for encoding
@@ -223,6 +219,7 @@ static ProcessFormatResult HandleJpegFormat(MemoryRef in_data, size_t in_size,
 
 ProcessFormatResult ProcessFormatInput(MemoryRef in_data, uint32_t in_size,
                                        ProcessFormatImageType datatype,
+                                       EdgeAppLibImageProperty *image_property,
                                        uint64_t timestamp, void **image,
                                        int32_t *image_size) {
   if (!image || !image_size) {
@@ -239,7 +236,8 @@ ProcessFormatResult ProcessFormatInput(MemoryRef in_data, uint32_t in_size,
       return HandleRawFormat(in_data, in_size, image, image_size);
 
     case kProcessFormatImageTypeJpeg:
-      return HandleJpegFormat(in_data, in_size, image, image_size);
+      return HandleJpegFormat(in_data, in_size, image_property, image,
+                              image_size);
 
     default:
       LOG_ERR("Invalid datatype.");
