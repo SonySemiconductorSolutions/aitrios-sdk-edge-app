@@ -45,11 +45,19 @@ add_subdirectory (
   ${CMAKE_CURRENT_BINARY_DIR}/data_export
 )
 
+add_subdirectory(
+  ${LIBS_DIR}/send_data/src/process_format/
+  ${CMAKE_CURRENT_BINARY_DIR}/process_format
+)
+
 macro(add_test_executable TEST_NAME)
 add_executable(${TEST_NAME} ${TEST_NAME}.cpp
   ${MOCKS_DIR}/evp/mock_evp.cpp
   ${AITRIOS_DATA_EXPORT_TEST_DIR}/fixtures/data_export_fixture.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
+  ${MOCKS_DIR}/device/mock_device.cpp
+  ${MOCKS_DIR}/sensor/mock_sensor.cpp
+  ${MOCKS_DIR}/sensor/testing_utils.cpp
   ${ARGN}
 )
 target_link_libraries(${TEST_NAME} data_export common GTest::gtest_main GTest::gmock_main)
@@ -57,7 +65,10 @@ target_include_directories (${TEST_NAME} PUBLIC
   ${ROOT_DIR}/include
   ${LIBS_DIR}/depend/edge_app
   ${MOCKS_DIR}
+  ${MOCKS_DIR}/device/
+  ${MOCKS_DIR}/sensor/
   ${AITRIOS_DATA_EXPORT_TEST_DIR}
+  ${LIBS_DIR}/send_data/src/data_export/include
 )
 gtest_discover_tests(${TEST_NAME})
 endmacro()

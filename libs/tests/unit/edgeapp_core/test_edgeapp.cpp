@@ -17,6 +17,8 @@
 #include <gtest/gtest.h>
 #include <string.h>
 
+#include <vector>
+
 #include "edgeapp_core.h"
 #include "mock_nn.hpp"  // Mock implementation of nn
 #include "sensor.h"
@@ -31,8 +33,11 @@ class EdgeAppCoreTest : public ::testing::Test {
  protected:
   EdgeAppCoreCtx ctx_imx500;
   EdgeAppCoreCtx ctx_cpu;
-  EdgeAppCoreModelInfo model[2] = {{"dummy_model.onnx", edge_imx500},
-                                   {"dummy_model2.onnx", edge_cpu}};
+  const std::vector<float> mean_values = {0.485f, 0.456f, 0.406f};
+  const std::vector<float> norm_values = {0.229f, 0.224f, 0.225f};
+  EdgeAppCoreModelInfo model[2] = {
+      {"dummy_model.onnx", edge_imx500, {}, {}},
+      {"dummy_model2.onnx", edge_cpu, &mean_values, &norm_values}};
 
   void SetUp() override {
     // Reset mock nn to success state
@@ -62,7 +67,7 @@ TEST_F(EdgeAppCoreTest, LoadModelsSuccess) {
 
 TEST_F(EdgeAppCoreTest, LoadModelsInvalidParam) {
   // Check invalid parameters
-  EdgeAppCoreModelInfo invalid_model{};
+  EdgeAppCoreModelInfo invalid_model{nullptr, edge_imx500, {}, {}};
   EXPECT_EQ(LoadModel(invalid_model, ctx_cpu, nullptr),
             EdgeAppCoreResultInvalidParam);
 }
@@ -140,11 +145,13 @@ TEST_F(EdgeAppCoreTest, LoadMultipleModelsAndProcess) {
   // Setup for more models (simulate up to 4)
   EdgeAppCoreCtx ctx_list[4];
   memset(ctx_list, 0, sizeof(ctx_list));
+  const std::vector<float> mean_values = {0.485f, 0.456f, 0.406f};
+  const std::vector<float> norm_values = {0.229f, 0.224f, 0.225f};
   EdgeAppCoreModelInfo models[4] = {
-      {"model0.onnx", edge_imx500},
-      {"model1.onnx", edge_cpu},
-      {"model2.onnx", edge_cpu},
-      {"model3.onnx", edge_cpu},
+      {"model0.onnx", edge_imx500, {}, {}},
+      {"model1.onnx", edge_cpu, &mean_values, &norm_values},
+      {"model2.onnx", edge_cpu, &mean_values, &norm_values},
+      {"model3.onnx", edge_cpu, &mean_values, &norm_values},
   };
 
   // Load models
@@ -203,7 +210,7 @@ TEST_F(EdgeAppCoreTest, UnloadModelTwiceDoesNotCrash) {
 }
 
 TEST_F(EdgeAppCoreTest, LoadModelWithEmptyNameFails) {
-  EdgeAppCoreModelInfo invalid_model = {"", edge_cpu};
+  EdgeAppCoreModelInfo invalid_model = {"", edge_cpu, {}, {}};
   EXPECT_EQ(LoadModel(invalid_model, ctx_cpu, nullptr),
             EdgeAppCoreResultInvalidParam);
 }
@@ -229,7 +236,8 @@ TEST_F(EdgeAppCoreTest, LoadAndUnloadMultipleTimes) {
 }
 
 TEST_F(EdgeAppCoreTest, LoadModelWithInvalidTarget) {
-  EdgeAppCoreModelInfo invalid_model = {"model.onnx", (EdgeAppCoreTarget)9999};
+  EdgeAppCoreModelInfo invalid_model = {
+      "model.onnx", (EdgeAppCoreTarget)9999, {}, {}};
   EXPECT_EQ(LoadModel(invalid_model, ctx_cpu, nullptr),
             EdgeAppCoreResultInvalidParam);
 }

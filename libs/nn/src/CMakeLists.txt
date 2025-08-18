@@ -29,4 +29,7 @@ target_include_directories(nn PRIVATE
   ${LIBS_DIR}/common/include
   ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/depend/
+  ${LIBS_DIR}/third_party/wasi_nn
 )
+
+target_link_libraries(nn draw)

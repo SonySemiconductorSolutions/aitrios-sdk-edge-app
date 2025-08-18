@@ -22,6 +22,11 @@ add_library(common STATIC
   ${COMMON_SRC_DIR}/map.cpp
 )
 
+target_sources(common PRIVATE
+  ${COMMON_SRC_DIR}/memory_usage.cpp
+)
+
 target_include_directories(common PUBLIC
   ${COMMON_ROOT_DIR}/include
+  ${ROOT_DIR}/include
 )

@@ -46,6 +46,14 @@ typedef enum {
   EdgeAppLibSendDataJson = 1
 } EdgeAppLibSendDataType;
 
+struct EdgeAppLibImageProperty {
+  uint32_t width;        /**< Image width. */
+  uint32_t height;       /**< Image height. */
+  uint32_t stride_bytes; /**< Image stride. */
+  /** The format of a pixel. */
+  char pixel_format[64];
+};
+
 #ifdef __cplusplus
 }
 #endif

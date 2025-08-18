@@ -17,8 +17,11 @@
 
 /* 0 = no called, 1 = called */
 static int EdgeAppLibSendDataSyncMetaCalled = 0;
+static int EdgeAppLibSendDataSyncImageCalled = 0;
 
 static EdgeAppLibSendDataResult SendDataSyncMetaSuccess =
+    EdgeAppLibSendDataResultSuccess;
+static EdgeAppLibSendDataResult SendDataSyncImageSuccess =
     EdgeAppLibSendDataResultSuccess;
 
 void setSendDataSyncMetaFail(EdgeAppLibSendDataResult result) {
@@ -33,6 +36,14 @@ int wasEdgeAppLibSendDataSyncMetaCalled() {
   return EdgeAppLibSendDataSyncMetaCalled;
 }
 
+void setSendDataImageSuccess() { EdgeAppLibSendDataSyncImageCalled = 1; }
+
+void resetSendDataImageSuccess() { EdgeAppLibSendDataSyncImageCalled = 0; }
+
+int wasEdgeAppLibSendDataSyncImageCalled() {
+  return EdgeAppLibSendDataSyncImageCalled;
+}
+
 namespace EdgeAppLib {
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +55,18 @@ EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
   EdgeAppLibSendDataSyncMetaCalled = 1;
   if (SendDataSyncMetaSuccess != EdgeAppLibSendDataResultSuccess)
     return SendDataSyncMetaSuccess;
+  return EdgeAppLibSendDataResultSuccess;
+}
+
+EdgeAppLibSendDataResult SendDataSyncImage(
+    void *data, int datalen, EdgeAppLibImageProperty *image_property,
+    uint64_t timestamp, int timeout_ms) {
+  EdgeAppLibSendDataSyncImageCalled = 1;
+  if (data != nullptr) {
+    free(data);  // Free the data if it was allocated
+  }
+  if (SendDataSyncImageSuccess != EdgeAppLibSendDataResultSuccess)
+    return SendDataSyncImageSuccess;
   return EdgeAppLibSendDataResultSuccess;
 }
 

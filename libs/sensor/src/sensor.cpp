@@ -199,20 +199,53 @@ int32_t SensorGetFrameLatency(EdgeAppLibSensorFrame frame,
  * @return int32_t Returns 0 on success, or an error code on failure.
  */
 static int32_t MemoryRefAccess(EdgeAppLibSensorChannel channel,
-                               struct EdgeAppLibSensorRawMemoryRef *raw_data,
+                               struct EdgeAppLibSensorRawData *raw_data,
                                int8_t mapped_flag) {
   int ret = -1;
-  if (mapped_flag == 0) {
+  if (mapped_flag == 0) {  // For memory constrained case
     struct senscord_raw_data_handle_t raw_data_handle = {0};
     ret = senscord_channel_get_raw_data_handle(channel, &raw_data_handle);
     if (ret != 0) {
       LOG_ERR("senscord_channel_get_raw_data_handle %d", ret);
       return -1;
     }
-    raw_data->address.type = MEMORY_MANAGER_FILE_TYPE;
-    raw_data->address.u.esf_handle = raw_data_handle.address;
-    raw_data->size = raw_data_handle.size;
-    raw_data->timestamp = raw_data_handle.timestamp;
+    EdgeAppLibSensorRawMemoryRef raw_data_tmp = {0};
+
+    raw_data_tmp.address.type = MEMORY_MANAGER_FILE_TYPE;
+    raw_data_tmp.address.u.esf_handle = raw_data_handle.address;
+    raw_data_tmp.size = raw_data_handle.size;
+    raw_data_tmp.timestamp = raw_data_handle.timestamp;
+
+    // Get codec settings for processing the raw data
+    JSON_Object *json_object = getCodecSettings();
+    int codec_number = json_object_get_number(json_object, "format");
+
+    void *codec_buffer = NULL;
+    int32_t codec_size = 0;
+
+    // Retrieve Channel properties for image processing
+    EdgeAppLibSensorImageProperty image_property = {0};
+    ret = senscord_channel_get_property(
+        channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY, &image_property,
+        sizeof(image_property));
+
+    // Process the raw data based on the specified format
+    ProcessFormatResult process_format_ret =
+        ProcessFormatInput(raw_data_tmp.address, raw_data_tmp.size,
+                           (ProcessFormatImageType)codec_number,
+                           (EdgeAppLibImageProperty *)&image_property,
+                           raw_data_tmp.timestamp, &codec_buffer, &codec_size);
+    if (process_format_ret != kProcessFormatResultOk) {
+      LOG_ERR("ProcessFormatInput failed. Exit with return %d.",
+              process_format_ret);
+      return -1;
+    }
+
+    // Populate the raw data structure with the processed data
+    raw_data->address =
+        codec_buffer;  // Assuming address is a union with a pointer
+    raw_data->size = codec_size;
+    raw_data->timestamp = raw_data_tmp.timestamp;
   } else {
     struct senscord_raw_data_t raw_data_tmp = {0};
     ret = senscord_channel_get_raw_data(channel, &raw_data_tmp);
@@ -220,8 +253,7 @@ static int32_t MemoryRefAccess(EdgeAppLibSensorChannel channel,
       LOG_ERR("senscord_channel_get_raw_data %d", ret);
       return -1;
     }
-    raw_data->address.type = MEMORY_MANAGER_MAP_TYPE;
-    raw_data->address.u.p = raw_data_tmp.address;
+    raw_data->address = raw_data_tmp.address;
     raw_data->size = raw_data_tmp.size;
     raw_data->timestamp = raw_data_tmp.timestamp;
   }
@@ -284,46 +316,19 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
     LOG_ERR("senscord_channel_get_channel_id failed with %" PRId32 ".", ret);
     return -1;
   }
-  EdgeAppLibSensorRawMemoryRef raw_data_tmp = {0};
+
+  LOG_WARN("mapped_flag: %d, channel_id: %u", mapped_flag, channel_id);
+
   if (mapped_flag != -1) {
     if (IsInferenceMetaChannel(channel_id)) {
       /* Metadata should be accessed by address based */
       return DataAccess(channel, raw_data);
     } else {
-      result = MemoryRefAccess(channel, &raw_data_tmp, mapped_flag);
-      if (result != 0) {
-        LOG_ERR("MemoryRefAccess failed. Exit with return %d.", result);
-        return result;
-      }
+      return MemoryRefAccess(channel, raw_data, mapped_flag);
     }
   } else {
     return DataAccess(channel, raw_data);
   }
-  // Get codec settings for processing the raw data
-  JSON_Object *json_object = getCodecSettings();
-  int codec_number = json_object_get_number(json_object, "format");
-
-  void *jpeg_buffer = NULL;
-  int32_t jpeg_size = 0;
-
-  // Process the raw data based on the specified format
-  ProcessFormatResult process_format_ret =
-      ProcessFormatInput(raw_data_tmp.address, raw_data_tmp.size,
-                         (ProcessFormatImageType)codec_number,
-                         raw_data_tmp.timestamp, &jpeg_buffer, &jpeg_size);
-  if (process_format_ret != kProcessFormatResultOk) {
-    LOG_ERR("ProcessFormatInput failed. Exit with return %d.",
-            process_format_ret);
-    return -1;
-  }
-
-  // Populate the raw data structure with the processed data
-  raw_data->address = jpeg_buffer;
-  raw_data->size = jpeg_size;
-  raw_data->timestamp = raw_data_tmp.timestamp;
-
-  LOG_TRACE("SensorChannelGetRawData end");
-  return result;
 }
 
 /**

@@ -23,7 +23,6 @@
 #include "data_export.h"
 #include "data_processor_api.hpp"
 #include "log.h"
-#include "send_data.h"
 #include "sensor.h"
 #include "sm_utils.hpp"
 
@@ -182,24 +181,22 @@ class FrameScopedTimer {
   s_frame_times_collector.Attach(id, elapsed_time);
 
 /**
- * @brief Sends the Input Tensor to the cloud asynchronously.
+ * @brief Sends the Input Tensor to the cloud synchronously.
  *
  * This function sends the input tensor data from the provided frame to the
- * cloud. It returns a future object representing the asynchronous operation.
- *
- * By returning a future, this function allows for non-blocking execution.
- * The caller can await this future after sending the output tensor, ensuring
- * that both awaits are done consecutively without blocking the sending of the
- * rest of the data.
+ * cloud using the SendDataSyncImage API which handles JPEG encoding for
+ * platforms with mapped memory support (e.g., Raspi, T5).
  *
  * @param frame Pointer to the current sensor frame.
  * @return A future representing the asynchronous operation of sending the input
  * tensor.
  */
-static void sendInputTensor(EdgeAppLibSensorFrame *frame) {
+static EdgeAppLibDataExportFuture *sendInputTensor(
+    EdgeAppLibSensorFrame *frame) {
   LOG_TRACE("Inside sendInputTensor.");
 
   struct EdgeAppLibSensorRawData data = {0};
+  EdgeAppLibSensorImageProperty image_property = {0};
   {
     FRAME_TIMER(FB_IT_GET_RAW_DATA);
     EdgeAppLibSensorChannel channel = 0;
@@ -212,7 +209,7 @@ static void sendInputTensor(EdgeAppLibSensorFrame *frame) {
           "sending "
           "input tensor.",
           ret);
-      return;
+      return nullptr;
     }
 
     if ((ret = SensorChannelGetRawData(channel, &data)) < 0) {
@@ -220,19 +217,57 @@ static void sendInputTensor(EdgeAppLibSensorFrame *frame) {
           "SensorChannelGetRawData : ret=%d. Skipping sending input "
           "tensor.",
           ret);
-      return;
+      return nullptr;
+    }
+
+    ret = SensorChannelGetProperty(channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                                   &image_property, sizeof(image_property));
+    if (ret != 0) {
+      LOG_ERR("SensorChannelGetProperty failed for input image: %d", ret);
+      // Use legacy DataExportSendData when image properties unavailable
+      EdgeAppLibDataExportFuture *future =
+          DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
+                             data.address, data.size, data.timestamp);
+      if (future == nullptr) {
+        LOG_ERR("DataExportSendData failed");
+      }
+      return future;
+    }
+
+    // Check if data is already encoded by comparing size with expected raw size
+    // If data size is significantly smaller than raw image size, it's likely
+    // already encoded
+    uint32_t expected_raw_size =
+        image_property.stride_bytes * image_property.height;
+    if (data.size < expected_raw_size / 2) {
+      LOG_DBG(
+          "Data appears already encoded (size %d < %d/2). Using legacy "
+          "DataExportSendData.",
+          data.size, expected_raw_size);
+      // Use legacy DataExportSendData for already encoded data (e.g., from
+      // fileio memory management)
+      EdgeAppLibDataExportFuture *future =
+          DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
+                             data.address, data.size, data.timestamp);
+      if (future == nullptr) {
+        LOG_ERR("DataExportSendData failed");
+      }
+      return future;
     }
   }
 
   {
     FRAME_TIMER(FB_IT_UPLOAD);
+    // Use extended DataExportSendData with image properties for raw data that
+    // needs JPEG encoding
     EdgeAppLibDataExportFuture *future =
         DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
-                           data.address, data.size, data.timestamp);
-    if (future) {
-      DataExportAwait(future, DATA_EXPORT_AWAIT_TIMEOUT);
-      DataExportCleanup(future);
+                           data.address, data.size, data.timestamp, 1, 1,
+                           (EdgeAppLibImageProperty *)&image_property);
+    if (future == nullptr) {
+      LOG_ERR("DataExportSendData failed");
     }
+    return future;
   }
 }
 
@@ -367,11 +402,17 @@ int onIterate() {
       }
     }
 
+    EdgeAppLibDataExportFuture *future = nullptr;
     if (inputTensorEnabled) {
-      sendInputTensor(&frame);
+      future = sendInputTensor(&frame);
     }
     if (metadataEnabled) {
       sendMetadata(&frame);
+    }
+
+    if (future) {
+      DataExportAwait(future, DATA_EXPORT_AWAIT_TIMEOUT);
+      DataExportCleanup(future);
     }
 
     {

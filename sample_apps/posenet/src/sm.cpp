@@ -21,7 +21,6 @@
 #include "data_export.h"
 #include "data_processor_api.hpp"
 #include "log.h"
-#include "send_data.h"
 #include "sensor.h"
 #include "sm_utils.hpp"
 
@@ -51,6 +50,8 @@ char *GetConfigureErrorJsonSm(ResponseCode code, const char *message,
  *
  * This function sends the input tensor data from the provided frame to the
  * cloud. It returns a future object representing the asynchronous operation.
+ * When image properties are available, JPEG encoding is automatically handled
+ * for platforms with mapped memory support (e.g., Raspi, T5).
  *
  * By returning a future, this function allows for non-blocking execution.
  * The caller can await this future after sending the output tensor, ensuring
@@ -87,8 +88,37 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
     return nullptr;
   }
 
+  EdgeAppLibSensorImageProperty image_property = {0};
+  ret = SensorChannelGetProperty(channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                                 &image_property, sizeof(image_property));
+  if (ret != 0) {
+    LOG_ERR("SensorChannelGetProperty failed for input image: %d", ret);
+    // Use legacy DataExportSendData when image properties unavailable
+    return DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
+                              data.address, data.size, data.timestamp);
+  }
+
+  // Check if data is already encoded by comparing size with expected raw size
+  // If data size is significantly smaller than raw image size, it's likely
+  // already encoded
+  uint32_t expected_raw_size =
+      image_property.stride_bytes * image_property.height;
+  if (data.size < expected_raw_size / 2) {
+    LOG_DBG(
+        "Data appears already encoded (size %d < %d/2). Using legacy "
+        "DataExportSendData.",
+        data.size, expected_raw_size);
+    // Use legacy DataExportSendData for already encoded data (e.g., from fileio
+    // memory management)
+    return DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
+                              data.address, data.size, data.timestamp);
+  }
+
+  // Use extended DataExportSendData with image properties for raw data that
+  // needs JPEG encoding
   return DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
-                            data.address, data.size, data.timestamp);
+                            data.address, data.size, data.timestamp, 1, 1,
+                            (EdgeAppLibImageProperty *)&image_property);
 }
 
 /**

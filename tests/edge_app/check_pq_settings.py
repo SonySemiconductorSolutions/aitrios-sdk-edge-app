@@ -347,3 +347,12 @@ def check_auto_exposure_metering(checker: DTDLStateChecker, file_path: str) -> N
     ae_metering.change_auto_exposure_metering_left_underrange(config)
     state_dict = checker.get_state()
     ae_metering.validate_auto_exposure_metering_left_underrange(state_dict)
+
+def change_gamma_mode_error(data: dict) -> None:
+    data["common_settings"]["process_state"] = 1
+    data["req_info"]["req_id"] = "gamma mode out of scope"
+    # error value.
+    data["common_settings"]["pq_settings"]["gamma_mode"] = 2
+
+    send_data(data)
+    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)

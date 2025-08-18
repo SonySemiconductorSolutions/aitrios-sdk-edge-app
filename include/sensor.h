@@ -1111,7 +1111,7 @@ struct EdgeAppLibSensorTemperatureProperty {
 /* == SubFrameProperty == */
 /**
  * @def AITRIOS_SENSOR_SUB_FRAME_PROPERTY_KEY
- * @brief Key of EdgeAppLibSensorSubFramePropery
+ * @brief Key of EdgeAppLibSensorSubFrameProperty
  * @details Defines the properties for the sub frame
  */
 #define AITRIOS_SENSOR_SUB_FRAME_PROPERTY_KEY "sub_frame_property"
@@ -1125,6 +1125,61 @@ struct EdgeAppLibSensorSubFrameProperty {
   uint32_t current_num;
   /** Total number of divisions of the Frame output */
   uint32_t division_num;
+};
+
+/* == GammaModeProperty == */
+/**
+ * @def AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY
+ * @brief Key of gamma mode
+ * @details Defines the property for
+ * EdgeAppLibSensorInferenceGammaModeProperty
+ */
+#define AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY "gamma_mode_property"
+/**
+ * @enum EdgeAppLibSensorInferenceGammaMode
+ * @brief Mode of gamma correction to input tensor
+ * @details enum of gamma mode member in
+ * EdgeAppLibSensorInferenceGammaModeProperty
+ */
+enum EdgeAppLibSensorInferenceGammaMode {
+  AITRIOS_SENSOR_INFERENCE_GAMMA_MODE_STANDARD,
+  AITRIOS_SENSOR_INFERENCE_GAMMA_MODE_AUTO,
+};
+/**
+ * @struct EdgeAppLibSensorInferenceGammaModeProperty
+ * @brief Value of gamma mode
+ * @details Defines the property for
+ * AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY
+ */
+struct EdgeAppLibSensorInferenceGammaModeProperty {
+  enum EdgeAppLibSensorInferenceGammaMode gamma_mode;
+};
+
+/* == GammaParameterProperty == */
+/**
+ * @def AITRIOS_SENSOR_GAMMA_PARAMETER_PROPERTY_KEY
+ * @brief Key of gamma parameter
+ * @details Defines the property for
+ * EdgeAppLibSensorInferenceGammaParameterProperty
+ */
+#define AITRIOS_SENSOR_GAMMA_PARAMETER_PROPERTY_KEY "gamma_parameter_property"
+/**
+ * @def AI_MODEL_GAMMA_PARAMETER_SIZE
+ * @brief Maximum gamma parameter binary size
+ * @details Maximum gamma parameter binary size of gamma_parameter in
+ * EdgeAppLibSensorInferenceGammaParameterProperty
+ */
+#define AI_MODEL_GAMMA_PARAMETER_SIZE (2208)
+/**
+ * @struct EdgeAppLibSensorInferenceGammaParameterProperty
+ * @brief Value of gamma parameter
+ * @details Defines the property for
+ * AITRIOS_SENSOR_GAMMA_PARAMETER_PROPERTY_KEY
+ */
+struct EdgeAppLibSensorInferenceGammaParameterProperty {
+  enum EdgeAppLibSensorInferenceGammaMode gamma_mode;
+  uint32_t param_size;
+  uint8_t gamma_parameter[AI_MODEL_GAMMA_PARAMETER_SIZE];
 };
 
 #ifdef __cplusplus

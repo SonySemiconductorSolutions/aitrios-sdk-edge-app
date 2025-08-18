@@ -35,21 +35,28 @@ RUN cd /opt \
        else \
          echo "Unsupported architecture: $ARCH" && exit 1; \
        fi \
-    && wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-24/wasi-sdk-24.0-${WASI_ARCH}-linux.tar.gz \
-    && tar zxvf wasi-sdk-24.0-${WASI_ARCH}-linux.tar.gz \
+    && wget -q https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-24/wasi-sdk-24.0-${WASI_ARCH}-linux.tar.gz \
+    && tar zxf wasi-sdk-24.0-${WASI_ARCH}-linux.tar.gz \
     && ln -s wasi-sdk-24.0-${WASI_ARCH}-linux wasi-sdk \
     && rm wasi-sdk-24.0-${WASI_ARCH}-linux.tar.gz
 
 # Detect architecture and download appropriate binaryen
 RUN cd /opt \
     && ARCH=$(uname -m) \
-    && wget https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-${ARCH}-linux.tar.gz \
-    && tar zxvf binaryen-version_117-${ARCH}-linux.tar.gz \
+    && wget -q https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-${ARCH}-linux.tar.gz \
+    && tar zxf binaryen-version_117-${ARCH}-linux.tar.gz \
     && ln -s binaryen-version_117 binaryen \
     && rm binaryen-version_117-${ARCH}-linux.tar.gz
 
 # Install SensCord libcamera package
 RUN cd /opt \
-    && wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.1.6/senscord-libcamera_1.0.5_u22_amd64.deb \
-    && apt install ./senscord-libcamera_1.0.5_u22_amd64.deb \
-    && rm senscord-libcamera_1.0.5_u22_amd64.deb
+    && wget -q https://midokura.github.io/debian/evp-archive-keyring_jammy_amd64.deb \
+    && dpkg -i ./evp-archive-keyring_jammy_amd64.deb \
+    && apt update \
+    && apt install senscord-libcamera \
+    && rm evp-archive-keyring_jammy_amd64.deb
+
+# Add custom wasi-libmalloc to support memory profile
+COPY ./tools/virtual-machine/memory_profile/wasi-libmalloc /opt/wasi-libmalloc
+RUN cd /opt/wasi-libmalloc  \
+    && CC=/opt/wasi-sdk/bin/clang make libc

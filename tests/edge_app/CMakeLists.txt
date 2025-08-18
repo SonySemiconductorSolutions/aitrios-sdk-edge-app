@@ -47,6 +47,12 @@ elseif(APPS_SELECTION STREQUAL "segmentation")
 elseif(APPS_SELECTION STREQUAL "passthrough")
   message(STATUS "passthrough detected")
   add_compile_definitions(MOCK_PASSTHROUGH)
+elseif(APPS_SELECTION STREQUAL "barcode")
+  message(STATUS "barcode detected")
+  add_compile_definitions(MOCK_BARCODE)
+elseif(APPS_SELECTION STREQUAL "lp_recog")
+  message(STATUS "lp_recog detected")
+  add_compile_definitions(MOCK_LP_RECOG)
 elseif(APPS_SELECTION STREQUAL "apitest")
   message(STATUS "apitest detected")
   add_compile_definitions(MOCK_APITEST)
@@ -64,11 +70,13 @@ if(MOCK EQUAL 1)
   include_directories(
     ${SAMPLE_APP_DIR}/utils/include
     ${LIBS_DIR}/third_party/flatbuffers/include
+    ${LIBS_DIR}/third_party/wasi_nn
     ${ROOT_DIR}/include
     ${MOCKS_DIR}
     ${MOCKS_DIR}/sensor
     ${MOCKS_DIR}/device
     ${LIBS_DIR}/sensor/src/
+    ${LIBS_DIR}/send_data/src/data_export/include
   )
 endif()
 

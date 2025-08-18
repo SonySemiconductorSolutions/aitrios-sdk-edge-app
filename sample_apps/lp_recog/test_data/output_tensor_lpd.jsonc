@@ -1,0 +1,29 @@
+[
+    [
+        0.8, // detection score 1
+        0.9, // detection score 2
+        0.7, // detection score 3
+        0.1, // detection score 4
+        0.1, // ymin 1
+        0.3, // ymin 2
+        0.5, // ymin 3
+        0.0, // ymin 4
+        0.1, // xmin 1
+        0.3, // xmin 2
+        0.5, // xmin 3
+        0.0, // xmin 4
+        0.2, // ymax 1
+        0.4, // ymax 2
+        0.6, // ymax 3
+        0.0, // ymax 4
+        0.2, // xmax 1
+        0.4, // xmax 2
+        0.6, // xmax 3
+        0.0, // xmax 4
+        4.0, // num_detections
+        1.0, // class_id 1
+        2.0, // class_id 2
+        3.0, // class_id 3
+        0.0 // class_id 4
+    ]
+]

@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "edge_app_sdk"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
     "numpy",
     "opencv-python",

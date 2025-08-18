@@ -1,5 +1,7 @@
-python3-edge-app-sdk (0.3.0) unstable; urgency=medium
+python3-edge-app-sdk (0.3.1) unstable; urgency=medium
 
-  * Initial release.
+  * Fix error handling in SensorFrame.get_inputs() method to return empty data
+  instead of throwing exceptions when sensor data is unavailable
+  * Update process_frame() validation to handle empty arrays and invalid timestamps
 
- -- None <None>  Thu, 22 May 2025 11:53:45 +0900
+ -- None <None>  Tue, 22 Jul 2025 15:08:05 +0900

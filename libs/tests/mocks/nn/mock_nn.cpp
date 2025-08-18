@@ -19,66 +19,68 @@
 #include <string.h>
 
 // Global flags to simulate success or error
-static EdgeAppLibNNResult LoadModelStatus = success;
-static EdgeAppLibNNResult InitContextStatus = success;
-static EdgeAppLibNNResult SetInputStatus = success;
-static EdgeAppLibNNResult ComputeStatus = success;
-static EdgeAppLibNNResult GetOutputStatus = success;
+static EdgeAppLibNNResult LoadModelStatus = EDGEAPP_LIB_NN_SUCCESS;
+static EdgeAppLibNNResult InitContextStatus = EDGEAPP_LIB_NN_SUCCESS;
+static EdgeAppLibNNResult SetInputStatus = EDGEAPP_LIB_NN_SUCCESS;
+static EdgeAppLibNNResult ComputeStatus = EDGEAPP_LIB_NN_SUCCESS;
+static EdgeAppLibNNResult GetOutputStatus = EDGEAPP_LIB_NN_SUCCESS;
 
 // Functions to toggle error simulation for tests
-void setLoadModelError() { LoadModelStatus = runtime_error; }
-void resetLoadModelStatus() { LoadModelStatus = success; }
+void setLoadModelError() { LoadModelStatus = EDGEAPP_LIB_NN_RUNTIME_ERROR; }
+void resetLoadModelStatus() { LoadModelStatus = EDGEAPP_LIB_NN_SUCCESS; }
 
-void setInitContextError() { InitContextStatus = runtime_error; }
-void resetInitContextStatus() { InitContextStatus = success; }
+void setInitContextError() { InitContextStatus = EDGEAPP_LIB_NN_RUNTIME_ERROR; }
+void resetInitContextStatus() { InitContextStatus = EDGEAPP_LIB_NN_SUCCESS; }
 
-void setSetInputError() { SetInputStatus = runtime_error; }
-void resetSetInputStatus() { SetInputStatus = success; }
+void setSetInputError() { SetInputStatus = EDGEAPP_LIB_NN_RUNTIME_ERROR; }
+void resetSetInputStatus() { SetInputStatus = EDGEAPP_LIB_NN_SUCCESS; }
 
-void setComputeError() { ComputeStatus = runtime_error; }
-void resetComputeStatus() { ComputeStatus = success; }
+void setComputeError() { ComputeStatus = EDGEAPP_LIB_NN_RUNTIME_ERROR; }
+void resetComputeStatus() { ComputeStatus = EDGEAPP_LIB_NN_SUCCESS; }
 
-void setGetOutputError() { GetOutputStatus = runtime_error; }
-void resetGetOutputStatus() { GetOutputStatus = success; }
+void setGetOutputError() { GetOutputStatus = EDGEAPP_LIB_NN_RUNTIME_ERROR; }
+void resetGetOutputStatus() { GetOutputStatus = EDGEAPP_LIB_NN_SUCCESS; }
 
 // Mock implementation of LoadModel
-EdgeAppLibNNResult LoadModel(const char *model_name, graph *g,
-                             execution_target target) {
-  if (LoadModelStatus != success) return LoadModelStatus;
-  *g = (graph)123;  // Dummy graph handle
-  return success;
+EdgeAppLibNNResult LoadModel(const char *model_name, EdgeAppLibGraph *g,
+                             EdgeAppLibGraphContext target) {
+  if (LoadModelStatus != EDGEAPP_LIB_NN_SUCCESS) return LoadModelStatus;
+  *g = (EdgeAppLibGraph)123;  // Dummy graph handle
+  return EDGEAPP_LIB_NN_SUCCESS;
 }
 
 // Mock implementation of InitContext
-EdgeAppLibNNResult InitContext(graph g, graph_execution_context *ctx) {
-  if (InitContextStatus != success) return InitContextStatus;
-  *ctx = (graph_execution_context)456;  // Dummy context handle
-  return success;
+EdgeAppLibNNResult InitContext(EdgeAppLibGraph g, EdgeAppLibGraphContext *ctx) {
+  if (InitContextStatus != EDGEAPP_LIB_NN_SUCCESS) return InitContextStatus;
+  *ctx = (EdgeAppLibGraphContext)456;  // Dummy context handle
+  return EDGEAPP_LIB_NN_SUCCESS;
 }
 
 // Mock implementation of SetInput
-EdgeAppLibNNResult SetInput(graph_execution_context ctx, uint8_t *input_tensor,
-                            uint32_t *dim) {
-  if (SetInputStatus != success) return SetInputStatus;
-  return success;
+EdgeAppLibNNResult SetInput(EdgeAppLibGraphContext ctx, uint8_t *input_tensor,
+                            uint32_t *dim, const float *mean_values,
+                            size_t mean_size, const float *norm_values,
+                            size_t norm_size) {
+  if (SetInputStatus != EDGEAPP_LIB_NN_SUCCESS) return SetInputStatus;
+  return EDGEAPP_LIB_NN_SUCCESS;
 }
 
 // Mock implementation of Compute
-EdgeAppLibNNResult Compute(graph_execution_context ctx) {
-  if (ComputeStatus != success) return ComputeStatus;
-  return success;
+EdgeAppLibNNResult Compute(EdgeAppLibGraphContext ctx) {
+  if (ComputeStatus != EDGEAPP_LIB_NN_SUCCESS) return ComputeStatus;
+  return EDGEAPP_LIB_NN_SUCCESS;
 }
 
 // Mock implementation of GetOutput
-EdgeAppLibNNResult GetOutput(graph_execution_context ctx, uint32_t index,
+EdgeAppLibNNResult GetOutput(EdgeAppLibGraphContext ctx, uint32_t index,
                              float *out_tensor, uint32_t *out_size) {
-  if (GetOutputStatus != success) return GetOutputStatus;
+  if (GetOutputStatus != EDGEAPP_LIB_NN_SUCCESS) return GetOutputStatus;
 
   *out_size = 5;  // Dummy output size
   for (uint32_t i = 0; i < 5; ++i) {
     out_tensor[i] = (float)i;  // Dummy output data
   }
-  return success;
+  return EDGEAPP_LIB_NN_SUCCESS;
 }
 
 #include <stdlib.h>

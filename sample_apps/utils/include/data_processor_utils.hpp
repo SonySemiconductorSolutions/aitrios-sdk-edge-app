@@ -38,9 +38,11 @@ int GetValueNumber(JSON_Object *json, const char *param, double *result);
  * @param json A pointer to the JSON_Object containing the data.
  * @param param The name of the parameter whose value is to be retrieved.
  * @param result A pointer to a char array where the result will be stored.
+ * @param result_size The size of the result array to prevent buffer overflow.
  * @return String
  */
-int GetValueString(JSON_Object *json, const char *param, char *result);
+int GetValueString(JSON_Object *json, const char *param, char *result,
+                   size_t result_size);
 /**
  * Retrieves a boolean associated with a parameter from a JSON object.
  *

@@ -24,6 +24,10 @@
 #include "sm_context.hpp"
 #include "utils.hpp"
 
+extern "C" {
+#include "base64.h"
+}
+
 #define CAMERA_IMAGE_SIZE "camera_image_size"
 #define CAMERA_IMAGE_FLIP "camera_image_flip"
 #define DIGITAL_ZOOM "digital_zoom"
@@ -40,6 +44,8 @@
 #define IMAGE_CROPPING "image_cropping"
 #define IMAGE_ROTATION "image_rotation"
 #define REGISTER_ACCESS "register_access"
+#define GAMMA_MODE "gamma_mode"
+#define GAMMA_PARAMETER "gamma_parameter"
 
 using namespace EdgeAppLib;
 
@@ -84,6 +90,9 @@ PqSettings::PqSettings() {
       {EXPOSURE_MODE, kNe, 1},
       {EXPOSURE_MODE, kNe, 2},
       {REGISTER_ACCESS, kType, JSONArray},
+      {GAMMA_MODE, kGe, AITRIOS_SENSOR_INFERENCE_GAMMA_MODE_STANDARD},
+      {GAMMA_MODE, kLe, AITRIOS_SENSOR_INFERENCE_GAMMA_MODE_AUTO},
+      {GAMMA_PARAMETER, kType, JSONString},
   };
   SetValidations(s_validations, sizeof(s_validations) / sizeof(Validation));
   static Property s_properties[] = {
@@ -99,6 +108,15 @@ PqSettings::PqSettings() {
       {.property = IMAGE_CROPPING,
        .obj = &image_cropping}}; /* LCOV_EXCL_BR_LINE: array check */
   SetProperties(s_properties, sizeof(s_properties) / sizeof(Property));
+
+  _gamma_param = (EdgeAppLibSensorInferenceGammaParameterProperty *)malloc(
+      sizeof(EdgeAppLibSensorInferenceGammaParameterProperty));
+  if (!_gamma_param) {
+    LOG_ERR("Malloc for _gamma_param failed.");
+    return;
+  }
+  memset(_gamma_param, 0,
+         sizeof(EdgeAppLibSensorInferenceGammaParameterProperty));
 
   json_object_set_value(
       json_obj, CAMERA_IMAGE_SIZE,
@@ -133,10 +151,11 @@ PqSettings::PqSettings() {
       json_obj, IMAGE_CROPPING,
       json_object_get_wrapping_value(GetImageCropping()->GetJsonObject()));
   json_object_set_null(json_obj, IMAGE_ROTATION);
-
   json_object_set_value(
       json_obj, REGISTER_ACCESS,
       json_array_get_wrapping_value(GetRegisterAccessArray()->GetJsonArray()));
+  json_object_set_null(json_obj, GAMMA_MODE);
+  json_object_set_null(json_obj, GAMMA_PARAMETER);
 }
 
 void PqSettings::InitializeValues() {
@@ -203,6 +222,19 @@ void PqSettings::InitializeValues() {
   json_object_set_number(json_obj, IMAGE_ROTATION,
                          image_rotation_property.rotation_angle);
   _image_rotation = image_rotation_property.rotation_angle;
+
+  EdgeAppLibSensorInferenceGammaModeProperty gamma_mode_property = {};
+  SensorStreamGetProperty(stream, AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY,
+                          &gamma_mode_property, sizeof(gamma_mode_property));
+  json_object_set_number(json_obj, GAMMA_MODE, gamma_mode_property.gamma_mode);
+  _gamma_mode = gamma_mode_property.gamma_mode;
+
+  if (!_gamma_param) return;
+  memset(_gamma_param, 0,
+         sizeof(EdgeAppLibSensorInferenceGammaParameterProperty));
+  _gamma_param->gamma_mode = (EdgeAppLibSensorInferenceGammaMode)_gamma_mode;
+  _gamma_param->param_size = 0;
+  json_object_set_string(json_obj, GAMMA_PARAMETER, "");
 }
 
 int PqSettings::Verify(JSON_Object *obj) {
@@ -226,7 +258,8 @@ int PqSettings::Apply(JSON_Object *obj) {
       {&PqSettings::ApplyEvCompensationVal, EV_COMPENSATION},
       {&PqSettings::ApplyAeAntiFlickerMode, AE_ANTI_FLICKER_MODE},
       {&PqSettings::ApplyWhiteBalanceMode, WHITE_BALANCE_MODE},
-      {&PqSettings::ApplyImageRotation, IMAGE_ROTATION}};
+      {&PqSettings::ApplyImageRotation, IMAGE_ROTATION},
+      {&PqSettings::ApplyGammaMode, GAMMA_MODE}};
   int num_funcs = sizeof(funcs) / sizeof(ApplyFuncType);
   /* LCOV_EXCL_BR_START */
   for (int i = 0; i < num_funcs; ++i) {
@@ -239,6 +272,11 @@ int PqSettings::Apply(JSON_Object *obj) {
     }
   }
   /* LCOV_EXCL_BR_STOP */
+
+  if (json_object_has_value(obj, GAMMA_PARAMETER)) {
+    const char *gamma_parameter = json_object_get_string(obj, GAMMA_PARAMETER);
+    if (gamma_parameter) this->ApplyGammaParameter(gamma_parameter);
+  }
 
   if (json_object_has_value(obj, REGISTER_ACCESS)) {
     JSON_Array *array = json_object_dotget_array(obj, REGISTER_ACCESS);
@@ -448,6 +486,116 @@ void PqSettings::StoreWhiteBalanceMode(int white_balance_mode) {
   LOG_INFO("Updating WhiteBalanceMode");
   json_object_set_number(json_obj, WHITE_BALANCE_MODE, white_balance_mode);
   _white_balance_mode = white_balance_mode;
+}
+
+int PqSettings::ApplyGammaMode(double gamma_mode) {
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+  EdgeAppLibSensorStream stream = context->GetSensorStream();
+
+  EdgeAppLibSensorInferenceGammaModeProperty gamma_mode_prop = {
+      .gamma_mode = (EdgeAppLibSensorInferenceGammaMode)gamma_mode};
+  int32_t result =
+      SensorStreamSetProperty(stream, AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY,
+                              &gamma_mode_prop, sizeof(gamma_mode_prop));
+
+  if (result != 0) {
+    SmUtilsPrintSensorError();
+    DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
+    dtdl->GetResInfo()->SetDetailMsg(
+        "Gamma Mode property failed to be set. Please use valid values "
+        "for gamma_mode.");
+    dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
+  }
+  return result;
+}
+
+void PqSettings::StoreGammaMode(int gamma_mode) {
+  if (_gamma_mode == gamma_mode) return;
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+  context->EnableNotification();
+
+  LOG_INFO("Updating GammaMode to mode %d", gamma_mode);
+  json_object_set_number(json_obj, GAMMA_MODE, gamma_mode);
+  _gamma_mode = gamma_mode;
+  if (!_gamma_param) return;
+  _gamma_param->gamma_mode = (EdgeAppLibSensorInferenceGammaMode)gamma_mode;
+}
+
+int PqSettings::ApplyGammaParameter(const char *gamma_parameter) {
+  if (!gamma_parameter) {
+    LOG_ERR("Null pointer for Gamma Parameter");
+    return -1;
+  }
+  size_t max_string_len = b64e_size(AI_MODEL_GAMMA_PARAMETER_SIZE) + 1;
+  size_t gamma_parameter_len = strnlen(gamma_parameter, max_string_len);
+  if (gamma_parameter_len == max_string_len) {
+    LOG_ERR("Gamma Parameter string too long or not null-terminated");
+    return -1;
+  }
+
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+  EdgeAppLibSensorStream stream = context->GetSensorStream();
+
+  EdgeAppLibSensorInferenceGammaParameterProperty *gamma_param_prop =
+      (EdgeAppLibSensorInferenceGammaParameterProperty *)malloc(
+          sizeof(EdgeAppLibSensorInferenceGammaParameterProperty));
+  if (!gamma_param_prop) {
+    LOG_ERR("Malloc for gamma_param_prop failed.");
+    return -1;
+  }
+  memset(gamma_param_prop, 0,
+         sizeof(EdgeAppLibSensorInferenceGammaParameterProperty));
+  gamma_param_prop->gamma_mode =
+      (EdgeAppLibSensorInferenceGammaMode)_gamma_mode;
+  gamma_param_prop->param_size =
+      b64_decode((const unsigned char *)gamma_parameter, gamma_parameter_len,
+                 gamma_param_prop->gamma_parameter);
+  LOG_INFO("Real binary size: %u", gamma_param_prop->param_size);
+
+  int32_t result = SensorStreamSetProperty(
+      stream, AITRIOS_SENSOR_GAMMA_PARAMETER_PROPERTY_KEY, gamma_param_prop,
+      sizeof(EdgeAppLibSensorInferenceGammaParameterProperty));
+
+  if (result != 0) {
+    SmUtilsPrintSensorError();
+    DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
+    dtdl->GetResInfo()->SetDetailMsg(
+        "Gamma Parameter property failed to be set. Please use valid values "
+        "for gamma_parameter.");
+    dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
+  }
+  free(gamma_param_prop);
+  return result;
+}
+
+void PqSettings::StoreGammaParameter(uint8_t *bin, uint32_t bin_size) {
+  if (!_gamma_param || !bin || bin_size == 0) return;
+
+  if (bin_size == _gamma_param->param_size &&
+      !memcmp(bin, _gamma_param->gamma_parameter, bin_size))
+    return;
+
+  size_t encoded_buffer_size = b64e_size(bin_size) + 1;
+  unsigned char *encoded_buffer = (unsigned char *)malloc(encoded_buffer_size);
+  if (!encoded_buffer) {
+    LOG_ERR("Malloc failed for encoded_buffer");
+    return;
+  }
+
+  memset(encoded_buffer, 0, encoded_buffer_size);
+  b64_encode((const unsigned char *)bin, bin_size, encoded_buffer);
+
+  StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
+  context->EnableNotification();
+
+  LOG_INFO("Updating GammaParameter");
+  json_object_set_string(json_obj, GAMMA_PARAMETER,
+                         (const char *)encoded_buffer);
+  memset(_gamma_param->gamma_parameter, 0, _gamma_param->param_size);
+  memcpy(_gamma_param->gamma_parameter, (const uint8_t *)bin, bin_size);
+  _gamma_param->param_size = bin_size;
+
+  free(encoded_buffer);
 }
 
 CameraImageSize *PqSettings::GetCameraImageSize() { return &camera_image_size; }

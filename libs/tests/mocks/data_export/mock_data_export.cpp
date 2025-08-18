@@ -50,7 +50,8 @@ EdgeAppLibDataExportResult DataExportUnInitialize() {
 }
 EdgeAppLibDataExportFuture *DataExportSendData(
     char *portname, EdgeAppLibDataExportDataType datatype, void *data,
-    int datalen, uint64_t timestamp, uint32_t current, uint32_t division) {
+    int datalen, uint64_t timestamp, uint32_t current, uint32_t division,
+    EdgeAppLibImageProperty *image_property) {
   EdgeAppLibDataExportSendDataCalled = 1;
   EdgeAppLibDataExportFuture *future =
       (EdgeAppLibDataExportFuture *)malloc(sizeof(EdgeAppLibDataExportFuture));

@@ -40,6 +40,7 @@ add_executable(test_edgeapp_core
   ${MOCKS_DIR}/nn/mock_nn.cpp
   ${MOCKS_DIR}/sensor/mock_sensor.cpp
   ${MOCKS_DIR}/data_export/mock_data_export.cpp
+  ${MOCKS_DIR}/send_data/mock_send_data.cpp
   ${MOCKS_DIR}/device/mock_device.cpp
   ${MOCKS_DIR}/sensor/testing_utils.cpp
   ${MOCKS_DIR}/sm/mock_sm_api.cpp
@@ -59,12 +60,15 @@ target_include_directories(test_edgeapp_core PUBLIC
   ${LIBS_DIR}/depend/edge_app
   ${LIBS_DIR}/sm/include
   ${LIBS_DIR}/send_data/src/data_export/include
+  ${LIBS_DIR}/send_data/src/process_format
   ${MOCKS_DIR}
   ${MOCKS_DIR}/nn/
   ${MOCKS_DIR}/device
   ${MOCKS_DIR}/sensor
   ${MOCKS_DIR}/data_export
+  ${MOCKS_DIR}/send_data/process_format
   ${THIRD_DIR}/parson
+  ${THIRD_DIR}/wasi_nn
   ${NN_TEST_DIR}
 )
 

@@ -72,6 +72,7 @@ ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
 
 ProcessFormatResult ProcessFormatInput(MemoryRef data, uint32_t datalen,
                                        ProcessFormatImageType codec_number,
+                                       EdgeAppLibImageProperty *image_property,
                                        uint64_t timestamp, void **jpeg_buffer,
                                        int32_t *jpeg_size) {
   // Simulate behavior based on codec_number

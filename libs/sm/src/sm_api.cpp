@@ -152,6 +152,17 @@ void updateProperty(EdgeAppLibSensorStream stream, const char *property_key,
   } else if (compare_string(property_key,
                             AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY)) {
     // inside custom_settings, set by the user
+  } else if (compare_string(property_key,
+                            AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY)) {
+    EdgeAppLibSensorInferenceGammaModeProperty *gamma_mode =
+        (EdgeAppLibSensorInferenceGammaModeProperty *)value;
+    pq->StoreGammaMode(gamma_mode->gamma_mode);
+  } else if (compare_string(property_key,
+                            AITRIOS_SENSOR_GAMMA_PARAMETER_PROPERTY_KEY)) {
+    EdgeAppLibSensorInferenceGammaParameterProperty *gamma_param =
+        (EdgeAppLibSensorInferenceGammaParameterProperty *)value;
+    pq->StoreGammaParameter(gamma_param->gamma_parameter,
+                            gamma_param->param_size);
   } else {
     LOG_INFO("Unknown property: %s", property_key);
   }

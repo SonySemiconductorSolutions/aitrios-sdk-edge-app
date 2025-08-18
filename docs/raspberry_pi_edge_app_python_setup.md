@@ -31,11 +31,13 @@ sudo reboot now
 ```
 
 
-## Install SensCord Libcamera
+## Install senscord-libcamera
 
 ```bash
-wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_arm64.deb
-sudo apt install senscord-libcamera_1.0.7_arm64.deb
+wget http://midokura.github.io/debian/evp-archive-keyring_bookworm_arm64.deb
+sudo dpkg -i ./evp-archive-keyring_bookworm_arm64.deb
+sudo apt update
+sudo apt install senscord-libcamera
 ```
 
 All files are placed in `/opt/senscord`.
@@ -43,14 +45,9 @@ All files are placed in `/opt/senscord`.
 
 ## Install & Configure EVP Agent
 
-### 1. Download & install .deb packages
-Download from the GitHub Releases: https://github.com/SonySemiconductorSolutions/edge-virtualization-platform/releases/tag/releases%2Fv1.48.0
-
-From `/tmp` to avoid permission warnings:
+### 1. Install EVP Agent
 ```bash
-cd /tmp
-sudo apt install ./python3-evp-app_1.0.0-1-raspios-bookworm_arm64.deb
-sudo apt install ./evp-agent-1.48.0-raspios-bookworm_arm64.deb
+sudo apt install python3-evp-app evp-agent
 ```
 
 ### 2. Edit `/lib/systemd/system/evp-agent.service`
@@ -86,19 +83,9 @@ journalctl -fu evp-agent
 ```
 
 
-## Download and install Python Edge App SDK
-
-Download from the GitHub Releases: https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases
-
-Create and run `install-edge-app-sdk-system-wide.sh`:
-```bash
-#!/bin/bash
-python3 -m pip install ./edge_app_sdk-0.1.0-cp311-cp311-linux_aarch64.whl --break-system-packages -v
-```
-
-```bash
-chmod +x install-edge-app-sdk-system-wide.sh
-sudo ./install-edge-app-sdk-system-wide.sh
+## Install Python Edge App SDK
+```sh
+sudo apt install python3-edge-app-sdk
 ```
 
 

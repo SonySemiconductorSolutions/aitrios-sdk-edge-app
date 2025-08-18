@@ -18,6 +18,7 @@
 
 #include <string.h>
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -52,7 +53,8 @@ int GetValueBoolean(JSON_Object *json, const char *param, bool *result) {
   return 1;
 }
 
-int GetValueString(JSON_Object *json, const char *param, char *result) {
+int GetValueString(JSON_Object *json, const char *param, char *result,
+                   size_t result_size) {
   if (json == NULL || param == NULL || result == NULL) {
     LOG_ERR("Invalid input arguments");
     return -1;
@@ -60,7 +62,8 @@ int GetValueString(JSON_Object *json, const char *param, char *result) {
   if (json_object_has_value(json, param)) {
     const char *value = json_object_get_string(json, param);
     if (value) {
-      strcpy(result, value);
+      strncpy(result, value, result_size);
+      result[std::min(strlen(value), result_size - 1)] = '\0';
       return 0;
     }
   }

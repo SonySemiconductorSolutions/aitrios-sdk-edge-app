@@ -72,6 +72,8 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
   ctx.temp_input.width = 0;
   ctx.temp_input.height = 0;
   ctx.temp_input.timestamp = 0;
+  ctx.mean_values = model.mean_values;
+  ctx.norm_values = model.norm_values;
 
   if (model.target == edge_imx500) {
     ctx.sensor_core =
@@ -106,15 +108,15 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
       return EdgeAppCoreResultFailure;
     }
   } else {
-    graph g;
+    EdgeAppLibGraph g;
     if (EdgeAppLib::LoadModel(model.model_name, &g,
-                              ToExecutionTarget(model.target)) != 0) {
+                              (EdgeAppLibExecutionTarget)model.target) != 0) {
       LOG_ERR("Failed to load model: %s", model.model_name);
       return EdgeAppCoreResultFailure;
     }
 
     ctx.graph_ctx =
-        (graph_execution_context *)xmalloc(sizeof(graph_execution_context));
+        (EdgeAppLibGraphContext *)xmalloc(sizeof(EdgeAppLibGraphContext));
     if (!ctx.graph_ctx) {
       return EdgeAppCoreResultFailure;
     }
@@ -180,6 +182,7 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
                              &image_property, sizeof(image_property));
     src.width = image_property.width;
     src.height = image_property.height;
+    src.stride_byte = image_property.stride_bytes;
     if (strncmp(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
                 sizeof(AITRIOS_SENSOR_PIXEL_FORMAT_RGB24)) == 0) {
       src.format = AITRIOS_DRAW_FORMAT_RGB8;
@@ -228,11 +231,12 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
       dst.width = roi.width;
       dst.height = roi.height;
       dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+      dst.stride_byte = dst.width * 3;  // RGB format, 3 bytes per pixel
       dst.size = dst_size;
       dst.address = (uint8_t *)malloc(dst_size);
-      CropRectangle(&src, &dst, roi.left, roi.top, roi.left + roi.width,
-                    roi.top + roi.height);
-
+      CropRectangle(&src, &dst, roi.left, roi.top, roi.left + roi.width - 1,
+                    roi.top + roi.height - 1);
+      ctx.temp_input.memory_owner = TensorMemoryOwner::App;
       ctx.temp_input.size = dst.size;
       ctx.temp_input.width = dst.width;
       ctx.temp_input.height = dst.height;
@@ -247,12 +251,15 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
       ctx.temp_input.timestamp = data.timestamp;
       roi.height = src.height;
       roi.width = src.width;
+      ctx.temp_input.memory_owner = TensorMemoryOwner::Sensor;
     }
 
     // Set input tensor and run inference
     if (ctx.graph_ctx != nullptr) {
-      uint32_t dims[4] = {1, 3, roi.width, roi.height};
-      if (SetInput(*(ctx.graph_ctx), ctx.temp_input.buffer, dims) != 0) {
+      uint32_t dims[4] = {1, 3, roi.height, roi.width};
+      if (SetInput(*(ctx.graph_ctx), ctx.temp_input.buffer, dims,
+                   ctx.mean_values->data(), ctx.mean_values->size(),
+                   ctx.norm_values->data(), ctx.norm_values->size()) != 0) {
         LOG_ERR("Failed to set input tensor");
         frame = 0;  // Return empty frame
       }
@@ -347,35 +354,39 @@ Tensor GetOutput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame,
       return {};
     }
     float *write_ptr = base;
-    uint32_t total_elements = 0;
+    uint32_t total_element_size = 0;
 
     output_tensor.data = base;
     output_tensor.size = MAX_OUTPUT_TENSORS_SIZE * sizeof(float);
     output_tensor.shape_info.ndim = 0;
     output_tensor.type = TensorDataType::TensorTypeFloat32;
+    // Use the input tensor's timestamp for CPU/NPU models
+    output_tensor.timestamp = ctx.temp_input.timestamp;
 
     for (size_t j = 0; j < tensor_num; ++j) {
-      uint32_t remaining_elements = MAX_OUTPUT_TENSORS_SIZE - total_elements;
-      uint32_t outsize = remaining_elements;
+      uint32_t remaining_elements_size =
+          MAX_OUTPUT_TENSORS_SIZE - total_element_size;
+      uint32_t outsize = remaining_elements_size;
 
       if (EdgeAppLib::GetOutput(*ctx.graph_ctx, j, write_ptr, &outsize) != 0) {
         // LOG_WARN("Failed to get output tensor index %zu", j);
         continue;
       }
 
-      output_tensor.shape_info.dims[output_tensor.shape_info.ndim++] = outsize;
-      write_ptr += outsize;
-      total_elements += outsize;
+      output_tensor.shape_info.dims[output_tensor.shape_info.ndim++] =
+          outsize / sizeof(float);
+      write_ptr += outsize / sizeof(float);
+      total_element_size += outsize;
     }
 
-    void *tmp = realloc(base, total_elements * sizeof(float));
+    void *tmp = realloc(base, total_element_size);
     if (tmp == nullptr) {
       free(base);
       LOG_ERR("realloc failed");
       return {};
     }
     output_tensor.data = tmp;
-    output_tensor.size = total_elements * sizeof(float);
+    output_tensor.size = total_element_size;
 
     if (output_tensor.shape_info.ndim == 0) {
       LOG_WARN("No valid output tensors found.");
@@ -438,6 +449,7 @@ Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame) {
     input_tensor.shape_info.dims[1] = property.height;
     input_tensor.shape_info.dims[2] = property.width;
     input_tensor.shape_info.dims[3] = 3;  // RGB
+    input_tensor.memory_owner = TensorMemoryOwner::Sensor;
     snprintf(input_tensor.name, sizeof(input_tensor.name), "imx500_input");
 
     LOG_DBG("Parsed input tensor:  [ %d ][ %d ][ %d ][ %d ]",
@@ -450,13 +462,14 @@ Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame) {
     if (temp.buffer && temp.width > 0 && temp.height > 0) {
       input_tensor.data = temp.buffer;
       input_tensor.size = temp.size;
-      input_tensor.timestamp = 0;  // No timestamp for CPU/NPU input
+      input_tensor.timestamp = temp.timestamp;
       input_tensor.type = TensorDataType::TensorTypeUInt8;
       input_tensor.shape_info.ndim = 4;
       input_tensor.shape_info.dims[0] = 1;
       input_tensor.shape_info.dims[1] = temp.height;
       input_tensor.shape_info.dims[2] = temp.width;
       input_tensor.shape_info.dims[3] = 3;
+      input_tensor.memory_owner = temp.memory_owner;
       snprintf(input_tensor.name, sizeof(input_tensor.name), "wasi_nn_input_%d",
                ctx.model_idx);
 
@@ -497,6 +510,15 @@ EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx) {
   return EdgeAppCoreResultSuccess;
 }
 
+EdgeAppCoreResult SendInference(void *data, size_t datalen,
+                                EdgeAppLibSendDataType datatype,
+                                uint64_t timestamp) {
+  EdgeAppLibSendDataResult result =
+      EdgeAppLib::SendDataSyncMeta(data, datalen, datatype, timestamp, -1);
+  // free(data);
+  return result == EdgeAppLibSendDataResultSuccess ? EdgeAppCoreResultSuccess
+                                                   : EdgeAppCoreResultFailure;
+}
 /**
  * @brief Sends the Input Tensor to the cloud asynchronously.
  *
@@ -508,111 +530,10 @@ EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx) {
  * that both awaits are done consecutively without blocking the sending of the
  * rest of the data.
  *
- * @param frame Pointer to the current sensor frame.
+ * @param Tensor Pointer to the input tensor to be sent.
  * @return A future representing the asynchronous operation of sending the input
  * tensor.
  */
-
-#include <mutex>
-#include <string>
-
-struct StreamEntry {
-  char name[64];       // Stream name
-  uint64_t stream_id;  // Stream ID
-  uint32_t width;      // Registered width
-  uint32_t height;     // Registered height
-};
-
-// Temporal scaling function to resize the input image to the target dimensions
-// using nearest neighbor interpolation. This function assumes the input image
-// is in RGB format (3 channels).
-// @param input Pointer to the input image data.
-// @param width Width of the input image.
-// @param height Height of the input image.
-// @param output Pointer to the output image data.
-// @param target_width Desired width of the output image.
-// @param target_height Desired height of the output image.
-// @param channels Number of channels in the input image (e.g., 3 for RGB).
-
-static void PlaceInputImageWithPadding(const uint8_t *input, uint32_t in_width,
-                                       uint32_t in_height, uint8_t *output,
-                                       uint32_t out_width, uint32_t out_height,
-                                       uint32_t channels) {
-  memset(output, 0, out_width * out_height * channels);
-
-  uint32_t copy_height = (in_height < out_height) ? in_height : out_height;
-  uint32_t copy_width = (in_width < out_width) ? in_width : out_width;
-
-  uint32_t copy_bytes_per_row = copy_width * channels;
-
-  for (uint32_t y = 0; y < copy_height; ++y) {
-    uint8_t *dst_row = output + (y * out_width) * channels;
-    const uint8_t *src_row = input + (y * in_width) * channels;
-
-    memcpy(dst_row, src_row, copy_bytes_per_row);
-  }
-}
-
-static uint64_t CreateStreamIfNameChanged(EdgeAppCore::Tensor *input,
-                                          const char *pixel_format,
-                                          void **present_data) {
-  constexpr size_t MAX_STREAMS = 6;  // Maximum number of stream slots
-  static StreamEntry stream_entries[MAX_STREAMS] = {};
-  static std::mutex mutex;
-  uint64_t stream_id = 0;
-  std::lock_guard<std::mutex> lock(mutex);
-
-  if (input->name[0] == '\0') {
-    strcpy(input->name, "");
-  }
-  uint32_t width = input->shape_info.dims[2];
-  uint32_t height = input->shape_info.dims[1];
-  uint32_t stride_bytes = width * 3;  // Assuming RGB format, 3 bytes per pixel
-
-  // Check if a stream with the same name already exists
-  for (size_t i = 0; i < MAX_STREAMS; ++i) {
-    if (strcmp(stream_entries[i].name, input->name) == 0) {
-      uint32_t target_width = stream_entries[i].width;
-      uint32_t target_height = stream_entries[i].height;
-      if (width != target_width || height != target_height) {
-        LOG_DBG("Resizing input image from %dx%d to %dx%d for stream %s", width,
-                height, target_width, target_height, stream_entries[i].name);
-        *present_data = malloc(target_width * target_height * 3);
-        PlaceInputImageWithPadding((uint8_t *)input->data, width, height,
-                                   (uint8_t *)*present_data, target_width,
-                                   target_height, 3);
-      } else {
-        LOG_DBG("Using existing stream %s with ID %llu", stream_entries[i].name,
-                stream_entries[i].stream_id);
-        *present_data = input->data;  // No scaling needed
-      }
-      return stream_entries[i].stream_id;
-    }
-  }
-
-  // Find an empty slot or overwrite the oldest one (FIFO strategy)
-  size_t slot = 0;
-  for (; slot < MAX_STREAMS; ++slot) {
-    if (stream_entries[slot].stream_id == 0) break;
-  }
-  if (slot == MAX_STREAMS) {
-    slot = 0;  // All slots are used, overwrite the first one
-  }
-
-  LOG_INFO("Creating new stream for name: %s", input->name);
-  stream_id = senscord_ub_create_stream(input->name, width, height,
-                                        stride_bytes, pixel_format);
-
-  // Store the new stream info in the selected slot
-  strncpy(stream_entries[slot].name, input->name,
-          sizeof(stream_entries[slot].name) - 1);
-  stream_entries[slot].name[sizeof(stream_entries[slot].name) - 1] = '\0';
-  stream_entries[slot].stream_id = stream_id;
-  stream_entries[slot].width = width;
-  stream_entries[slot].height = height;
-
-  return stream_id;
-}
 
 EdgeAppCoreResult SendInputTensor(Tensor *input_tensor) {
   LOG_TRACE("Inside sendInputTensor.");
@@ -620,34 +541,24 @@ EdgeAppCoreResult SendInputTensor(Tensor *input_tensor) {
     LOG_ERR("Invalid input tensor data.");
     return EdgeAppCoreResultInvalidParam;
   }
-#if 0
-  void *present_data = nullptr;
-  uint64_t stream_id = CreateStreamIfNameChanged(
-      input_tensor, SENSCORD_PIXEL_FORMAT_RGB24, &present_data);
 
-  if (stream_id != 0) {
-    LOG_INFO("Stream ID: %llu input_tensor width=%d height=%d ", stream_id,
-             input_tensor->shape_info.dims[2],
-             input_tensor->shape_info.dims[1]);
+  EdgeAppLibImageProperty image_property = {};
+  image_property.width = input_tensor->shape_info.dims[2];
+  image_property.height = input_tensor->shape_info.dims[1];
+  image_property.stride_bytes = input_tensor->shape_info.dims[2] * 3;  // RGB
+  snprintf(image_property.pixel_format, sizeof(image_property.pixel_format),
+           "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
 
-    senscord_ub_send_data(stream_id, present_data);
-    if (present_data != nullptr && input_tensor->data != present_data) {
-      free(present_data);
-      present_data = nullptr;  // Free only if we allocated new data
-    }
+  EdgeAppLibSendDataResult ret = SendDataSyncImage(
+      input_tensor->data, input_tensor->size,
+      (EdgeAppLibImageProperty *)&image_property, input_tensor->timestamp, -1);
+  if (input_tensor->memory_owner == TensorMemoryOwner::App) {
+    // Free the input tensor data if it was allocated by the app
+    free(input_tensor->data);
+    input_tensor->data = nullptr;
   }
-#endif
-  auto future = DataExportSendData((char *)PORTNAME_INPUT,
-                                   EdgeAppLibDataExportRaw, input_tensor->data,
-                                   input_tensor->size, input_tensor->timestamp);
-
-  DataExportAwait(future, -1);
-  DataExportCleanup(future);
-  if (future == nullptr) {
-    free(input_tensor->data);  // Free only if we allocated new data
-  }
-
-  return EdgeAppCoreResultSuccess;
+  return (ret == EdgeAppLibSendDataResultSuccess) ? EdgeAppCoreResultSuccess
+                                                  : EdgeAppCoreResultFailure;
 }
 
 }  // namespace EdgeAppCore

@@ -30,8 +30,9 @@ class MockSensor {
                EdgeAppLibLatencyTimestamps *info));
   MOCK_METHOD(bool, DataExportIsEnabled, (int type), ());
   MOCK_METHOD(EdgeAppLibDataExportFuture *, DataExportSendData,
-              (char *port_name, int type, const void *data, size_t size,
-               uint64_t timestamp),
+              (char *portname, EdgeAppLibDataExportDataType datatype,
+               void *data, int datalen, uint64_t timestamp, uint32_t current,
+               uint32_t division, EdgeAppLibImageProperty *image_property),
               ());
   MOCK_METHOD(int32_t, SensorLatencySetMode, (bool enable, uint32_t backlog),
               ());

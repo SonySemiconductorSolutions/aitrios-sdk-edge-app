@@ -82,7 +82,9 @@
                     "address": "8AC7230489E80000",
                     "data": "12345678901234567890"
                 }
-            ]
+            ],
+            "gamma_mode": 1,
+            "gamma_parameter": "5ZCD6JGh6JCE5LiN5ZCQ6JGh6JCE55qu77yM5LiN5ZCD6JGh6JCE5YCS5ZCQ6JGh6JCE55qu44CCCg=="
         },
         "port_settings": {
             "metadata": {

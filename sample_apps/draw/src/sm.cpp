@@ -24,7 +24,6 @@
 #include "draw.h"
 #include "log.h"
 #include "objectdetection_generated.h"
-#include "send_data.h"
 #include "sensor.h"
 #include "sm_utils.hpp"
 
@@ -58,6 +57,8 @@ char *GetConfigureErrorJsonSm(ResponseCode code, const char *message,
  *
  * This function sends the input tensor data from the provided frame to the
  * cloud. It returns a future object representing the asynchronous operation.
+ * When image properties are available, JPEG encoding is automatically handled
+ * for platforms with mapped memory support (e.g., Raspi, T5).
  *
  * By returning a future, this function allows for non-blocking execution.
  * The caller can await this future after sending the output tensor, ensuring
@@ -127,7 +128,7 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
     img_format = AITRIOS_DRAW_FORMAT_RGB8;
   }
   struct EdgeAppLibDrawBuffer buffer = {data.address, data.size, img_format,
-                                        img_w, img_h};
+                                        img_w,        img_h,     img_w * 3};
   // Draw box
   if (strlen(s_metadata) > 0) {
     auto object_detection_root = SmartCamera::GetObjectDetectionTop(s_metadata);
@@ -149,8 +150,10 @@ static EdgeAppLibDataExportFuture *sendInputTensor(
     PrintSensorError();
     return nullptr;
   }
+
   return DataExportSendData((char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw,
-                            buffer.address, buffer.size, data.timestamp);
+                            buffer.address, buffer.size, data.timestamp, 1, 1,
+                            (EdgeAppLibImageProperty *)&property);
 }
 
 /**

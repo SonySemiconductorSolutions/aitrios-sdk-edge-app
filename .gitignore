@@ -3,6 +3,9 @@
 **/*.o
 **/*.info
 
+# MkDocs build output
+site/
+
 ################################
 # Python .gitignore: https://github.com/github/gitignore/blob/main/Python.gitignore
 ################################

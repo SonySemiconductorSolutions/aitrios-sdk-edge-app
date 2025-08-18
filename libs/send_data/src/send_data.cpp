@@ -36,6 +36,69 @@ static InfElem output_tensor_vec[MAX_NUMBER_OF_INFERENCE_QUEUE] = {
 
 static pthread_mutex_t inf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+EdgeAppLibSendDataResult SendDataSyncImage(
+    void *data, int datalen, EdgeAppLibImageProperty *image_property,
+    uint64_t timestamp, int timeout_ms, uint32_t current, uint32_t division) {
+  LOG_TRACE("Entering SendDataSyncImage");
+
+  if (data == nullptr || image_property == nullptr) {
+    const char *error_msg = "Invalid data param";
+    LOG_ERR("%s", error_msg);
+    return EdgeAppLibSendDataResultInvalidParam;
+  }
+
+  /* If the data length is less than the size of the image,
+   * send the raw data directly without processing assuming that it is already
+   * encoded.
+   */
+  if ((datalen > 0) &&
+      (datalen < image_property->stride_bytes * image_property->height)) {
+    LOG_WARN(
+        "Data length is less than the size of the image. "
+        "Processing the data as raw data.");
+    EdgeAppLibDataExportFuture *future =
+        DataExportSendData((char *)PORTNAME_META, EdgeAppLibDataExportRaw, data,
+                           datalen, timestamp, current, division);
+    DataExportAwait(future, timeout_ms);
+    DataExportCleanup(future);
+
+    return EdgeAppLibSendDataResultSuccess;
+  }
+
+  LOG_WARN(
+      "Data length is greater than the size of the image. "
+      "Processing the data as an image.");
+  JSON_Object *json_object = getCodecSettings();
+  int codec_number = json_object_get_number(json_object, "format");
+
+  void *codec_buffer = NULL;
+  int32_t codec_size = 0;
+  MemoryRef codec_memory_ref = {};
+  codec_memory_ref.type = MEMORY_MANAGER_MAP_TYPE;
+  codec_memory_ref.u.p = data;
+
+  ProcessFormatResult ret;  // Declare ret first
+  ret = ProcessFormatInput(codec_memory_ref, datalen,
+                           (ProcessFormatImageType)codec_number, image_property,
+                           timestamp, &codec_buffer, &codec_size);
+
+  if (ret != kProcessFormatResultOk) {
+    LOG_ERR("ProcessFormatImage failed. Exit with return %d.", ret);
+    if (codec_buffer != NULL) {
+      free(codec_buffer);
+    }
+    return EdgeAppLibSendDataResultFailure;
+  }
+
+  EdgeAppLibDataExportFuture *future = DataExportSendData(
+      (char *)PORTNAME_META, EdgeAppLibDataExportRaw, codec_buffer, codec_size,
+      timestamp, current, division);
+  DataExportAwait(future, timeout_ms);
+  DataExportCleanup(future);
+
+  return EdgeAppLibSendDataResultSuccess;
+}
+
 EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
                                           EdgeAppLibSendDataType datatype,
                                           uint64_t timestamp, int timeout_ms) {

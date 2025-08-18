@@ -35,6 +35,8 @@
 #define AE_ANTI_FLICKER_MODE "ae_anti_flicker_mode"
 #define WHITE_BALANCE_MODE "white_balance_mode"
 #define IMAGE_ROTATION "image_rotation"
+#define GAMMA_MODE "gamma_mode"
+#define GAMMA_PARAMETER "gamma_parameter"
 
 #define TEST_INPUT \
   "{            \
@@ -48,11 +50,13 @@
   \"ev_compensation\": 0.6,              \
   \"ae_anti_flicker_mode\": 1,           \
   \"manual_exposure\": {},               \
-  \"white_balance_mode\": 1,            \
+  \"white_balance_mode\": 1,             \
   \"auto_white_balance\": {},            \
   \"manual_white_balance_preset\": {},   \
   \"image_cropping\": {},                \
-  \"image_rotation\": 2}"
+  \"image_rotation\": 2,                 \
+  \"gamma_mode\": 1,                     \
+  \"gamma_parameter\": \"NDY0OZAEAAABAAEAAQMAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAMDEwMDAwAAAAAAAAAAAAABEAAAAAwACAUAQAAAAAAAAwMTAwMDAAAAAAAAAAAAAAUUlBAQEAAQEDAwMCyAAAAAMDAwLIAAAAAwMDAsgAAABQxwIAUMcCAAEAAAAC////////AP//////////Af///////wEAAAAAAAQHCw8SFhkdJCwzOkhWYWpyeYWQmaCtt8DIz9TY3ODj5ujs7/L1+Pr9/wAAAAAAAAAAAAAAAAAAAAAAAgUPGiUvQlJgbHeAiI+Vmp+jqq+0uLzAxMgAAQMEBgcICgsOERMWHykxOD9FUFpkbHuJlJ6nsLe9w8nN0tnf5evw9fr/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADU5NjMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\"}"
 
 using namespace EdgeAppLib;
 
@@ -438,3 +442,43 @@ TEST_F(PqSettingsTest, CheckNotificationWBMode) {
   ASSERT_EQ(white_balance_mode_prop.mode,
             (EdgeAppLibSensorInferenceWhiteBalanceMode)3);
 }
+
+TEST_F(PqSettingsTest, CheckNotificationGammaMode) {
+  EdgeAppLibSensorStream stream = context->GetSensorStream();
+  EdgeAppLibSensorInferenceGammaModeProperty gamma_mode_prop = {
+      .gamma_mode = AITRIOS_SENSOR_INFERENCE_GAMMA_MODE_STANDARD};
+
+  PqSettings *pq_settings =
+      context->GetDtdlModel()->GetCommonSettings()->GetPqSettings();
+  pq_settings->Apply(json_obj);
+
+  context->ClearNotification();
+  json_object_set_number(json_obj, "gamma_mode", 0);
+  pq_settings->Apply(json_obj);
+  ASSERT_TRUE(context->IsPendingNotification());
+
+  SensorStreamGetProperty(stream, AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY,
+                          &gamma_mode_prop, sizeof(gamma_mode_prop));
+  ASSERT_EQ(gamma_mode_prop.gamma_mode, (EdgeAppLibSensorInferenceGammaMode)0);
+
+  context->ClearNotification();
+  json_object_set_number(json_obj, "gamma_mode", 1);
+  pq_settings->Apply(json_obj);
+  ASSERT_TRUE(context->IsPendingNotification());
+
+  SensorStreamGetProperty(stream, AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY,
+                          &gamma_mode_prop, sizeof(gamma_mode_prop));
+  ASSERT_EQ(gamma_mode_prop.gamma_mode, (EdgeAppLibSensorInferenceGammaMode)1);
+
+  context->ClearNotification();
+  json_object_set_number(json_obj, "gamma_mode", 0);
+  setEdgeAppLibSensorStreamSetPropertyFail();
+  pq_settings->Apply(json_obj);
+  resetEdgeAppLibSensorStreamSetPropertySuccess();
+  ASSERT_TRUE(context->IsPendingNotification());
+  SensorStreamGetProperty(stream, AITRIOS_SENSOR_GAMMA_MODE_PROPERTY_KEY,
+                          &gamma_mode_prop, sizeof(gamma_mode_prop));
+  ASSERT_EQ(gamma_mode_prop.gamma_mode, (EdgeAppLibSensorInferenceGammaMode)1);
+}
+
+TEST_F(PqSettingsTest, CheckNotificationGammaParameter) { ; }

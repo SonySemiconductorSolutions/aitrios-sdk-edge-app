@@ -1,6 +1,6 @@
 {
     "@context": "dtmi:dtdl:context;3",
-    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:switchdnn;3",
+    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:switchdnn;5",
     "@type": "Interface",
     "displayName": "Edge App Example",
     "contents": [
@@ -607,7 +607,7 @@
                                                                     },
                                                                     {
                                                                         "name": "temp_6500k",
-                                                                        "displayName": "Temperature of 5600K",
+                                                                        "displayName": "Temperature of 6500K",
                                                                         "enumValue": 3
                                                                     }
                                                                 ]
@@ -741,6 +741,33 @@
                                                         ]
                                                     }
                                                 }
+                                            },
+                                            {
+                                                "name": "gamma_mode",
+                                                "displayName": "Gamma Mode",
+                                                "description": "Method of Gamma correction. Standard mode or automatic mode.",
+                                                "schema": {
+                                                    "@type": "Enum",
+                                                    "valueSchema": "integer",
+                                                    "enumValues": [
+                                                        {
+                                                            "name": "standard",
+                                                            "displayName": "Standard",
+                                                            "enumValue": 0
+                                                        },
+                                                        {
+                                                            "name": "auto",
+                                                            "displayName": "Auto",
+                                                            "enumValue": 1
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "gamma_parameter",
+                                                "displayName": "Gamma Parameter",
+                                                "description": "Gamma parameter for input tensor Gamma correction with base64 encoded.",
+                                                "schema": "string"
                                             }
                                         ]
                                     }

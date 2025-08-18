@@ -34,6 +34,7 @@ class EdgeAppLibDrawApiTest : public ::testing::Test {
     draw_buffer.format = AITRIOS_DRAW_FORMAT_RGB8_PLANAR;
     draw_buffer.width = TEST_IMG_WIDTH;
     draw_buffer.height = TEST_IMG_HEIGHT;
+    draw_buffer.stride_byte = TEST_IMG_WIDTH * 1;
     ResetImage();
   }
 
@@ -81,6 +82,8 @@ TEST_F(EdgeAppLibDrawApiTest, DrawRectangle_Normal) {
 
 TEST_F(EdgeAppLibDrawApiTest, DrawRectangle_Normal_Interleaved) {
   draw_buffer.format = AITRIOS_DRAW_FORMAT_RGB8;
+  draw_buffer.stride_byte =
+      TEST_IMG_WIDTH * 3;  // RGB format, 3 bytes per pixel
   int32_t ret = DrawRectangle(&draw_buffer, 10, 10, 90, 90, TEST_COLOR);
   ASSERT_EQ(ret, 0);
 
@@ -108,6 +111,7 @@ TEST_F(EdgeAppLibDrawApiTest, CropCenterRegion_RGB8) {
   src.width = 4;
   src.height = 4;
   src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.stride_byte = 4 * 3;  // 4 pixels, 3 bytes each (RGB)
   src.size = 4 * 4 * 3;
   src.address = new uint8_t[src.size];
 
@@ -126,6 +130,7 @@ TEST_F(EdgeAppLibDrawApiTest, CropCenterRegion_RGB8) {
   dst.width = 2;
   dst.height = 2;
   dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.stride_byte = 2 * 3;  // 2 pixels, 3 bytes each (RGB)
   dst.size = 2 * 2 * 3;
   dst.address = new uint8_t[dst.size];
 
@@ -152,7 +157,8 @@ TEST_F(EdgeAppLibDrawApiTest, CropOutOfBoundsClamped_RGB8) {
   src.width = 3;
   src.height = 3;
   src.format = AITRIOS_DRAW_FORMAT_RGB8;
-  src.size = 3 * 3 * 3;
+  src.stride_byte = 3 * 3 + 3;  // 3 pixels, 3 bytes each (RGB) + padding 3
+  src.size = src.stride_byte * src.height;
   src.address = new uint8_t[src.size];
 
   auto *src_ptr = reinterpret_cast<uint8_t *>(src.address);
@@ -164,6 +170,7 @@ TEST_F(EdgeAppLibDrawApiTest, CropOutOfBoundsClamped_RGB8) {
   dst.width = 1;
   dst.height = 1;
   dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.stride_byte = 1 * 3;  // 1 pixel, 3 bytes (RGB)
   dst.size = 1 * 1 * 3;
   dst.address = new uint8_t[dst.size];
 
@@ -245,6 +252,74 @@ TEST_F(EdgeAppLibDrawApiTest, UnknownFormat) {
   dst.address = new uint8_t[dst.size];
 
   ASSERT_EQ(CropRectangle(&src, &dst, 0, 0, 1, 1), -1);
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, StrideAndSizeMismatch) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 2;
+  src.height = 2;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;  // Valid format, testing incorrect
+                                          // stride and size settings
+  src.stride_byte = 2 * 3 + 1;            // Add padding
+  src.size = src.stride_byte * src.height + 5;  // Wrong size
+  src.address = new uint8_t[src.size];
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 2;
+  dst.height = 2;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.stride_byte = 2 * 3;  // Correct stride
+  dst.size = 2 * 2 * 3;
+  dst.address = new uint8_t[dst.size];
+
+  ASSERT_EQ(CropRectangle(&src, &dst, 0, 0, 1, 1), -1);
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, NoStrideByteSetting) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 4;
+  src.height = 4;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.size = 4 * 4 * 3;
+  src.address = new uint8_t[src.size];
+
+  // Fill source with known RGB values
+  auto *src_ptr = reinterpret_cast<uint8_t *>(src.address);
+  for (uint32_t y = 0; y < src.height; ++y) {
+    for (uint32_t x = 0; x < src.width; ++x) {
+      size_t idx = (y * src.width + x) * 3;
+      src_ptr[idx + 0] = 100;  // R
+      src_ptr[idx + 1] = 150;  // G
+      src_ptr[idx + 2] = 200;  // B
+    }
+  }
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 2;
+  dst.height = 2;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.size = 2 * 2 * 3;
+  dst.address = new uint8_t[dst.size];
+
+  // Crop center region: (1,1)-(2,2)
+  ASSERT_EQ(CropRectangle(&src, &dst, 1, 1, 2, 2), 0);
+
+  // Validate all cropped pixels have the expected RGB values
+  auto *dst_ptr = reinterpret_cast<uint8_t *>(dst.address);
+  for (uint32_t y = 0; y < dst.height; ++y) {
+    for (uint32_t x = 0; x < dst.width; ++x) {
+      size_t idx = (y * dst.width + x) * 3;
+      EXPECT_EQ(dst_ptr[idx + 0], 100);
+      EXPECT_EQ(dst_ptr[idx + 1], 150);
+      EXPECT_EQ(dst_ptr[idx + 2], 200);
+    }
+  }
 
   delete[] reinterpret_cast<uint8_t *>(src.address);
   delete[] reinterpret_cast<uint8_t *>(dst.address);

@@ -70,10 +70,10 @@ endif
 
 define run_vm =
     @echo "Starting in $(1) mode..."
-    @docker run --rm -it --network=host \
+    @docker run -d -it --network=host \
         -v $(edge_app):/root/edge_app \
         $(IMAGE_NAME) bash -c \
-        "cd /opt/senscord/ && ./run_iwasm$(2).sh -d pc /root/edge_app"
+        "cd /opt/senscord/ && ./run_iwasm.sh $(2) -d pc /root/edge_app"
 endef
 
 .PHONY: vm_run vm_debug
@@ -90,4 +90,4 @@ ifeq ($(IMAGE),)
 	@echo "docker not created, run 'make docker_build' first"
 	@exit 1
 endif
-	$(call run_vm,debug,_debug)
+	$(call run_vm,debug,--debug)

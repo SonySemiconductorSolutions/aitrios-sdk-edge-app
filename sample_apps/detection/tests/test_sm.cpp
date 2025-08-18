@@ -48,6 +48,8 @@ class EvenFunctionsTest : public ::testing::Test {
     resetEdgeAppLibSensorStartCalled();
     resetEdgeAppLibSensorCoreCloseStreamSuccess();
     resetEdgeAppLibSensorCoreExitSuccess();
+    resetSendDataImageSuccess();
+    resetSendDataSyncMetaSuccess();
   }
 
   void TearDown() override {}
@@ -123,9 +125,8 @@ TEST_F(EvenFunctionsTest, OnIterateSuccess) {
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 1);
   EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 1);
   onDestroy();
 }
 
@@ -140,9 +141,8 @@ TEST_F(EvenFunctionsTest, OnIterateChannelError) {
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
   EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
   onDestroy();
 }
 
@@ -157,9 +157,8 @@ TEST_F(EvenFunctionsTest, OnIterateRawDataError) {
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
   EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
   onDestroy();
 }
 
@@ -175,8 +174,6 @@ TEST_F(EvenFunctionsTest, OnIterateSendDataSyncMetaError) {
   EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 1);
   onDestroy();
@@ -194,9 +191,8 @@ TEST_F(EvenFunctionsTest, OnIterateRawDataNull) {
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 1);
   EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
   onDestroy();
 }
 
@@ -211,9 +207,8 @@ TEST_F(EvenFunctionsTest, OnIterateGetFrameError) {
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 0);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
   EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
   onDestroy();
 }
 
@@ -228,9 +223,8 @@ TEST_F(EvenFunctionsTest, OnIterateGetFrameErrorTimeout) {
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 0);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
   onDestroy();
 }
 
@@ -243,9 +237,8 @@ TEST_F(EvenFunctionsTest, OnIterateDataExportDisabled) {
   EXPECT_EQ(wasEdgeAppLibSensorFrameGetChannelFromChannelIdCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorChannelGetRawDataCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 0);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 0);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
   onDestroy();
 }
 
@@ -260,9 +253,8 @@ TEST_F(EvenFunctionsTest, OnIterateReleaseFrameError) {
   EXPECT_EQ(wasEdgeAppLibSensorReleaseFrameCalled(), 1);
   EXPECT_EQ(wasDataProcessorAnalyzeCalled(), 1);
   EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
-  EXPECT_EQ(wasEdgeAppLibDataExportAwaitCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibDataExportCleanupCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibDataExportSendDataCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
   onDestroy();
 }
 

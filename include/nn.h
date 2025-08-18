@@ -17,29 +17,52 @@
 #ifndef NN_WRAPPER_H_
 #define NN_WRAPPER_H_
 
+#include <stddef.h>
 #include <stdint.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "wasi_nn_types.h"
-#ifdef __cplusplus
-}
-#endif
+// Return codes
+typedef enum {
+  EDGEAPP_LIB_NN_SUCCESS = 0,
+  EDGEAPP_LIB_NN_INVALID_ARGUMENT,
+  EDGEAPP_LIB_NN_INVALID_ENCODING,
+  EDGEAPP_LIB_NN_TIMEOUT,
+  EDGEAPP_LIB_NN_RUNTIME_ERROR,
+  EDGEAPP_LIB_NN_UNSUPPORTED_OPERATION,
+  EDGEAPP_LIB_NN_TOO_LARGE,
+  EDGEAPP_LIB_NN_NOT_FOUND,
+  EDGEAPP_LIB_NN_SECURITY,
+  EDGEAPP_LIB_NN_UNKNOWN,
+  EDGEAPP_LIB_NN_END_OF_SEQUENCE = 100,
+  EDGEAPP_LIB_NN_CONTEXT_FULL = 101,
+  EDGEAPP_LIB_NN_PROMPT_TOO_LONG = 102,
+  EDGEAPP_LIB_NN_MODEL_NOT_FOUND = 103
+} EdgeAppLibNNResult;
 
-typedef wasi_nn_error EdgeAppLibNNResult;
+typedef uint32_t EdgeAppLibGraphContext;
+typedef uint32_t EdgeAppLibGraph;
+
 #ifdef __cplusplus
 namespace EdgeAppLib {
 extern "C" {
 #endif
+// Execution target
+typedef enum {
+  EDGEAPP_TARGET_CPU = 0,
+  EDGEAPP_TARGET_GPU,
+  EDGEAPP_TARGET_NPU,
+  EDGEAPP_TARGET_OTHER
+} EdgeAppLibExecutionTarget;
 
-// WASI-NN wrappers
-EdgeAppLibNNResult LoadModel(const char *model_name, graph *g,
-                             execution_target target);
-EdgeAppLibNNResult InitContext(graph g, graph_execution_context *ctx);
-EdgeAppLibNNResult SetInput(graph_execution_context ctx, uint8_t *input_tensor,
-                            uint32_t *dim);
-EdgeAppLibNNResult Compute(graph_execution_context ctx);
-EdgeAppLibNNResult GetOutput(graph_execution_context ctx, uint32_t index,
+// API functions
+EdgeAppLibNNResult LoadModel(const char *model_name, EdgeAppLibGraph *graph,
+                             EdgeAppLibExecutionTarget target);
+EdgeAppLibNNResult InitContext(EdgeAppLibGraph graph,
+                               EdgeAppLibGraphContext *ctx);
+EdgeAppLibNNResult SetInput(EdgeAppLibGraphContext ctx, uint8_t *input_tensor,
+                            uint32_t *dim, const float *mean_values,
+                            size_t mean_size, const float *norm_values,
+                            size_t norm_size);
+EdgeAppLibNNResult Compute(EdgeAppLibGraphContext ctx);
+EdgeAppLibNNResult GetOutput(EdgeAppLibGraphContext ctx, uint32_t index,
                              float *out_tensor, uint32_t *out_size);
 
 #ifdef __cplusplus

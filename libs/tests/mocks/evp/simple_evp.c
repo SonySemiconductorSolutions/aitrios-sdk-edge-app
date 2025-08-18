@@ -113,16 +113,22 @@ static void *entrypoint(void *args) {
 
     pthread_mutex_lock(&evp.mutex);
     if (operations.buffer[operations.next].config == NULL) {
-      char *aux = (char *)malloc(EVP_MQTT_SEND_BUFF_SIZE);
+      char *aux = (char *)malloc(EVP_MQTT_SEND_BUFF_SIZE + 1);
       // assuming we receive all data at one call
       int config_len = recv(new_socket, aux, EVP_MQTT_SEND_BUFF_SIZE, 0);
-      operations.buffer[operations.next] =
-          (RingBufferElement){.config = aux, .config_len = config_len};
-      operations.next = (operations.next + 1) % PENDING_OPERATIONS;
-      pthread_mutex_unlock(&evp.mutex);
-      assert(config_len < EVP_MQTT_SEND_BUFF_SIZE);
-      assert(config_len > 0);
-      LOG_INFO("Received: %d", config_len);
+      assert(config_len <= EVP_MQTT_SEND_BUFF_SIZE);
+      if (config_len > 0) {
+        aux[config_len] = '\0';
+        operations.buffer[operations.next] =
+            (RingBufferElement){.config = aux, .config_len = config_len};
+        operations.next = (operations.next + 1) % PENDING_OPERATIONS;
+        pthread_mutex_unlock(&evp.mutex);
+        LOG_INFO("Received: %d", config_len);
+      } else {
+        free(aux);
+        pthread_mutex_unlock(&evp.mutex);
+        LOG_ERR("recv failed or no data received");
+      }
     } else {
       LOG_ERR("Buffer too small");
     }
@@ -149,7 +155,7 @@ EVP_RESULT EVP_setConfigurationCallback(struct EVP_client *h,
                                         EVP_CONFIGURATION_CALLBACK cb,
                                         void *userData) {
   assert(evp.cb == NULL);
-  assert(h = &evp.h);
+  assert(h == &evp.h);
   evp.cb = cb;
   evp.userData = userData;
   return EVP_OK;

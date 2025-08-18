@@ -24,6 +24,8 @@ jobs:
           - libs/tests/unit/common
           - libs/tests/unit/send_data
           - libs/tests/unit/send_data/process_format
+          - libs/tests/unit/nn
+          - libs/tests/unit/edgeapp_core
           - sample_apps/passthrough/tests
           - sample_apps/passthrough/data_processor/tests
           - sample_apps/draw/tests
@@ -35,6 +37,8 @@ jobs:
           - sample_apps/posenet/data_processor/tests
           - sample_apps/segmentation/tests
           - sample_apps/segmentation/data_processor/tests
+          - sample_apps/lp_recog/tests
+          - sample_apps/lp_recog/data_processor/tests
           - sample_apps/switch_dnn/tests
           - sample_apps/perfbench/tests
           - sample_apps/utils/tests
@@ -81,7 +85,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        app: [passthrough, draw, classification, detection, posenet, segmentation, switch_dnn, apitest]
+        app: [passthrough, draw, classification, detection, posenet, segmentation, switch_dnn, apitest, lp_recog]
     steps:
     - name: Checkout
       uses: actions/checkout@v4

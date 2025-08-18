@@ -62,6 +62,7 @@ ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
  * @brief Encode the data to be Input Tensor
  * @param in_data Pointer or handle for input tensor buffer.
  * @param in_size Size of input tensor buffer.
+ * @param image_property Pointer to the image property structure.
  * @param datatype The type of the data to upload.
  * @param timestamp The timestamp of the processed frame in nanoseconds.
  * @param image Pointer or handle of encoded input tensor buffer.
@@ -70,6 +71,7 @@ ProcessFormatResult ProcessFormatMeta(void *in_data, uint32_t in_size,
  */
 ProcessFormatResult ProcessFormatInput(MemoryRef in_data, uint32_t in_size,
                                        ProcessFormatImageType datatype,
+                                       EdgeAppLibImageProperty *image_property,
                                        uint64_t timestamp, void **image,
                                        int32_t *image_size);
 

@@ -1,5 +1,11 @@
 # Edge Application SDK for AITRIOS™
 
+[![CI](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/workflows/CI/badge.svg)](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/actions/workflows/ci.yaml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/release/SonySemiconductorSolutions/aitrios-sdk-edge-app.svg)](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases)
+[![GitHub issues](https://img.shields.io/github/issues/SonySemiconductorSolutions/aitrios-sdk-edge-app.svg)](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/issues)
+[![GitHub stars](https://img.shields.io/github/stars/SonySemiconductorSolutions/aitrios-sdk-edge-app.svg)](https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/stargazers)
+
 This repository provides SDKs and libraries to simplify the development of Edge Applications across various devices. Using this SDK, you can efficiently develop AI applications on Edge devices, such as handling AI inference results from the IMX500 and processing image data.
 
 ## Features
@@ -19,24 +25,6 @@ This Edge Application SDK is designed to connect to a Local Console. You need to
 To avoid compatibility issues, please ensure you use version v4.0.18-sss.
 [Local Console](https://github.com/SonySemiconductorSolutions/local-console/tree/v4.0.18-sss)
 
-### Sample Application for Python on Raspberry Pi + AI Camera
-
-The sample Edge Application Python runs on a Raspberry Pi with an AI Camera. First, follow the instructions on the Picamera2 GitHub repository to install the necessary tools:
-[Picamera2](https://github.com/raspberrypi/picamera2)
-
-#### Install Edge App Python Library
-
-```python
-python3 -m venv .venv --system-site-package
-source .venv/bin/activate
-pip install -e ./libs/python
-```
-
-#### Run Sample Edge Application Python
-```python
-python3 sample_apps/classification/python/imx500_classification_local_console_demo.py --model /usr/share/imx500-models/imx500_network_efficientnet_bo.rpk --softmax --mqtt_host=localhost --mqtt_port=1883
-```
-
 ### Sample Application for C/C++
 
 
@@ -54,6 +42,7 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 | [classification] | Outputs encoded inference results into FlatBuffers after post-processing for classification task on IMX500.|
 | [detection]      | Outputs encoded inference results into FlatBuffers after post-processing for objectdetection task on IMX500.|
 | [posenet] | Outputs encoded inference results into FlatBuffers after post-processing for posenet task on IMX500.|
+| [gaze]    | Outputs encoded inference results into FlatBuffers after post-processing for gaze task on IMX500.|
 | [segmentation]   | Outputs encoded inference results into FlatBuffers after post-processing for segmentation task on IMX500.|
 | [switch_dnn]     | Sample application for switching between multiple DNNs on IMX500.|
 | [draw]           | Sample application for drawing bounding box on input tensor from IMX500.|
@@ -63,6 +52,7 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 [classification]: sample_apps/classification
 [detection]: sample_apps/detection
 [posenet]: sample_apps/posenet
+[gaze]: sample_apps/gaze
 [segmentation]: sample_apps/segmentation
 [switch_dnn]: sample_apps/switch_dnn
 [draw]: sample_apps/draw
@@ -74,7 +64,7 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 
 You can run and debug the built Edge Application **without deploying it to the Edge device** by following way:
 
-Target devices: **Ubuntu(amd64), Raspberry Pi (aarch64)**
+Target devices: **Ubuntu (amd64), Raspberry Pi (aarch64)**
 
 Before running this Edge Application, please ensure that **Netcat** is installed on your Target Device.  
 Netcat is used to send configuration data to the application.  
@@ -86,38 +76,44 @@ sudo apt install -y netcat-traditional
 
 #### Steps 
 
-##### 1. Download and Install `senscord_libcamera.deb`
+##### 1. Install senscord-libcamera
 
-Download the package according to your Ubuntu version:
+Install the package using the Debian package repository according to your system:
 
-- **For Ubuntu 22.04 (amd64)**  
+- **For Ubuntu 22.04 (Jammy/amd64)**  
   ```sh
-  wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_u22_amd64.deb
-  sudo apt install ./senscord-libcamera_*.deb
+  wget http://midokura.github.io/debian/evp-archive-keyring_jammy_amd64.deb
+  sudo dpkg -i ./evp-archive-keyring_jammy_amd64.deb 
+  sudo apt update
+  sudo apt install senscord-libcamera
   ```
 
-- **For Ubuntu 20.04 (amd64, Codespaces)**  
+- **For Ubuntu 20.04 (Focal/amd64)**  
   ```sh
-  wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_u20_amd64.deb
-  sudo apt install ./senscord-libcamera_*.deb
+  wget http://midokura.github.io/debian/evp-archive-keyring_focal_amd64.deb
+  sudo dpkg -i ./evp-archive-keyring_focal_amd64.deb 
+  sudo apt update
+  sudo apt install senscord-libcamera
   ```
 
-- **For Raspberry Pi AI camera (aarch64)**  
+- **For Raspberry Pi (Bookworm/aarch64)**  
   ```sh
-  wget https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app/releases/download/1.2.1/senscord-libcamera_1.0.7_arm64.deb
-  sudo apt install ./senscord-libcamera_*.deb
+  wget http://midokura.github.io/debian/evp-archive-keyring_bookworm_arm64.deb
+  sudo dpkg -i ./evp-archive-keyring_bookworm_arm64.deb 
+  sudo apt update
+  sudo apt install senscord-libcamera
   ```
 
 
 ##### 2. Run Edge Application
 
-If the **Target Device is a Ubuntu**, run the following command:
+If the **Target Device is Ubuntu**, run the following command:
 
   ```sh
   /opt/senscord/run_iwasm.sh -d pc /path/to/your_edge_app.wasm
   ```
 
-If the **Target Device is a Raspberry Pi AI camera**
+If the **Target Device is Raspberry Pi**, run the following command:
 
   ```sh
   /opt/senscord/run_iwasm.sh /path/to/your_edge_app.wasm
@@ -136,7 +132,7 @@ cat configuration.json | nc localhost 8080
 You can use the sample configuration file in the `sample_apps/$NAME_OF_APP/configuration` directory.
 
 
-### 4. Check the Results
+##### 4. Check the Results
 
 When you run the application at step 2, **two folders** will be automatically created under your current directory:
 
@@ -144,6 +140,40 @@ When you run the application at step 2, **two folders** will be automatically cr
 - **Inference**: Contains the output data (e.g., Output Tensors) from the AI inference.
 
 ---
+
+## Building the Documentation
+
+You can view the documentation locally:
+
+### Setup
+
+Install uv.
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Create virtual environment.
+```bash
+uv venv
+```
+Activate virtual environment.
+```bash
+source .venv/bin/activate
+```
+Install required packages.
+```bash
+uv pip install mkdocs mkdocs-material
+uv pip install mkdocs-static-i18n # for supporting multiple language
+```
+
+### View Documentation Locally
+
+Start local server.
+```bash
+uv run mkdocs serve
+```
+
+Then open http://localhost:8000 in your browser.
 
 
 ## Get support
