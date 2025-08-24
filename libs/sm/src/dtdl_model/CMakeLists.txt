@@ -47,9 +47,6 @@ add_library(dtdl_model
   ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/codec_settings.cpp
   # TODO: properly link with parson
   ${LIBS_DIR}/third_party/parson/parson.c
-  ${SM_SRC_DIR}/sm_context.cpp
-  ${SM_SRC_DIR}/sm_configurator.cpp
-  ${SM_SRC_DIR}/states/state_utils.cpp
 )
 
 target_include_directories(dtdl_model PUBLIC

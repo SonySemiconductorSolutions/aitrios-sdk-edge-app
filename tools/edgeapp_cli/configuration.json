@@ -1,0 +1,59 @@
+{
+    "edge_app": {
+        "req_info": {
+            "req_id": "sample"
+        },
+        "common_settings": {
+            "process_state": 2,
+            "log_level": 5,
+            "inference_settings": {
+                "number_of_iterations": 0
+            },
+            "port_settings": {
+                "metadata": {
+                    "method": 2,
+                    "storage_name": "",
+                    "endpoint": "http://192.168.1.14:5000",
+                    "path": "inference",
+                    "enabled": true
+                },
+                "input_tensor": {
+                    "method": 2,
+                    "storage_name": "",
+                    "endpoint": "http://192.168.1.14:5000",
+                    "path": "upload",
+                    "enabled": true
+                }
+            },
+            "codec_settings": {
+                "format": 1
+            },
+            "number_of_inference_per_message": 1
+        },
+        "custom_settings": {
+            "ai_models_imx500": {
+                "lp_detection": {
+                    "ai_model_bundle_id": "${network_id_1}",
+                    "parameters": {
+                        "max_detections": 200,
+                        "threshold": 0.3,
+                        "input_width": 300,
+                        "input_height": 300,
+                        "bbox_normalization": true
+                    }
+                }
+            },
+            "ai_models_cpu": {
+                "lp_recognition": {
+                    "ai_model_path": "/opt/senscord/share/tflite_models/LPR.tflite",
+                    "parameters": {
+                        "threshold": 0.5
+                    }
+                }
+            },
+            "metadata_settings": {
+                "format": 1
+            }
+        }
+    }
+}

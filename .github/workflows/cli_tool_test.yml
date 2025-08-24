@@ -1,0 +1,25 @@
+name: CLI tool test
+
+on:
+    workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        working-directory: tools/edgeapp_cli/tests
+        run: |
+          pip install -r test_requirements.txt
+          
+      - name: Run tests
+        working-directory: tools/edgeapp_cli/tests
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          export MQTT_TEST_HOST=localhost
+          pytest -v
