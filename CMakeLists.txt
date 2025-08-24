@@ -24,21 +24,33 @@ set(TESTS_DIR ${ROOT_DIR}/tests)
 set(LIBS_DIR ${ROOT_DIR}/libs)
 
 # Define a list of possible apps
-set(APPS_LIST "passthrough" "classification" "detection" "posenet" "segmentation" "switch_dnn" "draw" "perfbench" "apitest" "lp_recog")
+set(APPS_LIST
+  "passthrough"
+  "classification"
+  "detection"
+  "posenet"
+  "segmentation"
+  "switch_dnn"
+  "draw"
+  "perfbench"
+  "apitest"
+  "lp_recog"
+)
 
 if(NOT DEFINED APPS_SELECTION)
   set(APPS_SELECTION "passthrough")
 endif()
 
-if (APPS_SELECTION IN_LIST APPS_LIST)
+if(APPS_SELECTION IN_LIST APPS_LIST)
   message(STATUS "App selected: ${APPS_SELECTION}")
 else()
   message(FATAL_ERROR
-    "Please if you are defining the `APPS_SELECTION` flag select one of the following: passthrough, classification, detection, posenet, segmentation, switch_dnn, draw, perfbench, lp_recog or apitest"
+    "Invalid APPS_SELECTION: '${APPS_SELECTION}'. "
+    "Please select one of the following supported apps: ${APPS_LIST}"
   )
 endif()
 
-if (APPS_SELECTION STREQUAL "barcode" OR APPS_SELECTION STREQUAL "lp_recog")
+if(APPS_SELECTION STREQUAL "barcode" OR APPS_SELECTION STREQUAL "lp_recog")
   set(MAX_MEMORY 52428800)
   set(INITIAL_MEMORY 52428800)
 else()
@@ -63,18 +75,24 @@ else()
   )
 endif()
 
-
 if(NOT APPS_SELECTION STREQUAL "apitest")
   add_subdirectory(${SAMPLE_APP_DIR}/${APPS_SELECTION}/data_processor/src)
 else()
   add_subdirectory(${TESTS_DIR}/${APPS_SELECTION}/data_processor/src)
 endif()
+
 if(NOT APPS_SELECTION STREQUAL "switch_dnn")
-set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
-)
+  set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
+    ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp)
 endif()
-set(TARGET_LIBS data_processor_api)
+
+# Add SSL subdirectory
+if(APPS_SELECTION STREQUAL "ssl")
+  add_subdirectory(${SAMPLE_APP_DIR}/ssl/ssl_client)
+  set(TARGET_LIBS ${TARGET_LIBS} ssl_client_api)
+endif()
+
+set(TARGET_LIBS ${TARGET_LIBS} data_processor_api)
 
 add_executable(edge_app ${EXECUTABLE_FILES})
 target_link_libraries(edge_app ${TARGET_LIBS} edge_app_lib)

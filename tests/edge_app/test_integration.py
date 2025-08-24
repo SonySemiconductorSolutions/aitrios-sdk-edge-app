@@ -216,6 +216,23 @@ def validate_lp_recog_custom_settings(data: dict, id_suffix: str) -> None:
     if "ai_models_cpu" in data["custom_settings"]:
         assert data["custom_settings"]["ai_models_cpu"]["lp_recognition"]["parameters"]["threshold"] == 0.8
 
+def change_ssl_custom_settings(data: dict, id_suffix: str) -> None:
+    data["req_info"]["req_id"] = f"ssl_custom_settings{id_suffix}"
+    data["custom_settings"]["ai_models"]["ssl"]["ai_model_bundle_id"] = "1234567890"
+    data["custom_settings"]["ssl_client"]["server"]["name"] = "localhost"
+    data["custom_settings"]["ssl_client"]["server"]["port"] = "8443"
+    data["custom_settings"]["ssl_client"]["server"]["base_path"] = "/api"
+    send_data(data)
+    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+
+def validate_ssl_custom_settings(data: dict, id_suffix: str) -> None:
+    assert data["res_info"]["res_id"] == f"ssl_custom_settings{id_suffix}"
+    assert data["custom_settings"]["res_info"]["res_id"] == f"ssl_custom_settings{id_suffix}"
+    assert data["custom_settings"]["ai_models"]["ssl"]["ai_model_bundle_id"] == "1234567890"
+    assert data["custom_settings"]["ssl_client"]["server"]["name"] == "localhost"
+    assert data["custom_settings"]["ssl_client"]["server"]["port"] == "8443"
+    assert data["custom_settings"]["ssl_client"]["server"]["base_path"] == "/api"
+
 def change_custom_settings_metadata_format(data: dict, metadata_format: int) -> None:
     data["req_info"]["req_id"] = f"custom_settings_metadata_format{metadata_format}"
     data["custom_settings"]["metadata_settings"]["format"] = metadata_format
@@ -320,6 +337,7 @@ CUSTOM_SETTINGS_PER_APP = {
     "switch_dnn": change_switch_dnn_custom_settings,
     "barcode": change_barcode_custom_settings,  # barcode is same as detection
     "lp_recog": change_lp_recog_custom_settings,  # lp_recog is similar to detection
+    "ssl": change_ssl_custom_settings,
 }
 
 VALIDATE_CUSTOM_SETTINGS_PER_APP = {
@@ -334,6 +352,7 @@ VALIDATE_CUSTOM_SETTINGS_PER_APP = {
     "switch_dnn": validate_switch_dnn_custom_settings,
     "barcode": validate_barcode_custom_settings,  # barcode is same as draw
     "lp_recog": validate_lp_recog_custom_settings,  # lp_recog is similar to detection
+    "ssl": validate_ssl_custom_settings,
 }
 
 def generate_random_string(length):

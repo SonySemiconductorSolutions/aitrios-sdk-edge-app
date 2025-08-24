@@ -1,0 +1,12 @@
+include *.md
+include *.txt
+include *.json
+include requirements.txt
+recursive-include src *
+recursive-include test_configs *
+recursive-exclude __pycache__ *
+recursive-exclude *.pyc
+recursive-exclude venv *
+recursive-exclude server_dir *
+recursive-exclude server_logs *
+recursive-exclude test_server_dir *

@@ -1,6 +1,6 @@
 # Pass through Edge Application Sample
 
-Pass theough "**Edge Application**" sample is showing how to get image data from Senscord and send it to the AITRIOS Console. It uses no AI model and performs no postprocessing.
+Pass through "**Edge Application**" sample is showing how to get image data from Senscord and send it to the AITRIOS Console. It uses no AI model and performs no postprocessing.
 
 ## Initialize process
 
