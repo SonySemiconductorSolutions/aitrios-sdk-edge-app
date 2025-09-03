@@ -160,6 +160,7 @@ void filter_predictions_by_score(std::vector<Prediction> &predictions,
                                  float threshold);
 
 std::string interpret_predictions(const std::vector<Prediction> &predictions);
+bool is_valid_japanese_number_plate(const char *plate_data);
 
 // Helper function declarations
 std::vector<Prediction> sort_by_xmin(

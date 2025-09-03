@@ -1,0 +1,118 @@
+{
+    "edge_app": {
+        "req_info": {
+            "req_id": "ssl_sample"
+        },
+        "common_settings": {
+            "process_state": 1,
+            "log_level": 2,
+            "inference_settings": {
+                "number_of_iterations": 0
+            },
+            "pq_settings": {
+                "camera_image_size": {
+                    "width": 2028,
+                    "height": 1520,
+                    "scaling_policy": 1
+                },
+                "frame_rate": {
+                    "num": 2997,
+                    "denom": 100
+                },
+                "digital_zoom": 1.0,
+                "camera_image_flip": {
+                    "flip_horizontal": 0,
+                    "flip_vertical": 0
+                },
+                "exposure_mode": 0,
+                "auto_exposure": {
+                    "max_exposure_time": 10000,
+                    "min_exposure_time": 100,
+                    "max_gain": 51.0,
+                    "convergence_speed": 2
+                },
+                "auto_exposure_metering": {
+                    "metering_mode": 0,
+                    "top": 0,
+                    "left": 0,
+                    "bottom": 0,
+                    "right": 0
+                },
+                "ev_compensation": 0,
+                "ae_anti_flicker_mode": 0,
+                "manual_exposure": {
+                    "exposure_time": 10000,
+                    "gain": 0.0
+                },
+                "white_balance_mode": 0,
+                "auto_white_balance": {
+                    "convergence_speed": 6
+                },
+                "manual_white_balance_preset": {
+                    "color_temperature": 0
+                },
+                "image_cropping": {
+                    "left": 0,
+                    "top": 0,
+                    "width": 2028,
+                    "height": 1520
+                },
+                "image_rotation": 0
+            },
+            "port_settings": {
+                "metadata": {
+                    "method": 0,
+                    "storage_name": "",
+                    "endpoint": "",
+                    "path": "",
+                    "enabled": true
+                },
+                "input_tensor": {
+                    "method": 1,
+                    "storage_name": "${project_id}",
+                    "endpoint": "",
+                    "path": "${device_id}/image/${current_timestamp}",
+                    "enabled": true
+                }
+            },
+            "codec_settings": {
+                "format": 1
+            },
+            "number_of_inference_per_message": 1
+        },
+        "custom_settings": {
+            "ai_models": {
+                "ssl": {
+                    "ai_model_bundle_id": "${network_id_1}"
+                }
+            },
+            "ssl_client": {
+                "server": {
+                    "name": "localhost",
+                    "port": "8443",
+                    "base_path": "/api"
+                },
+                "authentication": {
+                    "edge_login": {
+                        "user_id": "test_user",
+                        "password": "test_password",
+                        "host_id": "test_host_001"
+                    },
+                    "edge_info": {
+                        "host_id": "test_host_001"
+                    }
+                },
+                "metadata": {
+                    "servicer": "test_servicer",
+                    "dataset": "test_dataset"
+                },
+                "api_endpoints": {
+                    "edge_login": "/edge/login",
+                    "edge_info": "/edge/info/{host_id}",
+                    "metadata": "/metadata",
+                    "result": "/result"
+                }
+            }
+        }
+    }
+}

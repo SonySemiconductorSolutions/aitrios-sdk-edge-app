@@ -47,6 +47,7 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 | [switch_dnn]     | Sample application for switching between multiple DNNs on IMX500.|
 | [draw]           | Sample application for drawing bounding box on input tensor from IMX500.|
 | [perfbench]      | Sample Application for measuring performance with Debug Code.|
+| [lp_recog] | Detects license plates on IMX500 and recognizes license plate characters on CPU(TFLite). |
 
 [passthrough]: sample_apps/passthrough
 [classification]: sample_apps/classification
@@ -57,6 +58,7 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 [switch_dnn]: sample_apps/switch_dnn
 [draw]: sample_apps/draw
 [perfbench]: sample_apps/perfbench
+[lp_recog]: sample_apps/lp_recog
 
 ---
 

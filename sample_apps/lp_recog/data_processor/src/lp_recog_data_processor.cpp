@@ -46,6 +46,7 @@ using EdgeAppLib::SensorStreamGetProperty;
 pthread_mutex_t data_processor_mutex;
 EdgeAppLibSendDataType metadata_format = EdgeAppLibSendDataBase64;
 char lpr_ai_model_path[256] = DEFAULT_LPR_MODEL_PATH;
+char lpd_imx500_model_id[AI_MODEL_BUNDLE_ID_SIZE];
 float lpr_threshold = DEFAULT_THRESHOLD_CPU;
 
 DataProcessorCustomParam_LPD detection_param = {
@@ -117,12 +118,17 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
         kDataProcessorOk)
       res = act;
   }
-  pthread_mutex_unlock(&data_processor_mutex);
 
-  if (SetEdgeAppLibNetwork(s_stream, imx500_model_json_object) != 0) {
-    res = kDataProcessorInvalidParamSetError;
+  const char *ai_model_bundle_id =
+      json_object_dotget_string(imx500_model_json_object, "ai_model_bundle_id");
+  if (ai_model_bundle_id != nullptr) {
+    snprintf(lpd_imx500_model_id, sizeof(lpd_imx500_model_id), "%s",
+             ai_model_bundle_id);
+  } else {
+    LOG_WARN("ai_model_bundle_id not found for IMX500 model.");
   }
 
+  pthread_mutex_unlock(&data_processor_mutex);
   // extract parameters of AI model on CPU
   JSON_Object *object_model_cpu =
       json_object_dotget_object(object, "ai_models_cpu." CPU_MODEL_NAME);

@@ -14,21 +14,21 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
-#define MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
+#include "ssl_server_certs.h"
 
-#include "data_processor_api.hpp"
+#include "test_certs.h"
 
-// Mock functions for LPD and LPR data processor analyze
-void resetLPDDataProcessorAnalyzeCalled();
-int wasLPDDataProcessorAnalyzeCalled();
-void setLPDDataProcessorAnalyzeFail();
-void resetLPDDataProcessorAnalyzeSuccess();
+/* Server certificate (RSA) - using mbedTLS test certificate */
+const char mbedtls_test_srv_crt[] = TEST_SRV_CRT_RSA_SHA256_PEM;
 
-void resetLPRDataProcessorAnalyzeCalled();
-int wasLPRDataProcessorAnalyzeCalled();
-void setLPRDataProcessorAnalyzeFail();
-void resetLPRDataProcessorAnalyzeSuccess();
-void setLPRDataProcessorAnalyzeReturnValid(bool valid);
+const size_t mbedtls_test_srv_crt_len = sizeof(mbedtls_test_srv_crt);
 
-#endif /* MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP */
+/* Server private key (RSA) - using mbedTLS test key */
+const char mbedtls_test_srv_key[] = TEST_SRV_KEY_RSA_PEM;
+
+const size_t mbedtls_test_srv_key_len = sizeof(mbedtls_test_srv_key);
+
+/* CA certificates for trust chain - using mbedTLS test CA certificate */
+const char mbedtls_test_cas_pem[] = TEST_CA_CRT_RSA_SHA256_PEM;
+
+const size_t mbedtls_test_cas_pem_len = sizeof(mbedtls_test_cas_pem);

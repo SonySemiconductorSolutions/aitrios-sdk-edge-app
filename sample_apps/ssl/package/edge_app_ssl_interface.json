@@ -1,6 +1,6 @@
 {
     "@context": "dtmi:dtdl:context;3",
-    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:lp_recog;3",
+    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:ssl;1",
     "@type": "Interface",
     "displayName": "Edge App Example",
     "contents": [
@@ -942,54 +942,6 @@
                                     }
                                 },
                                 {
-                                    "name": "ai_models",
-                                    "displayName": "AI Models",
-                                    "description": "Configuration for AI models to be used",
-                                    "schema": {
-                                        "@type": "Array",
-                                        "elementSchema": {
-                                            "@type": "Object",
-                                            "fields": [
-                                                {
-                                                    "name": "name",
-                                                    "displayName": "Name",
-                                                    "description": "Name of the AI model to deploy to edge device.",
-                                                    "schema": "string"
-                                                },
-                                                {
-                                                    "name": "target",
-                                                    "displayName": "Target",
-                                                    "description": "The target platform for the AI model",
-                                                    "schema": {
-                                                        "@type": "Enum",
-                                                        "valueSchema": "string",
-                                                        "enumValues": [
-                                                            {
-                                                                "name": "cpu",
-                                                                "displayName": "CPU",
-                                                                "description": "AI model runs on CPU",
-                                                                "enumValue": "cpu"
-                                                            }
-                                                        ]
-                                                    }
-                                                },
-                                                {
-                                                    "name": "url_path",
-                                                    "displayName": "URL Path",
-                                                    "description": "URL path to the AI model",
-                                                    "schema": "string"
-                                                },
-                                                {
-                                                    "name": "hash",
-                                                    "displayName": "Hash",
-                                                    "description": "SHA256 hash value of the AI model",
-                                                    "schema": "string"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                {
                                     "name": "number_of_inference_per_message",
                                     "displayName": "Number of Inference per Message",
                                     "description": "Number of inference results to include in one message. Default:1",
@@ -1136,8 +1088,8 @@
                                     }
                                 },
                                 {
-                                    "name": "ai_models_imx500",
-                                    "displayName": "AI Models on IMX500",
+                                    "name": "ai_models",
+                                    "displayName": "AI Models",
                                     "schema": {
                                         "@type": "Map",
                                         "mapKey": {
@@ -1157,41 +1109,6 @@
                                                         "description": "6 digit HEX value string like '000000'",
                                                         "comment": "SENSCORD_AI_MODEL_BUNDLE_ID_PROPERTY_KEY",
                                                         "schema": "string"
-                                                    },
-                                                    {
-                                                        "name": "parameters",
-                                                        "displayName": "Parameters of AI Model",
-                                                        "schema": {
-                                                            "@type": "Object",
-                                                            "fields": [
-                                                                {
-                                                                    "name": "max_detections",
-                                                                    "displayName": "Max detections",
-                                                                    "schema": "integer"
-                                                                },
-                                                                {
-                                                                    "name": "threshold",
-                                                                    "displayName": "Threshold",
-                                                                    "schema": "float"
-                                                                },
-                                                                {
-                                                                    "name": "input_width",
-                                                                    "displayName": "Input width",
-                                                                    "schema": "integer"
-                                                                },
-                                                                {
-                                                                    "name": "input_height",
-                                                                    "displayName": "Input height",
-                                                                    "schema": "integer"
-                                                                },
-                                                                {
-                                                                    "name": "bbox_normalization",
-                                                                    "displayName": "Flag for Bounding box normalization",
-                                                                    "description": "A value of true indicates that the bounding box is normalized (0.0-1.0). If false, the values are in absolute pixels based on the input image size.",
-                                                                    "schema": "boolean"
-                                                                }
-                                                            ]
-                                                        }
                                                     }
                                                 ]
                                             }
@@ -1199,68 +1116,140 @@
                                     }
                                 },
                                 {
-                                    "name": "ai_models_cpu",
-                                    "displayName": "AI Models on CPU",
-                                    "schema": {
-                                        "@type": "Map",
-                                        "mapKey": {
-                                            "name": "name",
-                                            "displayName": "Name",
-                                            "schema": "string"
-                                        },
-                                        "mapValue": {
-                                            "name": "value",
-                                            "displayName": "Value",
-                                            "schema": {
-                                                "@type": "Object",
-                                                "fields": [
-                                                    {
-                                                        "name": "ai_model_path",
-                                                        "displayName": "AI Model Path",
-                                                        "description": "Path to the AI model file.",
-                                                        "schema": "string"
-                                                    },
-                                                    {
-                                                        "name": "parameters",
-                                                        "displayName": "Parameters of AI Model",
-                                                        "schema": {
-                                                            "@type": "Object",
-                                                            "fields": [
-                                                                {
-                                                                    "name": "threshold",
-                                                                    "displayName": "Threshold",
-                                                                    "schema": "float"
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "name": "metadata_settings",
-                                    "displayName": "Metadata settings",
+                                    "name": "ssl_client",
+                                    "displayName": "SSL Client Configuration",
+                                    "description": "Configuration for SSL client communication settings",
                                     "schema": {
                                         "@type": "Object",
                                         "fields": [
                                             {
-                                                "name": "format",
-                                                "displayName": "Format",
+                                                "name": "server",
+                                                "displayName": "Server Settings",
                                                 "schema": {
-                                                    "@type": "Enum",
-                                                    "valueSchema": "integer",
-                                                    "enumValues": [
+                                                    "@type": "Object",
+                                                    "fields": [
                                                         {
-                                                            "name": "Base64",
-                                                            "displayName": "Base64",
-                                                            "enumValue": 0
+                                                            "name": "name",
+                                                            "displayName": "Server Name",
+                                                            "description": "SSL server hostname or IP address",
+                                                            "schema": "string"
                                                         },
                                                         {
-                                                            "name": "Json",
-                                                            "displayName": "Json",
-                                                            "enumValue": 1
+                                                            "name": "port",
+                                                            "displayName": "Server Port",
+                                                            "description": "SSL server port number",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "base_path",
+                                                            "displayName": "Base Path",
+                                                            "description": "Base API path for the server",
+                                                            "schema": "string"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "authentication",
+                                                "displayName": "Authentication Settings",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "edge_login",
+                                                            "displayName": "Edge Login Authentication",
+                                                            "schema": {
+                                                                "@type": "Object",
+                                                                "fields": [
+                                                                    {
+                                                                        "name": "user_id",
+                                                                        "displayName": "User ID",
+                                                                        "description": "User ID for edge login authentication",
+                                                                        "schema": "string"
+                                                                    },
+                                                                    {
+                                                                        "name": "password",
+                                                                        "displayName": "Password",
+                                                                        "description": "Password for edge login authentication",
+                                                                        "schema": "string"
+                                                                    },
+                                                                    {
+                                                                        "name": "host_id",
+                                                                        "displayName": "Host ID",
+                                                                        "description": "Host ID for edge login authentication",
+                                                                        "schema": "string"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "edge_info",
+                                                            "displayName": "Edge Info Authentication",
+                                                            "schema": {
+                                                                "@type": "Object",
+                                                                "fields": [
+                                                                    {
+                                                                        "name": "host_id",
+                                                                        "displayName": "Host ID",
+                                                                        "description": "Host ID for edge info authentication",
+                                                                        "schema": "string"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "metadata",
+                                                "displayName": "Metadata Configuration",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "servicer",
+                                                            "displayName": "Servicer",
+                                                            "description": "Service provider identifier",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "dataset",
+                                                            "displayName": "Dataset",
+                                                            "description": "Dataset identifier",
+                                                            "schema": "string"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "name": "api_endpoints",
+                                                "displayName": "API Endpoints",
+                                                "schema": {
+                                                    "@type": "Object",
+                                                    "fields": [
+                                                        {
+                                                            "name": "edge_login",
+                                                            "displayName": "Edge Login Endpoint",
+                                                            "description": "API endpoint for edge login",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "edge_info",
+                                                            "displayName": "Edge Info Endpoint",
+                                                            "description": "API endpoint for edge info",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "metadata",
+                                                            "displayName": "Metadata Endpoint",
+                                                            "description": "API endpoint for metadata",
+                                                            "schema": "string"
+                                                        },
+                                                        {
+                                                            "name": "result",
+                                                            "displayName": "Result Endpoint",
+                                                            "description": "API endpoint for sending results",
+                                                            "schema": "string"
                                                         }
                                                     ]
                                                 }

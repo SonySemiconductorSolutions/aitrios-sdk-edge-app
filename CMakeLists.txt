@@ -34,7 +34,9 @@ set(APPS_LIST
   "draw"
   "perfbench"
   "apitest"
+  "barcode"
   "lp_recog"
+  "ssl"
 )
 
 if(NOT DEFINED APPS_SELECTION)
@@ -88,8 +90,8 @@ endif()
 
 # Add SSL subdirectory
 if(APPS_SELECTION STREQUAL "ssl")
-  add_subdirectory(${SAMPLE_APP_DIR}/ssl/ssl_client)
-  set(TARGET_LIBS ${TARGET_LIBS} ssl_client_api)
+  add_subdirectory(${SAMPLE_APP_DIR}/ssl/ssl)
+  set(TARGET_LIBS ${TARGET_LIBS} ssl_client_api ssl_server_api)
 endif()
 
 set(TARGET_LIBS ${TARGET_LIBS} data_processor_api)

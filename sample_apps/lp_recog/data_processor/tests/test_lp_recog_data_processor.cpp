@@ -33,6 +33,7 @@ using EdgeAppLib::SensorStreamGetProperty;
 
 EdgeAppLibSensorStream s_stream = 0;
 extern char lpr_ai_model_path[256];
+extern char lpd_imx500_model_id[AI_MODEL_BUNDLE_ID_SIZE];
 extern float lpr_threshold;
 
 #define MAX_PREDICTIONS_PROP \
@@ -215,15 +216,14 @@ TEST_F(ConfigureAnalyzeFixtureTests, CorrectConfigurationTest) {
   EXPECT_STREQ(lpr_ai_model_path, expected_path);
   EXPECT_EQ(lpr_threshold, 0.5f);
 
-  EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle;
-  SensorStreamGetProperty(0, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-                          &ai_model_bundle, sizeof(ai_model_bundle));
-  printf("ai_model_bundle.ai_model_bundle_id: %s\n",
-         ai_model_bundle.ai_model_bundle_id);
+  /* NOT SET AI MODEL BUNDLE ID to host */
+  // EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle;
+  // SensorStreamGetProperty(0, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
+  //                         &ai_model_bundle, sizeof(ai_model_bundle));
+
+  printf("ai_model_bundle.ai_model_bundle_id: %s\n", lpd_imx500_model_id);
   printf("network_id: %s\n", network_id);
-  ASSERT_EQ(strncmp(ai_model_bundle.ai_model_bundle_id, network_id,
-                    sizeof(network_id)),
-            0);
+  ASSERT_EQ(strncmp(lpd_imx500_model_id, network_id, sizeof(network_id)), 0);
 }
 
 TEST_F(ConfigureAnalyzeFixtureTests, DefaultValuesTest) {
