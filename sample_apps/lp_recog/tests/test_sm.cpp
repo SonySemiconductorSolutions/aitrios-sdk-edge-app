@@ -19,6 +19,7 @@
 #include "data_export/mock_data_export.hpp"
 #include "data_processor_api/mock_data_processor_api.hpp"
 #include "draw.h"
+#include "lp_recog_data_processor/mock_lp_recog_data_processor.hpp"
 #include "mock_device.hpp"
 #include "mock_draw.hpp"
 #include "mock_edgecore.hpp"
@@ -106,6 +107,24 @@ TEST_F(EvenFunctionsTest, OnIterateSuccess) {
   EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 1);
   onDestroy();
   EXPECT_EQ(wasEdgeAppCoreUnloadModelCalled(), 1);
+}
+
+TEST_F(EvenFunctionsTest, OnIterateInvalidJapaneseNumberPlate) {
+  onCreate();
+  // Set LPRDataProcessorAnalyze to return invalid plate data
+  setLPRDataProcessorAnalyzeReturnValid(false);
+  int res = onIterate();
+  EXPECT_EQ(res, 0);
+  // LPRDataProcessorAnalyze should be called
+  EXPECT_EQ(wasLPRDataProcessorAnalyzeCalled(), 1);
+  // DataProcessorGetDataType should NOT be called because SendDataSyncMeta is
+  // not called
+  EXPECT_EQ(wasDataProcessorGetDataTypeCalled(), 0);
+  // SendDataSyncMeta should NOT be called for invalid Japanese number plate
+  EXPECT_EQ(wasEdgeAppLibSendDataSyncMetaCalled(), 0);
+  onDestroy();
+  EXPECT_EQ(wasEdgeAppCoreUnloadModelCalled(), 1);
+  setLPRDataProcessorAnalyzeReturnValid(true);
 }
 
 TEST_F(EvenFunctionsTest, OnIterateLoadModelError) {

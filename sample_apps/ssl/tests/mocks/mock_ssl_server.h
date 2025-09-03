@@ -14,21 +14,24 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
-#define MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
+#ifndef MOCK_SSL_SERVER_H
+#define MOCK_SSL_SERVER_H
 
-#include "data_processor_api.hpp"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Mock functions for LPD and LPR data processor analyze
-void resetLPDDataProcessorAnalyzeCalled();
-int wasLPDDataProcessorAnalyzeCalled();
-void setLPDDataProcessorAnalyzeFail();
-void resetLPDDataProcessorAnalyzeSuccess();
+// Mock control functions for SSL server functions
+void setMockStartSSLServerFail(int fail);
+void setMockStopSSLServerFail(int fail);
+void resetAllMockSSLServerMocks();
 
-void resetLPRDataProcessorAnalyzeCalled();
-int wasLPRDataProcessorAnalyzeCalled();
-void setLPRDataProcessorAnalyzeFail();
-void resetLPRDataProcessorAnalyzeSuccess();
-void setLPRDataProcessorAnalyzeReturnValid(bool valid);
+// Mock implementations for SSL server functions
+int start_ssl_server(void);
+int stop_ssl_server(void);
 
-#endif /* MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP */
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MOCK_SSL_SERVER_H

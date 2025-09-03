@@ -26,6 +26,8 @@ struct LPDataProcessorAnalyzeParam {
 
 // Global variables used by lp_recog
 char lpr_ai_model_path[256] = {};
+bool LPRDataProcessorAnalyzeReturnValidData = true;
+char lpd_imx500_model_id[128];
 
 // Mock functions for LPD and LPR data processor analyze functions
 static int LPDDataProcessorAnalyzeCalled = 0;
@@ -53,13 +55,33 @@ DataProcessorResultCode LPRDataProcessorAnalyze(float *in_data,
 
   // Create a simple mock response
   if (out_data && out_size) {
-    const char *mock_response = "\"mock_license_plate\"";
+    const char *mock_response;
+    if (LPRDataProcessorAnalyzeReturnValidData) {
+      mock_response =
+          "Mock 589, ra 52-04";  // Valid Japanese number plate format
+    } else {
+      mock_response =
+          "Invalid?Plate--123";  // Invalid format (contains ? and --)
+    }
+
     *out_data = (char *)malloc(strlen(mock_response) + 1);
     strcpy(*out_data, mock_response);
     *out_size = strlen(mock_response) + 1;
   }
 
   return LPRDataProcessorAnalyzeReturn;
+}
+
+bool is_valid_japanese_number_plate(const char *plate_data) {
+  if (plate_data == nullptr) {
+    return false;
+  }
+  // Simple Checking for invalid patterns that the real function would reject
+  if (strstr(plate_data, "?") != nullptr ||
+      strstr(plate_data, "--") != nullptr) {
+    return false;
+  }
+  return true;
 }
 
 // Reset and check functions for LPD/LPR analyze
@@ -79,4 +101,7 @@ void setLPRDataProcessorAnalyzeFail() {
 }
 void resetLPRDataProcessorAnalyzeSuccess() {
   LPRDataProcessorAnalyzeReturn = kDataProcessorOk;
+}
+void setLPRDataProcessorAnalyzeReturnValid(bool valid) {
+  LPRDataProcessorAnalyzeReturnValidData = valid;
 }

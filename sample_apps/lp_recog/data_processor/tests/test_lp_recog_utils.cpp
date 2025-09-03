@@ -281,3 +281,65 @@ TEST_F(LPRecogUtilsTestFixture, CreateLPDetections_Unnormalized) {
   free(dets->detection_data);
   free(dets);
 }
+TEST(LPRecogUtilsTest, IsValidJapaneseNumberPlate_ValidPlates) {
+  // Valid plates with dash in the correct position (3rd from end)
+  EXPECT_TRUE(is_valid_japanese_number_plate("Nagoya 589, ka 45-67"));
+  EXPECT_TRUE(is_valid_japanese_number_plate("Tokyo 123, su 12-34"));
+  EXPECT_TRUE(is_valid_japanese_number_plate("Test AB-CD"));
+  EXPECT_TRUE(is_valid_japanese_number_plate("12-34"));
+
+  // Valid plates with dot
+  EXPECT_TRUE(is_valid_japanese_number_plate("Shonan 300, a .. .9"));
+}
+
+TEST(LPRecogUtilsTest, IsValidJapaneseNumberPlate_InvalidPlates) {
+  // Plates with question marks
+  EXPECT_FALSE(is_valid_japanese_number_plate("Test?123"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("? 012, sa 12-34"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("ABC?DEF"));
+
+  // Plates with consecutive dashes
+  EXPECT_FALSE(is_valid_japanese_number_plate("Test--123"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("AB--CD"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("--test"));
+
+  // Plates with neither dot nor dash
+  EXPECT_FALSE(is_valid_japanese_number_plate("Test123"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("ABCDEF"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("123456"));
+
+  // Plates with dash in wrong position
+  EXPECT_FALSE(
+      is_valid_japanese_number_plate("Test-123"));  // dash not 3rd from end
+  EXPECT_FALSE(
+      is_valid_japanese_number_plate("-test123"));  // dash at beginning
+  EXPECT_FALSE(is_valid_japanese_number_plate(
+      "te-st123"));  // dash in middle (not 3rd from end)
+  EXPECT_FALSE(
+      is_valid_japanese_number_plate("test12-3"));  // dash 2nd from end
+
+  EXPECT_FALSE(is_valid_japanese_number_plate("test123-"));  // dash at end
+
+  // Null pointer
+  EXPECT_FALSE(is_valid_japanese_number_plate(nullptr));
+}
+
+TEST(LPRecogUtilsTest, IsValidJapaneseNumberPlate_EdgeCases) {
+  // Empty string
+  EXPECT_FALSE(is_valid_japanese_number_plate(""));
+
+  // Very short strings
+  EXPECT_FALSE(is_valid_japanese_number_plate("A-B"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("AB-C"));
+  EXPECT_FALSE(is_valid_japanese_number_plate("A-BC"));
+
+  // Single dot or dash
+  EXPECT_FALSE(is_valid_japanese_number_plate("."));
+  EXPECT_FALSE(is_valid_japanese_number_plate("-"));
+
+  // Multiple dots
+  EXPECT_TRUE(is_valid_japanese_number_plate(
+      "A.B.C"));  // This case is actually invalid but rare. So we keep the
+                  // implementation of data_processor simple.
+  EXPECT_FALSE(is_valid_japanese_number_plate("..."));
+}

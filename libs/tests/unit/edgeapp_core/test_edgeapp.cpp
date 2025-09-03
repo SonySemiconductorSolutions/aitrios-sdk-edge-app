@@ -63,6 +63,14 @@ TEST_F(EdgeAppCoreTest, LoadModelsSuccess) {
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
   res = LoadModel(model[1], ctx_cpu, &ctx_imx500);
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
+  // Verify model properties
+  EdgeAppLibSensorAiModelBundleIdProperty bundle_id;
+  EdgeAppLib::SensorStreamGetProperty(
+      *ctx_imx500.sensor_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
+      &bundle_id, sizeof(bundle_id));
+  EXPECT_STREQ(
+      bundle_id.ai_model_bundle_id,
+      model[0].model_name);  // Assuming model_name is the correct member
 }
 
 TEST_F(EdgeAppCoreTest, LoadModelsInvalidParam) {
@@ -77,7 +85,11 @@ TEST_F(EdgeAppCoreTest, ProcessFrameSuccess) {
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
   res = LoadModel(model[1], ctx_cpu, &ctx_imx500);
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
-
+  EdgeAppLibSensorAiModelBundleIdProperty bundle_id;
+  EdgeAppLib::SensorStreamGetProperty(
+      *ctx_imx500.sensor_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
+      &bundle_id, sizeof(bundle_id));
+  EXPECT_STREQ(bundle_id.ai_model_bundle_id, model[0].model_name);
   // Use dummy sensor frame
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
   EXPECT_NE(frame, 0);  // Ensure frame is valid
@@ -90,7 +102,11 @@ TEST_F(EdgeAppCoreTest, ProcessFrameComputeError) {
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
   res = LoadModel(model[1], ctx_cpu, &ctx_imx500);
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
-
+  EdgeAppLibSensorAiModelBundleIdProperty bundle_id;
+  EdgeAppLib::SensorStreamGetProperty(
+      *ctx_imx500.sensor_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
+      &bundle_id, sizeof(bundle_id));
+  EXPECT_STREQ(bundle_id.ai_model_bundle_id, model[0].model_name);
   // Simulate failure in Compute
   setComputeError();
   // ProcessFrame still returns success, but Compute inside may fail
@@ -104,6 +120,11 @@ TEST_F(EdgeAppCoreTest, ProcessFrameComputeError) {
 TEST_F(EdgeAppCoreTest, GetOutputsSuccess) {
   EdgeAppCoreResult res = LoadModel(model[0], ctx_imx500, nullptr);
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
+  EdgeAppLibSensorAiModelBundleIdProperty bundle_id;
+  EdgeAppLib::SensorStreamGetProperty(
+      *ctx_imx500.sensor_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
+      &bundle_id, sizeof(bundle_id));
+  EXPECT_STREQ(bundle_id.ai_model_bundle_id, model[0].model_name);
   res = LoadModel(model[1], ctx_cpu, &ctx_imx500);
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);

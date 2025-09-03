@@ -14,21 +14,32 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
-#define MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
+#ifndef SSL_CLIENT_KEEPALIVE_H
+#define SSL_CLIENT_KEEPALIVE_H
 
-#include "data_processor_api.hpp"
+#include <stddef.h>
 
-// Mock functions for LPD and LPR data processor analyze
-void resetLPDDataProcessorAnalyzeCalled();
-int wasLPDDataProcessorAnalyzeCalled();
-void setLPDDataProcessorAnalyzeFail();
-void resetLPDDataProcessorAnalyzeSuccess();
+#include "ssl_client_core.h"  // For ssl_context_t type definition
 
-void resetLPRDataProcessorAnalyzeCalled();
-int wasLPRDataProcessorAnalyzeCalled();
-void setLPRDataProcessorAnalyzeFail();
-void resetLPRDataProcessorAnalyzeSuccess();
-void setLPRDataProcessorAnalyzeReturnValid(bool valid);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP */
+// Keep-alive connection handler functions
+int ssl_keepalive_init(void);
+void ssl_keepalive_cleanup(void);
+
+// Get or create SSL context for keep-alive
+void *ssl_keepalive_get_context(const char *server_name, const char *port);
+
+// Keep-alive specific connection management functions
+int ssl_keepalive_can_reuse_connection(ssl_context_t *ctx,
+                                       const char *server_name,
+                                       const char *port);
+int ssl_keepalive_check_connection_health(ssl_context_t *ctx);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SSL_CLIENT_KEEPALIVE_H */

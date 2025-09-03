@@ -89,22 +89,19 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
         SensorCoreOpenStream(*ctx.sensor_core,
                              AITRIOS_SENSOR_STREAM_KEY_DEFAULT,
                              ctx.sensor_stream) != 0) {
-      SensorCoreExit(*ctx.sensor_core);
       return EdgeAppCoreResultFailure;
     }
     struct EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle = {};
+    snprintf(ai_model_bundle.ai_model_bundle_id, AI_MODEL_BUNDLE_ID_SIZE, "%s",
+             model.model_name);
 
     if (SensorStreamSetProperty(
             *ctx.sensor_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
             &ai_model_bundle, sizeof(ai_model_bundle)) < 0) {
       LOG_ERR("Error while setting desired AI model bundle ID");
-      SensorCoreCloseStream(*ctx.sensor_core, *ctx.sensor_stream);
-      SensorCoreExit(*ctx.sensor_core);
       return EdgeAppCoreResultFailure;
     }
     if (SensorStart(*ctx.sensor_stream) != 0) {
-      SensorCoreCloseStream(*ctx.sensor_core, *ctx.sensor_stream);
-      SensorCoreExit(*ctx.sensor_core);
       return EdgeAppCoreResultFailure;
     }
   } else {

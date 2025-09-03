@@ -39,6 +39,7 @@ static EdgeAppCoreCtx ctx_cpu;
 static EdgeAppCoreCtx *ctx_list[2] = {&ctx_imx500, &ctx_cpu};
 static EdgeAppCoreCtx *shared_list[2] = {nullptr, &ctx_imx500};
 extern char lpr_ai_model_path[256];
+extern char lpd_imx500_model_id[AI_MODEL_BUNDLE_ID_SIZE];
 
 // Define static vectors for model parameters
 static const std::vector<float> imx500_mean = {0.0f, 0.0f, 0.0f};
@@ -47,7 +48,8 @@ static const std::vector<float> cpu_mean = {0.0f, 0.0f, 0.0f};
 static const std::vector<float> cpu_std = {0.0f, 0.0f, 0.0f};
 
 EdgeAppCoreModelInfo models[2] = {
-    {"000000", EdgeAppCoreTarget::edge_imx500, &imx500_mean, &imx500_std},
+    {lpd_imx500_model_id, EdgeAppCoreTarget::edge_imx500, &imx500_mean,
+     &imx500_std},
     {lpr_ai_model_path, EdgeAppCoreTarget::edge_cpu, &cpu_mean, &cpu_std}};
 
 static const uint32_t model_count = 2;
@@ -62,18 +64,6 @@ EdgeAppLibSensorImageCropProperty roi[2] = {
 };                    // These values are initial values.
 int onCreate() {
   LOG_TRACE("Inside onCreate.");
-  int32_t ret = -1;
-  if ((ret = SensorCoreInit(&s_core)) < 0) {
-    LOG_ERR("SensorCoreInit : ret=%d", ret);
-    return -1;
-  }
-
-  const char *stream_key = AITRIOS_SENSOR_STREAM_KEY_DEFAULT;
-  if ((ret = SensorCoreOpenStream(s_core, stream_key, &s_stream)) < 0) {
-    LOG_ERR("SensorCoreOpenStream : ret=%d", ret);
-    PrintSensorError();
-    return -1;
-  }
   return 0;
 }
 
@@ -193,12 +183,16 @@ int onIterate() {
     LPRDataProcessorAnalyze(static_cast<float *>(output_cpu.data),
                             output_cpu.size, &recognized_data,
                             &recognized_data_size);
-    // Send plate number
-    if (SendDataSyncMeta((void *)recognized_data, recognized_data_size,
-                         DataProcessorGetDataType(), output_cpu.timestamp) !=
-        EdgeAppLibSendDataResultSuccess) {
-      LOG_ERR("Failed to send inference data.");
+
+    // Send plate number if recognized data is valid as Japanese number plate
+    if (is_valid_japanese_number_plate(recognized_data)) {
+      if (SendDataSyncMeta((void *)recognized_data, recognized_data_size,
+                           DataProcessorGetDataType(), output_cpu.timestamp) !=
+          EdgeAppLibSendDataResultSuccess) {
+        LOG_ERR("Failed to send inference data.");
+      }
     }
+
     if (output_cpu.data) {
       free(output_cpu.data);  // Always free for CPU model
       output_cpu.data = nullptr;

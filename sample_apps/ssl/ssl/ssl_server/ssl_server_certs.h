@@ -14,21 +14,36 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
-#define MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
+#ifndef SSL_SERVER_CERTS_H
+#define SSL_SERVER_CERTS_H
 
-#include "data_processor_api.hpp"
+#include <stddef.h>
 
-// Mock functions for LPD and LPR data processor analyze
-void resetLPDDataProcessorAnalyzeCalled();
-int wasLPDDataProcessorAnalyzeCalled();
-void setLPDDataProcessorAnalyzeFail();
-void resetLPDDataProcessorAnalyzeSuccess();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void resetLPRDataProcessorAnalyzeCalled();
-int wasLPRDataProcessorAnalyzeCalled();
-void setLPRDataProcessorAnalyzeFail();
-void resetLPRDataProcessorAnalyzeSuccess();
-void setLPRDataProcessorAnalyzeReturnValid(bool valid);
+/**
+ * @brief SSL Server Certificate Management
+ *
+ * This header provides access to SSL server test certificates and keys
+ * for development and testing purposes.
+ *
+ * Note: These are test certificates and should not be used
+ * in production environments.
+ */
 
-#endif /* MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP */
+// Certificate and key declarations
+extern const char mbedtls_test_srv_crt[];
+extern const char mbedtls_test_srv_key[];
+extern const char mbedtls_test_cas_pem[];
+
+extern const size_t mbedtls_test_srv_crt_len;
+extern const size_t mbedtls_test_srv_key_len;
+extern const size_t mbedtls_test_cas_pem_len;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SSL_SERVER_CERTS_H */

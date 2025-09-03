@@ -11,3 +11,6 @@
 	path = libs/third_party/pybind11
 	url = https://github.com/pybind/pybind11.git
 	branch = stable
+[submodule "sample_apps/ssl/third_party/mbedtls"]
+	path = sample_apps/ssl/third_party/mbedtls
+	url = https://github.com/yamt/mbedtls.git

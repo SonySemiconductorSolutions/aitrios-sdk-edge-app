@@ -309,6 +309,63 @@ std::string interpret_predictions(const std::vector<Prediction> &predictions) {
   return upper_text + ", " + lower_text;
 }
 
+bool is_valid_japanese_number_plate(const char *plate_data) {
+  if (plate_data == nullptr) {
+    LOG_INFO("Plate data is null.");
+    return false;
+  }
+
+  std::string plateText(plate_data);
+
+  // Remove surrounding double quotes if present
+  if (plateText.length() >= 2 && plateText.front() == '\"' &&
+      plateText.back() == '\"') {
+    plateText = plateText.substr(1, plateText.length() - 2);
+    LOG_INFO("Removed quotes, plate text: %s", plateText.c_str());
+  }
+
+  // Exclude plates containing question marks
+  if (plateText.find('?') != std::string::npos) {
+    LOG_INFO("Plate contains a question mark.");
+    return false;
+  }
+
+  // Exclude plates containing consecutive dashes (e.g., --)
+  if (plateText.find("--") != std::string::npos) {
+    LOG_INFO("Plate contains consecutive dashes.");
+    return false;
+  }
+
+  // Check if plate contains "." or "-", if neither then exclude
+  bool hasDot = plateText.find('.') != std::string::npos;
+  bool hasDash = plateText.find('-') != std::string::npos;
+
+  if (!hasDot && !hasDash) {
+    LOG_INFO("Plate does not contain '.' or '-'.");
+    return false;
+  }
+
+  // Exclude plates with length < 5
+  if (plateText.length() < 5) {
+    LOG_INFO("Plate length is less than 5.");
+    return false;
+  }
+
+  // Exclude plates with dash that is not in the 3rd position from the end
+  if (hasDash) {
+    size_t dashIndex = plateText.rfind('-');
+    LOG_INFO("dashIndex=%zu", dashIndex);
+    size_t expectedPosition =
+        plateText.length() - 3;  // 3rd position from the end
+    if (dashIndex != expectedPosition) {
+      LOG_INFO("Dash is not in the 3rd position from the end.");
+      return false;
+    }
+  }
+
+  return true;
+}
+
 DataProcessorResultCode ExtractThresholdIMX500(
     JSON_Object *json, DataProcessorCustomParam_LPD *detection_param_pr) {
   double aux = 0;
