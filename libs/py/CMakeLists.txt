@@ -69,7 +69,8 @@ if(SENSCORD_MOCK)
     ${MOCKS_DIR}/log/mock_log.cpp
     ${MOCKS_DIR}/evp/pytest_support.c
   )
-  add_compile_definitions(EVP_REMOTE_SDK PYTHON_MODULE MOCK_PASSTHROUGH)
+  add_compile_definitions(EVP_REMOTE_SDK PYTHON_MODULE MOCK_PASSTHROUGH
+                          HAVE_CHECK_ACK_FILE)
 
   include_directories(
     ${SAMPLE_APP_DIR}/include
@@ -106,8 +107,10 @@ endif()
 
 
 # Dependencies
+list(APPEND CMAKE_MODULE_PATH ${ROOT_DIR}/cmake)
 add_subdirectory(${LIBS_DIR} ${CMAKE_BINARY_DIR}/build)
 # For now using the passthrough data_processor until a data_processor can be implemeneted in Python
+set(INCLUDE_DIR ${ROOT_DIR}/include)
 add_subdirectory(${SAMPLE_APP_DIR}/passthrough/data_processor/src ${CMAKE_BINARY_DIR}/build/data_processor)
 set(PYBIND11_FINDPYTHON ON)
 add_subdirectory(${LIBS_DIR}/third_party/pybind11 ${CMAKE_BINARY_DIR}/build/pybind11)

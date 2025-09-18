@@ -18,6 +18,7 @@ project(ssl_data_processor_test)
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
 set(LIBS_DIR ${ROOT_DIR}/libs)
+set(INCLUDE_DIR ${ROOT_DIR}/include)
 set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 
 include(${ROOT_DIR}/cmake/gtest.cmake)
@@ -42,6 +43,9 @@ add_subdirectory (
 )
 
 target_include_directories (test_ssl_data_processor PUBLIC
+    ${SAMPLE_APP_DIR}/utils/include
+    ${ROOT_DIR}/include
+    ${SAMPLE_APP_DIR}/ssl/ssl/ssl_client
     ${LIBS_DIR}/third_party/parson
     ${LIBS_DIR}/tests/mocks/sensor
     ${LIBS_DIR}/third_party/base64.c

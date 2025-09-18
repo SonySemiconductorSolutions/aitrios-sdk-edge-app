@@ -29,7 +29,7 @@
 // empty objects for each key apart from process_state
 #define SUBJSON                                                              \
   "\"inference_settings\": {}, \"pq_settings\": {}, \"port_settings\": {}, " \
-  "\"codec_settings\": {}"
+  "\"codec_settings\": {}, \"ai_models\": []"
 
 #define LOGLEVEL " \"log_level\": 1, \"number_of_inference_per_message\": 1, "
 

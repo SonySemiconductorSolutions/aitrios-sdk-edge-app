@@ -96,13 +96,17 @@ int JsonObject::Verify(JSON_Object *obj) {
 
 int JsonObject::Apply(JSON_Object *obj) {
   int ret = 0;
+  int ret2 = 0;
   for (int i = 0;; ++i) {
     const char *name = json_object_get_name(obj, i);
     if (name == nullptr) break;
-
+    LOG_INFO("Applying json object %s.", name);
     for (int j = 0; j < properties_size; ++j) {
       if (strcmp(name, properties[j].property) == 0) {
-        int ret2 = properties[j].obj->Apply(json_object_get_object(obj, name));
+        JSON_Value *value = json_object_get_value(obj, name);
+        if (value == nullptr) continue;
+
+        ret2 = properties[j].obj->Apply(json_object_get_object(obj, name));
         if (ret2 != 0) {
           ret = -1;
         }

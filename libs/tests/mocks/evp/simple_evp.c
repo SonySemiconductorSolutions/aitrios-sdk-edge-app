@@ -188,12 +188,6 @@ EVP_RESULT EVP_processEvent(struct EVP_client *h, int timeout_ms) {
   return res;
 }
 
-// If this mock is not called with pytest, do nothing.
-__attribute__((weak)) void check_ack_file(const void *state, size_t statelen) {
-  (void)state;
-  (void)statelen;
-}
-
 EVP_RESULT EVP_sendState(struct EVP_client *h, const char *topic,
                          const void *state, size_t statelen,
                          EVP_STATE_CALLBACK cb, void *userData) {
@@ -206,8 +200,11 @@ EVP_RESULT EVP_sendState(struct EVP_client *h, const char *topic,
   LOG_INFO("EVP_sendState: sending state");
   LOG_INFO("EVP_sendState: size %d, state %s", (int)statelen, (char *)state);
 
+#if defined(HAVE_CHECK_ACK_FILE)
   // monitor ack file to be removed by the integration test
+  extern void check_ack_file(const void *state, size_t statelen);
   check_ack_file(state, statelen);
+#endif
 
   // call evp state callback
   cb(EVP_STATE_CALLBACK_REASON_SENT, userData);

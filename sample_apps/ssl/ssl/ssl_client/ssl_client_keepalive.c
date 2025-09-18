@@ -17,13 +17,12 @@
 #include "ssl_client_keepalive.h"
 
 #include <errno.h>
-#include <netinet/in.h>
+#include <poll.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <time.h>
 
 #include "log.h"
-#include "mbedtls/net_sockets.h"
 #include "ssl_client_core.h"
 
 // Global SSL context for keep-alive
@@ -171,14 +170,17 @@ int ssl_keepalive_check_connection_health(ssl_context_t *ctx) {
 
   LOG_TRACE("Connection health check: socket fd = %d", sock);
 
-  // Check if socket is still valid by trying to get socket info
-  // This will fail if the socket is closed or invalid
-  int optval;
-  socklen_t optlen = sizeof(optval);
-  int getsockopt_ret = getsockopt(sock, SOL_SOCKET, SO_TYPE, &optval, &optlen);
-  if (getsockopt_ret < 0) {
-    LOG_TRACE("Socket health check failed: getsockopt error = %d",
-              getsockopt_ret);
+  struct pollfd pfd = {.fd = sock, .events = POLLIN};
+  int result = poll(&pfd, 1, 0);  // Non-blocking check
+
+  if (result < 0) {
+    LOG_TRACE("Connection health check: poll() failed with errno %d", errno);
+    ctx_impl->connection_health = 0;
+    return -1;
+  }
+
+  if (pfd.revents & (POLLERR | POLLHUP)) {
+    LOG_TRACE("Connection health check: connection broken (POLLERR/POLLHUP)");
     ctx_impl->connection_health = 0;
     return -1;
   }

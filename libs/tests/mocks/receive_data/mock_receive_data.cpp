@@ -27,6 +27,11 @@ EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataUnInitialize() {
   return EdgeAppLibReceiveDataResultSuccess;
 }
 
+EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
+    EdgeAppLibReceiveDataInfo *info, int timeout_ms) {
+  return EdgeAppLibReceiveDataResultSuccess;
+}
+
 #ifdef __cplusplus
 }
 #endif

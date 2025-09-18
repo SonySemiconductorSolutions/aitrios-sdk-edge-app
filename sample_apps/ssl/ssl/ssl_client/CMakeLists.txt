@@ -24,6 +24,7 @@ set(SSL_CLIENT_SOURCES
   ${SAMPLE_APP_DIR}/ssl/ssl/ssl_client/ssl_client_metadata.c
   ${SAMPLE_APP_DIR}/ssl/ssl/ssl_client/ssl_client_result.c
   ${SAMPLE_APP_DIR}/ssl/ssl/ssl_client/ssl_client_keepalive.c
+  ${LIBS_DIR}/third_party/base64.c/base64.c
 )
 
 # Create SSL client API library
@@ -31,12 +32,15 @@ add_library(ssl_client_api ${SSL_CLIENT_SOURCES})
 
 # Set include directories for SSL client API
 target_include_directories(ssl_client_api PUBLIC
-  ${ROOT_DIR}/include
-  ${SAMPLE_APP_DIR}/utils/include
-  ${SAMPLE_APP_DIR}/ssl/src
   ${SAMPLE_APP_DIR}/ssl/ssl/ssl_client
+  ${ROOT_DIR}/include
+)
+
+target_include_directories(ssl_client_api PRIVATE
+  ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/ssl/third_party/mbedtls/include
   ${LIBS_DIR}/third_party/parson
+  ${LIBS_DIR}/third_party/base64.c
 )
 
 # Link required libraries

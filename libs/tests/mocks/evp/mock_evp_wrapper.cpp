@@ -204,6 +204,22 @@ struct EVP_client *EVP_initialize_wrapper(wasm_exec_env_t exec_env) {
   return (struct EVP_client *)(uintptr_t)register_handle(&evp.h);
 }
 
+const char *EVP_getWorkspaceDirectory_wrapper(wasm_exec_env_t exec_env,
+                                              struct EVP_client *h,
+                                              EVP_WORKSPACE_TYPE type) {
+  const char *workspace = "/tmp/workspace";
+  void *native_ws;
+  wasm_module_inst_t module_inst = wasm_runtime_get_module_inst(exec_env);
+  uint64_t wasm_ws = wasm_runtime_module_malloc(
+      module_inst, strlen(workspace) + 1, &native_ws);
+  if (wasm_ws == 0) {
+    LOG_ERR("EVP_getWorkspaceDirectory: malloc failed");
+    return NULL;
+  }
+  sprintf((char *)native_ws, "%s", workspace);
+  return (const char *)wasm_ws;
+};
+
 EVP_RESULT
 EVP_setConfigurationCallback_wrapper(wasm_exec_env_t exec_env,
                                      struct EVP_client *h,
@@ -494,6 +510,7 @@ static NativeSymbol wasm_exported_symbols[] = {
     EXPORT_WASM_API_WITH_SIG2(EVP_blobOperation, "(iiiiiii)i"),
     EXPORT_WASM_API_WITH_SIG2(EVP_sendTelemetry, "(iiiii)i"),
     EXPORT_WASM_API_WITH_SIG2(EVP_processEvent, "(ii)i"),
+    EXPORT_WASM_API_WITH_SIG2(EVP_getWorkspaceDirectory, "(ii)i"),
 };
 
 uint32_t get_native_lib(const char **p_module_name,

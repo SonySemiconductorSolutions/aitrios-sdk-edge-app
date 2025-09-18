@@ -18,6 +18,7 @@ project(lp_recog_data_processor_test)
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
 set(LIBS_DIR ${ROOT_DIR}/libs)
+set(INCLUDE_DIR ${ROOT_DIR}/include)
 set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 
 include(${ROOT_DIR}/cmake/gtest.cmake)

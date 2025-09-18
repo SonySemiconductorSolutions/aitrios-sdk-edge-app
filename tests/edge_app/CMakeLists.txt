@@ -24,12 +24,6 @@ set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 
 if(EVP_MOCK EQUAL 1)
   set(ELF 1)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-  set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -pthread")
-  set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-    ${MOCKS_DIR}/evp/simple_evp.c
-    ${MOCKS_DIR}/evp/pytest_support.c
-  )
 endif()
 
 add_compile_definitions(MOCK_INTEGRATION_TEST)
@@ -60,24 +54,6 @@ endif()
 
 if(MOCK EQUAL 1)
   message(STATUS "Using mock")
-  set(EXECUTABLE_FILES ${EXECUTABLE_FILES}
-    ${MOCKS_DIR}/sensor/mock_sensor.cpp
-    ${MOCKS_DIR}/sensor/testing_utils.cpp
-    ${MOCKS_DIR}/device/mock_device.cpp
-    ${MOCKS_DIR}/log/mock_log.cpp
-    ${MOCKS_DIR}/nn/mock_wasi_nn.c
-  )
-  include_directories(
-    ${SAMPLE_APP_DIR}/utils/include
-    ${LIBS_DIR}/third_party/flatbuffers/include
-    ${LIBS_DIR}/third_party/wasi_nn
-    ${ROOT_DIR}/include
-    ${MOCKS_DIR}
-    ${MOCKS_DIR}/sensor
-    ${MOCKS_DIR}/device
-    ${LIBS_DIR}/sensor/src/
-    ${LIBS_DIR}/send_data/src/data_export/include
-  )
 endif()
 
 add_subdirectory(${ROOT_DIR} ${CMAKE_BINARY_DIR}/build)

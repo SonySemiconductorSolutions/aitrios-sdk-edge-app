@@ -24,6 +24,7 @@ typedef struct {
   int urllen;      /**< Length of the data url. */
   char *filename;  /**< Filename, a relative path to save the data. */
   int filenamelen; /**< Length of the filename. */
+  char *hash;      /**< saved hash which will be compared with. */
 } EdgeAppLibReceiveDataInfo;
 
 typedef enum {

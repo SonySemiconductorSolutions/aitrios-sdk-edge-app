@@ -13,25 +13,25 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.14)
+project(edge_app)
 
-set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(LIBS_DIR ${ROOT_DIR}/libs)
-set(AITRIOS_RECEIVE_DATA_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
-add_library(receive_data STATIC
-  ${AITRIOS_RECEIVE_DATA_ROOT_DIR}/src/receive_data.cpp
-  ${AITRIOS_RECEIVE_DATA_ROOT_DIR}/src/receive_data_utils.cpp
-  ${LIBS_DIR}/third_party/SHA-256/sha256.c
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+
+add_subdirectory(libs ${CMAKE_BINARY_DIR}/edgeapplib)
+
+set(MAX_MEMORY 10485760)
+set(INITIAL_MEMORY 2097152)
+include(edge_app)
+
+set(SAMPLE_APP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+add_executable(edge_app
+  src/sm.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
 )
-
-target_include_directories(receive_data PUBLIC
-  ${AITRIOS_RECEIVE_DATA_ROOT_DIR}/include
-  ${AITRIOS_RECEIVE_DATA_ROOT_DIR}/src
-  ${LIBS_DIR}/depend/edge_app/evp_c_sdk
-  ${LIBS_DIR}/third_party/SHA-256
-  ${ROOT_DIR}/include
-)
-
-target_link_libraries(receive_data
-  common log
-)
+add_subdirectory(ssl)
+add_subdirectory(data_processor/src)
+target_link_libraries(edge_app ssl_client_api ssl_server_api data_processor_api edge_app_lib)

@@ -12,18 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(data_processor_api
-  ${SAMPLE_APP_DIR}/switch_dnn/data_processor/src/switch_dnn_analyzer.cpp
-  ${LIBS_DIR}/third_party/parson/parson.c
+cmake_minimum_required(VERSION 3.14)
+project(edge_app)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+
+add_subdirectory(libs ${CMAKE_BINARY_DIR}/edgeapplib)
+
+set(MAX_MEMORY 10485760)
+set(INITIAL_MEMORY 2097152)
+include(edge_app)
+
+set(SAMPLE_APP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+add_executable(edge_app
+  src/sm.cpp
   ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
 )
-
-target_include_directories(data_processor_api PUBLIC
-  ${SAMPLE_APP_DIR}/switch_dnn/include/schemas
-  ${SAMPLE_APP_DIR}/switch_dnn/data_processor/include
-  ${SAMPLE_APP_DIR}/utils/include
-  ${INCLUDE_DIR}
-  ${LIBS_DIR}/third_party/parson
-  ${LIBS_DIR}/third_party/flatbuffers/include
-  ${LIBS_DIR}/depend/edge_app
-)
+add_subdirectory(data_processor/src)
+target_link_libraries(edge_app data_processor_api edge_app_lib)
