@@ -19,6 +19,7 @@
 
 #include <cstdint>
 
+#include "dtdl_model/objects/common_settings/ai_models.hpp"
 #include "dtdl_model/objects/common_settings/codec_settings.hpp"
 #include "dtdl_model/objects/common_settings/inference_settings.hpp"
 #include "dtdl_model/objects/common_settings/port_settings.hpp"
@@ -43,6 +44,7 @@ class CommonSettings : public JsonObject {
   UT_ATTRIBUTE PqSettings *GetPqSettings();
   UT_ATTRIBUTE InferenceSettings *GetInferenceSettings();
   UT_ATTRIBUTE CodecSettings *GetCodecSettings();
+  UT_ATTRIBUTE AiModels *GetAiModels();
   uint32_t getNumOfInfPerMsg() const;
 
   int SetProcessState(uint32_t value);
@@ -54,12 +56,14 @@ class CommonSettings : public JsonObject {
   PqSettings pq_settings;
   InferenceSettings inference_settings;
   CodecSettings codec_settings;
+  AiModels ai_models;
 
   uint32_t GetProcessState(JSON_Object *obj) const;
   uint32_t GetLoggingLevel(JSON_Object *obj) const;
   uint32_t GetInferencePerMessage(JSON_Object *obj) const;
 
   JSON_Object *GetSettingsJson(const char *setting);
+  JSON_Array *GetSettingsJsonArray(const char *setting);
 };
 
 #endif /* DTDL_MODEL_OBJECTS_COMMON_SETTINGS_HPP */

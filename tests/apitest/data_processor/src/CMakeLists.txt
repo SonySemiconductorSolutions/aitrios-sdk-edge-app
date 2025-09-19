@@ -37,4 +37,9 @@ target_include_directories(data_processor_api PUBLIC
   ${LIBS_DIR}/depend/edge_app
 )
 
+# for MOCK_APITEST
+target_include_directories(data_processor_api PRIVATE
+  ${LIBS_DIR}/tests/mocks
+)
+
 target_link_libraries(data_processor_api log)

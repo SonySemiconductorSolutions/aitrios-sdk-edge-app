@@ -12,18 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(data_processor_api
-  ${SAMPLE_APP_DIR}/switch_dnn/data_processor/src/switch_dnn_analyzer.cpp
-  ${LIBS_DIR}/third_party/parson/parson.c
-  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
-)
-
-target_include_directories(data_processor_api PUBLIC
-  ${SAMPLE_APP_DIR}/switch_dnn/include/schemas
-  ${SAMPLE_APP_DIR}/switch_dnn/data_processor/include
-  ${SAMPLE_APP_DIR}/utils/include
-  ${INCLUDE_DIR}
-  ${LIBS_DIR}/third_party/parson
-  ${LIBS_DIR}/third_party/flatbuffers/include
-  ${LIBS_DIR}/depend/edge_app
-)
+include(config_common)

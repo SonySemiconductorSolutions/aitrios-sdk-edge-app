@@ -14,3 +14,6 @@
 [submodule "sample_apps/ssl/third_party/mbedtls"]
 	path = sample_apps/ssl/third_party/mbedtls
 	url = https://github.com/yamt/mbedtls.git
+[submodule "libs/third_party/SHA-256"]
+	path = libs/third_party/SHA-256
+	url = https://github.com/983/SHA-256.git

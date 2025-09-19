@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
-set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
-set(LIBS_DIR ${ROOT_DIR}/libs)
-
 add_library(data_processor_api
   ${SAMPLE_APP_DIR}/passthrough/data_processor/src/passthrough_data_processor.cpp
   ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
@@ -27,7 +23,7 @@ add_library(data_processor_api
 target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/passthrough/data_processor/src
-  ${ROOT_DIR}/include
+  ${INCLUDE_DIR}
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/depend/edge_app
 )

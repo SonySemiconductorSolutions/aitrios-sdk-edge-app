@@ -43,6 +43,8 @@ add_library(dtdl_model
   ${PQ_SETTINGS_FILES}
   ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/port_setting.cpp
   ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/port_settings.cpp
+  ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/ai_model.cpp
+  ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/ai_models.cpp
   ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/inference_settings.cpp
   ${DTDL_MODEL_ROOT_DIR}/objects/common_settings/codec_settings.cpp
   # TODO: properly link with parson
@@ -56,6 +58,7 @@ target_include_directories(dtdl_model PUBLIC
   # TODO: properly define include directories for logger and parson
   ${ROOT_DIR}/include
   ${LIBS_DIR}/third_party/parson
+  ${LIBS_DIR}/third_party/SHA-256
   ${LIBS_DIR}/depend/edge_app
 )
 

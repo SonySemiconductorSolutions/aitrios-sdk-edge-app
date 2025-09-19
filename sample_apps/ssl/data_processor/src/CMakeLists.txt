@@ -24,12 +24,13 @@ add_library(data_processor_api
   ${LIBS_DIR}/third_party/base64.c/base64.c
 )
 
-
 target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
-  ${SAMPLE_APP_DIR}/ssl/data_processor/src
-  ${SAMPLE_APP_DIR}/ssl/ssl/ssl_client
   ${ROOT_DIR}/include
+)
+
+target_include_directories(data_processor_api PRIVATE
+  ${SAMPLE_APP_DIR}/ssl/ssl/ssl_client
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/base64.c
   ${LIBS_DIR}/depend/edge_app

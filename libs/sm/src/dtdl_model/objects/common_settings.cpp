@@ -32,6 +32,7 @@ static const char *PORT_SETTINGS = "port_settings";
 static const char *CODEC_SETTINGS = "codec_settings";
 static const char *NUMBER_OF_INFERENCE_PER_MESSAGE =
     "number_of_inference_per_message";
+static const char *AI_MODELS = "ai_models";
 
 // define in dtdl
 STATE EnumToState(int process_state) {
@@ -80,6 +81,9 @@ CommonSettings::CommonSettings() {
       json_obj, CODEC_SETTINGS,
       json_object_get_wrapping_value(codec_settings.GetJsonObject()));
   json_object_set_number(json_obj, NUMBER_OF_INFERENCE_PER_MESSAGE, 1);
+  json_object_set_value(
+      json_obj, AI_MODELS,
+      json_array_get_wrapping_value(ai_models.GetJsonArray()));
 }
 
 JSON_Object *CommonSettings::GetSettingsJson(const char *setting) {
@@ -89,6 +93,14 @@ JSON_Object *CommonSettings::GetSettingsJson(const char *setting) {
     return GetPortSettings()->GetJsonObject();
   } else if (strcmp(setting, CODEC_SETTINGS) == 0) {
     return GetCodecSettings()->GetJsonObject();
+  } else {
+    return NULL;  // Return NULL if the setting is not found
+  }
+}
+
+JSON_Array *CommonSettings::GetSettingsJsonArray(const char *setting) {
+  if (strcmp(setting, AI_MODELS) == 0) {
+    return GetAiModels()->GetJsonArray();
   } else {
     return NULL;  // Return NULL if the setting is not found
   }
@@ -112,6 +124,16 @@ int CommonSettings::Apply(JSON_Object *obj) {
     res = json_value_equals(new_setting_val, current_setting_val);
   }
 
+  // Json Array
+  for (const char *setting : {AI_MODELS}) {
+    if (res != 1) break;
+    JSON_Value *new_setting_val =
+        json_array_get_wrapping_value(json_object_get_array(obj, setting));
+    JSON_Value *current_setting_val =
+        json_array_get_wrapping_value(GetSettingsJsonArray(setting));
+    res = json_value_equals(new_setting_val, current_setting_val);
+  }
+
   StateMachineContext *context = StateMachineContext::GetInstance(nullptr);
   if (context->GetCurrentState()->GetEnum() == STATE_RUNNING) {
     if (res != 1) {
@@ -124,8 +146,20 @@ int CommonSettings::Apply(JSON_Object *obj) {
     json_object_remove(obj, PORT_SETTINGS);
     json_object_remove(obj, CODEC_SETTINGS);
     json_object_remove(obj, NUMBER_OF_INFERENCE_PER_MESSAGE);
+    json_object_remove(obj, AI_MODELS);
   } else if (json_object_has_value(obj, NUMBER_OF_INFERENCE_PER_MESSAGE))
     SetInferencePerMessage(GetInferencePerMessage(obj));
+
+  if (json_object_has_value(obj, AI_MODELS)) {
+    JSON_Array *array = json_object_dotget_array(obj, AI_MODELS);
+    if (array) {
+      GetAiModels()->Apply(array);
+      JSON_Value *ai_models_value =
+          json_array_get_wrapping_value(GetAiModels()->GetJsonArray());
+      json_object_set_value(json_obj, AI_MODELS, ai_models_value);
+    }
+  }
+
   return JsonObject::Apply(obj);
 }
 
@@ -187,6 +221,8 @@ InferenceSettings *CommonSettings::GetInferenceSettings() {
 }
 
 CodecSettings *CommonSettings::GetCodecSettings() { return &codec_settings; }
+
+AiModels *CommonSettings::GetAiModels() { return &ai_models; }
 
 uint32_t CommonSettings::getNumOfInfPerMsg() const {
   return GetInferencePerMessage(json_obj);

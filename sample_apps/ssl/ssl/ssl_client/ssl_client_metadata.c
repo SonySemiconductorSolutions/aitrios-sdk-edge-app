@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "base64.h"
 #include "log.h"
 #include "parson.h"
 #include "ssl_client.h"
@@ -31,13 +32,32 @@
 // Buffer sizes for metadata operations
 #define FEATURE_STR_BUFFER_SIZE 1024
 
-// Function to unpack binary data
-static int unpack_metadata_data(const unsigned char *data, size_t data_size,
-                                char *feature_str, size_t feature_str_size) {
+// Function to encode tensor data to base64
+static int encode_tensor_to_base64(const unsigned char *data, size_t data_size,
+                                   char *feature_str, size_t feature_str_size) {
   LOG_TRACE("Processing metadata data");
 
-  snprintf(feature_str, feature_str_size, "%s",
-           "DUMMY_DATA_METADATA_1234567890");
+  // Check if we have valid data
+  if (!data || data_size == 0) {
+    LOG_ERR("Invalid tensor data: data=%p, size=%zu", data, data_size);
+    return -1;
+  }
+
+  // Calculate required buffer size for base64 encoding
+  unsigned int base64_size = b64e_size((unsigned int)data_size);
+
+  if (base64_size >= feature_str_size) {
+    LOG_ERR("Buffer too small for base64 encoding: required=%u, available=%zu",
+            base64_size, feature_str_size);
+    return -1;
+  }
+
+  // Convert binary tensor data to base64 string
+  unsigned int encoded_size =
+      b64_encode(data, (unsigned int)data_size, (unsigned char *)feature_str);
+
+  LOG_INFO("Converted tensor data to base64: %zu bytes -> %u base64 chars",
+           data_size, encoded_size);
 
   return 0;
 }
@@ -47,7 +67,7 @@ static char *create_metadata_payload(const char *feature_str) {
   // Request sample
   // {
   //   "primaryProbeData": {
-  //     "primaryData": "DUMMY_DATA_METADATA_1234567890"
+  //     "primaryData": "base64_encoded_tensor_data"
   //   }
   // }
 
@@ -247,11 +267,11 @@ int send_output_tensor(const char *tensor_data, size_t data_size,
 
   LOG_INFO("Processing raw tensor data (%zu bytes)", data_size);
 
-  // Unpack binary data
+  // Encode tensor data to base64
   char feature_str[FEATURE_STR_BUFFER_SIZE] = {0};
-  if (unpack_metadata_data((const unsigned char *)tensor_data, data_size,
-                           feature_str, sizeof(feature_str)) != 0) {
-    LOG_ERR("Failed to unpack metadata data");
+  if (encode_tensor_to_base64((const unsigned char *)tensor_data, data_size,
+                              feature_str, sizeof(feature_str)) != 0) {
+    LOG_ERR("Failed to encode tensor data to base64");
     return -1;
   }
 

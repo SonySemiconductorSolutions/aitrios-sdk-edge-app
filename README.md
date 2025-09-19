@@ -48,6 +48,7 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 | [draw]           | Sample application for drawing bounding box on input tensor from IMX500.|
 | [perfbench]      | Sample Application for measuring performance with Debug Code.|
 | [lp_recog] | Detects license plates on IMX500 and recognizes license plate characters on CPU(TFLite). |
+| [ssl]      | Demonstrates SSL/TLS communication for secure data exchange with both SSL client and server functionality. |
 
 [passthrough]: sample_apps/passthrough
 [classification]: sample_apps/classification
@@ -59,6 +60,27 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 [draw]: sample_apps/draw
 [perfbench]: sample_apps/perfbench
 [lp_recog]: sample_apps/lp_recog
+[ssl]: sample_apps/ssl
+
+---
+
+## Advanced Optimization
+
+### WebAssembly AOT Compilation
+
+You can optimize Edge Application WebAssembly files for various processor architectures including Xtensa, ARM, x86, RISC-V, and more. This optimization uses AOT (Ahead-of-Time) compilation to improve runtime performance, reduce memory footprint, and enable platform-specific features.
+
+**Key Features:**
+- Build [WAMR Compiler](https://github.com/bytecodealliance/wasm-micro-runtime/tree/main/wamr-compiler) for your target architecture
+- Optimize WebAssembly files with wamrc compiler for specific targets
+- Support for multiple architectures: Xtensa, ARM, AArch64, x86_64, RISC-V, etc.
+- Enable XIP (Execute In Place) mode for reduced memory usage on embedded systems
+
+**Example Command:**
+```bash
+# Enable XIP feature for Xtensa target
+wamrc --target=xtensa --xip --enable-multi-thread --size-level=0 -o bin/edge_app.aot bin/edge_app.wasm
+```
 
 ---
 

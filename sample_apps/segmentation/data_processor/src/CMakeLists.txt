@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
-set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
-set(LIBS_DIR ${ROOT_DIR}/libs)
 set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 
 add_library(data_processor_api
@@ -29,7 +26,7 @@ target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/segmentation/include/schemas
   ${SAMPLE_APP_DIR}/segmentation/data_processor/src
-  ${ROOT_DIR}/include
+  ${INCLUDE_DIR}
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/flatbuffers/include
   ${MOCKS_DIR}/sensor

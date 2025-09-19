@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
-set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
-set(LIBS_DIR ${ROOT_DIR}/libs)
-
 add_library(data_processor_api
   ${SAMPLE_APP_DIR}/posenet/data_processor/src/posenet_data_processor.cpp
   ${SAMPLE_APP_DIR}/posenet/data_processor/src/posenet_utils.cpp
@@ -27,7 +23,7 @@ target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${SAMPLE_APP_DIR}/posenet/include/schemas
   ${SAMPLE_APP_DIR}/posenet/data_processor/src
-  ${ROOT_DIR}/include
+  ${INCLUDE_DIR}
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/flatbuffers/include
   ${LIBS_DIR}/third_party/base64.c

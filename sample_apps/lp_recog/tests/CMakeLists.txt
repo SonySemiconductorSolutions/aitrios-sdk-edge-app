@@ -20,6 +20,7 @@ add_definitions(-DMOCK_LP_RECOG)
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
 set(LIBS_DIR ${ROOT_DIR}/libs)
+set(INCLUDE_DIR ${ROOT_DIR}/include)
 set(SAMPLE_APP_TEST_DIR ${SAMPLE_APP_DIR}/tests)
 set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 

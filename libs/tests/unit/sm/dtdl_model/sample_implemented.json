@@ -105,7 +105,15 @@
         "codec_settings": {
             "format": 1
         },
-        "number_of_inference_per_message": 1
+        "number_of_inference_per_message": 1,
+        "ai_models": [
+            {
+                "name": "fake_model",
+                "target": "cpu",
+                "url_path": "http://192.0.2.0:8000/fake_model",
+                "hash": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+            }
+        ]
     },
     "custom_settings": {
         "ai_models": {

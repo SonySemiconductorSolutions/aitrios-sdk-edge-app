@@ -28,9 +28,11 @@ add_library(ssl_server_api ${SSL_SERVER_SOURCES})
 
 # Set include directories for SSL server API
 target_include_directories(ssl_server_api PUBLIC
-    ${ROOT_DIR}/include
-    ${SAMPLE_APP_DIR}/utils/include
     ${SAMPLE_APP_DIR}/ssl/ssl/ssl_server
+    ${ROOT_DIR}/include
+)
+
+target_include_directories(ssl_server_api PRIVATE
     ${SAMPLE_APP_DIR}/ssl/third_party/mbedtls/include
     ${SAMPLE_APP_DIR}/ssl/third_party/mbedtls/tests/include/test
 )
