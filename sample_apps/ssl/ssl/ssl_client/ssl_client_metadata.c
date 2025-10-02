@@ -30,7 +30,7 @@
 #include "ssl_client_keepalive.h"
 
 // Buffer sizes for metadata operations
-#define FEATURE_STR_BUFFER_SIZE 1024
+#define FEATURE_STR_BUFFER_SIZE 8192
 
 // Function to encode tensor data to base64
 static int encode_tensor_to_base64(const unsigned char *data, size_t data_size,

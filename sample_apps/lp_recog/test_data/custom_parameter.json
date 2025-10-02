@@ -18,7 +18,6 @@
     },
     "ai_models_cpu": {
         "lp_recognition": {
-            "ai_model_path": "/opt/senscord/share/tflite_models/LPR.tflite",
             "parameters": {
                 "threshold": 0.5
             }

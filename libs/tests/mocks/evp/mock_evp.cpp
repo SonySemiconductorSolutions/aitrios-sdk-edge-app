@@ -16,8 +16,10 @@
 
 #include "mock_evp.hpp"
 
+#include <pthread.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <chrono>
 #include <string>
@@ -25,6 +27,16 @@
 #include "evp_c_sdk/sdk.h"
 #include "log.h"
 #include "memory_manager.hpp"
+
+typedef struct {
+  struct EVP_BlobLocalStore localStore;
+  char *upload;
+  char *blob_buff;      /* buffer for blob actions over memory */
+  int blob_buff_size;   /* Max buffer size */
+  int blob_buff_offset; /* Current buff size used */
+  off_t size;
+  uint32_t identifier;
+} module_vars_t;
 
 static int setConfigurationCallbackCalled = 0;
 static int processEventCalled = 0;
@@ -41,7 +53,7 @@ static EVP_BLOB_CALLBACK blob_callback = NULL;
 static EVP_BLOB_CALLBACK_REASON blob_callback_reason =
     EVP_BLOB_CALLBACK_REASON_DENIED;
 static std::string blob_http_request_url = "";
-static struct EVP_BlobResultEvp vp = {EVP_BLOB_RESULT_SUCCESS, 201, 0};
+static struct EVP_BlobResultEvp *vp = nullptr;
 static int evpBlobOperationNotCallbackCall = 0;
 
 static module_vars_t *module_vars1 = NULL;
@@ -54,6 +66,15 @@ static EVP_TELEMETRY_CALLBACK_REASON telemetry_cb_reason =
 
 static EVP_STATE_CALLBACK _state_cb = NULL;
 static void *_state_userData = NULL;
+static int dummy_handle = 1;
+
+// --- Test mode: 0=sync (same thread), 1=async (other thread) ---
+static int mock_async_mode = 0;
+static int callback_test = 0;
+
+void Mock_SetCallbackTest(int enable) { callback_test = enable; }
+
+void Mock_SetAsyncMode(int enable) { mock_async_mode = enable; }
 
 EVP_RESULT EVP_setConfigurationCallback(struct EVP_client *h,
                                         EVP_CONFIGURATION_CALLBACK cb,
@@ -77,8 +98,72 @@ int setSendTelemetryResult(EVP_RESULT result) {
 
 void resetSendTelemetryResult() { evpsendTelemetryResult = EVP_OK; }
 
-EVP_RESULT EVP_processEvent(struct EVP_client *h, int timeout_ms) {
+const char *EVP_getWorkspaceDirectory(struct EVP_client *h,
+                                      EVP_WORKSPACE_TYPE type) {
+  return "/tmp/workspace";
+};
+
+EVP_RESULT EVP_processEvent(struct EVP_client *evp_client, int timeout_ms) {
+  (void)evp_client;
+  (void)timeout_ms;
   processEventCalled = 1;
+  LOG_WARN("EVP_processEvent called in thread %lu",
+           (unsigned long)pthread_self());
+  if (!blob_callback) {
+    LOG_WARN("No Blob callback to call");
+    return processEventResult;
+  }
+
+  if (blob_callback_reason == EVP_BLOB_CALLBACK_REASON_EXIT) {
+    vp = nullptr;
+    if (mock_async_mode == 0) {
+      LOG_WARN("Blob callback calling from the same thread %lu",
+               (unsigned long)pthread_self());
+      blob_callback(blob_callback_reason, nullptr, module_vars);
+    } else {
+      pthread_t th;
+      pthread_create(
+          &th, NULL,
+          (void *(*)(void *))[](void *arg)->void * {
+            usleep(100 * 1000);  // simulate 100ms delay
+            LOG_WARN("Blob callback calling from another thread %lu",
+                     pthread_self());
+            blob_callback(blob_callback_reason, nullptr, module_vars);
+            return NULL;
+          },
+          NULL);
+      pthread_join(th, NULL);
+    }
+    return processEventResult;
+  }
+
+  vp = (struct EVP_BlobResultEvp *)malloc(sizeof(struct EVP_BlobResultEvp));
+  vp->result = EVP_BLOB_RESULT_SUCCESS;
+  vp->http_status = 200;
+  vp->error = 0;
+
+  if (mock_async_mode == 0) {
+    // --- synchronous: call callback immediately in this thread ---
+    LOG_WARN("Blob callback calling from the same thread %lu",
+             (unsigned long)pthread_self());
+    blob_callback(blob_callback_reason, &vp, module_vars);
+  } else {
+    // --- asynchronous: call callback from another thread after delay ---
+    pthread_t th;
+    pthread_create(
+        &th, NULL,
+        (void *(*)(void *))[](void *arg)->void * {
+          usleep(100 * 1000);  // simulate 100ms delay
+          LOG_WARN("Blob callback calling from another thread %lu",
+                   pthread_self());
+          blob_callback(blob_callback_reason, &vp, module_vars);
+          return NULL;
+        },
+        NULL);
+    pthread_join(th, NULL);
+    free(vp);
+  }
+
   return processEventResult;
 }
 
@@ -90,7 +175,7 @@ void setProcessEventResult(EVP_RESULT result) { processEventResult = result; }
 
 struct EVP_client *EVP_initialize(void) {
   initializeCalled = 1;
-  return nullptr;
+  return (EVP_client *)&dummy_handle;
 }
 
 EVP_RESULT EVP_sendState(struct EVP_client *h, const char *topic,
@@ -106,14 +191,17 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
                              struct EVP_BlobLocalStore *localStore,
                              EVP_BLOB_CALLBACK cb, void *userData) {
   blobOperationCalled = 1;
-
+  LOG_WARN("EVP_blobOperation called: type=%d, op=%d", type, op);
   module_vars = (module_vars_t *)userData;
 
-  if (type == EVP_BLOB_TYPE_HTTP) {
+  if (type == EVP_BLOB_TYPE_HTTP || type == EVP_BLOB_TYPE_AZURE_BLOB ||
+      type == EVP_BLOB_TYPE_HTTP_EXT) {
     blob_http_request_url = ((struct EVP_BlobRequestHttp *)request)->url;
   } else {
     blob_http_request_url.clear();
   }
+  LOG_WARN("blob_http_request_url=%s", blob_http_request_url.c_str());
+  LOG_WARN("localStore->blob_len=%d", localStore->blob_len);
 
   if (evpBlobOperationNotCallbackCall == 1) {
     LOG_DBG("Not calling BlobCallback");
@@ -121,14 +209,18 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
   }
 
   blob_callback = cb;
-  evp_blob_io_cb = localStore->io_cb;
-
-  evp_blob_io_cb(module_vars->blob_buff, localStore->blob_len, module_vars);
+  if (op == EVP_BLOB_OP_PUT) {
+    evp_blob_io_cb = localStore->io_cb;
+    evp_blob_io_cb(module_vars->blob_buff, localStore->blob_len, module_vars);
+  } else {
+    evp_blob_io_cb = nullptr;
+  }
 
   blob_callback_reason = evpBlobCallbackReason;
-  LOG_DBG("Calling BlobCallback");
-  blob_callback(blob_callback_reason, &vp, module_vars);
-
+  if (callback_test) {
+    LOG_WARN("Calling BlobCallback");
+    blob_callback(blob_callback_reason, &vp, module_vars);
+  }
   return evpBlobOperationResult;
 }
 

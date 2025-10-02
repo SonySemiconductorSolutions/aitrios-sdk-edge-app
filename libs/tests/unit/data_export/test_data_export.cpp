@@ -38,6 +38,7 @@ class EdgeAppLibDataExportApiTestCb : public CommonTest {
   void SetUp() override {
     CommonTest::SetUp();
     evp_client = EVP_initialize();
+    Mock_SetCallbackTest(1);
     DataExportInitialize(context, evp_client);
   }
 
@@ -78,6 +79,7 @@ TEST_F(CommonTest, UnInitializesTestSuccess) {
 
 TEST_F(EdgeAppLibDataExportApiTest, SendDataAwaitCleanupTestSuccess) {
   dummy_data = getDummyData(5);
+
   EdgeAppLibDataExportFuture *future = DataExportSendData(
       PORTNAME_META, EdgeAppLibDataExportMetadata, (void *)dummy_data.array,
       dummy_data.size, dummy_data.timestamp);

@@ -97,8 +97,19 @@ TEST_F(EvenFunctionsTest, OnCreateSuccess) {
 //   EXPECT_EQ(wasEdgeAppLibDataExportSendStateCalled(), 1);
 // }
 
+TEST_F(EvenFunctionsTest, OnStartLoadModelError) {
+  onCreate();
+  setLoadModelResult(EdgeAppCoreResultFailure);
+  int res = onStart();
+  // lp_recog doesn't check load model result directly, returns 0
+  EXPECT_EQ(res, 0);
+  onDestroy();
+  setLoadModelResult(EdgeAppCoreResultSuccess);
+}
+
 TEST_F(EvenFunctionsTest, OnIterateSuccess) {
   onCreate();
+  onStart();
   int res = onIterate();
   EXPECT_EQ(res, 0);
   // lp_recog uses DataProcessorGetDataType()
@@ -111,6 +122,7 @@ TEST_F(EvenFunctionsTest, OnIterateSuccess) {
 
 TEST_F(EvenFunctionsTest, OnIterateInvalidJapaneseNumberPlate) {
   onCreate();
+  onStart();
   // Set LPRDataProcessorAnalyze to return invalid plate data
   setLPRDataProcessorAnalyzeReturnValid(false);
   int res = onIterate();
@@ -127,18 +139,9 @@ TEST_F(EvenFunctionsTest, OnIterateInvalidJapaneseNumberPlate) {
   setLPRDataProcessorAnalyzeReturnValid(true);
 }
 
-TEST_F(EvenFunctionsTest, OnIterateLoadModelError) {
-  onCreate();
-  setLoadModelResult(EdgeAppCoreResultFailure);
-  int res = onIterate();
-  // lp_recog doesn't check load model result directly, returns 0
-  EXPECT_EQ(res, 0);
-  onDestroy();
-  setLoadModelResult(EdgeAppCoreResultSuccess);
-}
-
 TEST_F(EvenFunctionsTest, OnIterateGetOutputError) {
   onCreate();
+  onStart();
   setGetOutputResult(false);
   int res = onIterate();
   EXPECT_EQ(res, -1);  // Should fail when GetOutput fails
@@ -148,6 +151,7 @@ TEST_F(EvenFunctionsTest, OnIterateGetOutputError) {
 
 TEST_F(EvenFunctionsTest, OnIterateProcessError) {
   onCreate();
+  onStart();
   setProcessResult(false);
   int res = onIterate();
   EXPECT_EQ(res, -1);  // Should fail when Process fails

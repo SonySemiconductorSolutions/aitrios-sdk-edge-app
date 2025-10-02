@@ -72,27 +72,6 @@ int AiModel::Verify(JSON_Object *obj) {
   return result;
 }
 
-char *AiModel::get_filename_from_url(const char *url) {
-  if (url == nullptr) return nullptr;
-
-  const char *last_slash = strrchr(url, '/');
-  if (last_slash == nullptr || *(last_slash + 1) == '\0') return nullptr;
-
-  const char *filename = last_slash + 1;
-
-  // SAS query string may be appended after '?'
-  const char *qmark = strchr(filename, '?');
-  size_t len = qmark ? (size_t)(qmark - filename) : strlen(filename);
-
-  char *clean_name = (char *)malloc(len + 1);
-  if (!clean_name) return nullptr;
-
-  strncpy(clean_name, filename, len);
-  clean_name[len] = '\0';
-
-  return clean_name;
-}
-
 int AiModel::Apply(JSON_Object *obj) {
   int32_t result = 0;
   LOG_INFO("AiModel::Apply enters");
@@ -127,25 +106,21 @@ int AiModel::Apply(JSON_Object *obj) {
   LOG_INFO("url_path: %s", url_path);
   LOG_INFO("hash: %s", hash);
 
-  /*
   EdgeAppLibReceiveDataInfo info;
-  info.filename = get_filename_from_url(url_path);
+  info.filename = (char *)name;
   info.filenamelen = strlen(info.filename);
   info.url = strdup(url_path);
   info.urllen = strlen(url_path);
   info.hash = strdup(hash);
-  EdgeAppLibReceiveDataResult ret = EdgeAppLibReceiveData(&info, -1);
+  EdgeAppLibReceiveDataResult ret = EdgeAppLibReceiveData(&info, 5000);
   if (ret != EdgeAppLibReceiveDataResultSuccess) {
     LOG_ERR("EdgeAppLibReceiveDatafailed with EdgeAppLibReceiveDataResult: %d",
             ret);
     return -1;
   }
 
-  free(info.filename);
   free(info.url);
   free(info.hash);
-  */
-
   LOG_INFO("AiModel::Apply exits");
   return result;
 }

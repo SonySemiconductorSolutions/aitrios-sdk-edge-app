@@ -59,6 +59,13 @@ extern "C" {
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
     EdgeAppLibReceiveDataInfo *info, int timeout_ms);
 
+/**
+ * @brief Get the file path after downloading
+ *
+ * @return The file path after downloading
+ */
+const char *EdgeAppLibReceiveDataStorePath();
+
 #ifdef __cplusplus
 }
 #endif

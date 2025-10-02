@@ -25,20 +25,24 @@
 #include "edgeapp_core.h"
 #include "log.h"
 #include "lp_recog_utils.hpp"
+#include "receive_data.h"
 #include "send_data.h"
 #include "sensor.h"
 #include "sm_utils.hpp"
+
+#define MAX_PATH_LEN 256
+#define DEFAULT_LPR_MODEL_NAME "lp_recognition"
 
 using namespace EdgeAppLib;
 EdgeAppLibSensorCore s_core = 0;
 EdgeAppLibSensorStream s_stream = 0;
 int32_t res_release_frame = -1;
+static char lpr_ai_model_path[MAX_PATH_LEN] = DEFAULT_LPR_MODEL_NAME;
 
 static EdgeAppCoreCtx ctx_imx500;
 static EdgeAppCoreCtx ctx_cpu;
 static EdgeAppCoreCtx *ctx_list[2] = {&ctx_imx500, &ctx_cpu};
 static EdgeAppCoreCtx *shared_list[2] = {nullptr, &ctx_imx500};
-extern char lpr_ai_model_path[256];
 extern char lpd_imx500_model_id[AI_MODEL_BUNDLE_ID_SIZE];
 
 // Define static vectors for model parameters
@@ -75,6 +79,7 @@ int onConfigure(char *topic, void *value, int valuesize) {
   }
   LOG_INFO("[onConfigure] topic:%s\nvalue:%s\nvaluesize:%i\n", topic,
            (char *)value, valuesize);
+
   char *output = NULL;
   DataProcessorResultCode res;
   if ((res = DataProcessorConfigure((char *)value, &output)) !=
@@ -89,28 +94,6 @@ int onConfigure(char *topic, void *value, int valuesize) {
 
 int onIterate() {
   LOG_TRACE("Inside onIterate.");
-  if (first_flag) {
-    for (int i = 0; i < model_count; ++i) {
-      LOG_DBG(
-          "Model ctx %d: sensor_core=%p, sensor_stream=%p, "
-          "graph_ctx=%p, target=%d",
-          i, ctx_list[i]->sensor_core, ctx_list[i]->sensor_stream,
-          ctx_list[i]->graph_ctx, ctx_list[i]->target);
-      if (EdgeAppCore::LoadModel(models[i], *ctx_list[i], shared_list[i]) !=
-          EdgeAppCoreResultSuccess) {
-        LOG_ERR("Failed to load model %d.", i);
-      } else {
-        LOG_INFO("Successfully loaded model %d: %s", i, models[i].model_name);
-      }
-      LOG_DBG(
-          "Model ctx %d: sensor_core=%p, sensor_stream=%p, "
-          "graph_ctx=%p, target=%d",
-          i, ctx_list[i]->sensor_core, ctx_list[i]->sensor_stream,
-          ctx_list[i]->graph_ctx, ctx_list[i]->target);
-    }
-    s_stream = *ctx_imx500.sensor_stream;
-    first_flag = false;
-  }
 
   // Process the frame using the sensor stream
   auto frame = EdgeAppCore::Process(ctx_imx500, &ctx_imx500, 0, roi[0]);
@@ -118,7 +101,7 @@ int onIterate() {
     LOG_ERR("Failed to get frame from sensor stream.");
     return -1;
   }
-  // 4 output tensor from detection model
+  // Output tensor from detection model
   auto output = EdgeAppCore::GetOutput(ctx_imx500, frame, 4);
 
   LPDataProcessorAnalyzeParam param;
@@ -205,12 +188,35 @@ int onIterate() {
 }
 
 int onStop() {
-  LOG_TRACE("Inside onStop. Do nothing here.");
+  LOG_TRACE("Inside onStop.");
+  EdgeAppCoreCtx *ctx_list[] = {&ctx_imx500, &ctx_cpu};
+  for (auto ctx : ctx_list) {
+    EdgeAppCore::UnloadModel(*ctx);
+  }
   return 0;
 }
 
 int onStart() {
-  LOG_TRACE("Inside onStart. Do nothing here.");
+  LOG_TRACE("Inside onStart.");
+  for (int i = 0; i < model_count; ++i) {
+    LOG_DBG(
+        "Model ctx %d: sensor_core=%p, sensor_stream=%p, "
+        "graph_ctx=%p, target=%d",
+        i, ctx_list[i]->sensor_core, ctx_list[i]->sensor_stream,
+        ctx_list[i]->graph_ctx, ctx_list[i]->target);
+    if (EdgeAppCore::LoadModel(models[i], *ctx_list[i], shared_list[i]) !=
+        EdgeAppCoreResultSuccess) {
+      LOG_ERR("Failed to load model %d.", i);
+    } else {
+      LOG_INFO("Successfully loaded model %d: %s", i, models[i].model_name);
+    }
+    LOG_DBG(
+        "Model ctx %d: sensor_core=%p, sensor_stream=%p, "
+        "graph_ctx=%p, target=%d",
+        i, ctx_list[i]->sensor_core, ctx_list[i]->sensor_stream,
+        ctx_list[i]->graph_ctx, ctx_list[i]->target);
+  }
+  s_stream = *ctx_imx500.sensor_stream;
   return 0;
 }
 

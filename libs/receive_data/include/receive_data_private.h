@@ -24,16 +24,6 @@
 extern "C" {
 #endif
 
-struct EdgeAppLibReceiveDataFuture {
-  EdgeAppLibReceiveDataResult result;
-
-  pthread_mutex_t
-      mutex; /**< @brief A mutex for synchronizing access to the structure. */
-
-  pthread_cond_t cond; /**< @brief A condition variable for blocking and
-                          waking threads.*/
-};
-
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataInitialize(void *evp_client);
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataUnInitialize();
 

@@ -17,7 +17,6 @@
 #ifndef MOCKS_MOCK_EVP_HPP
 #define MOCKS_MOCK_EVP_HPP
 
-#include "data_export_private.h"
 #include "evp_c_sdk/sdk.h"
 
 EVP_RESULT EVP_setConfigurationCallback(struct EVP_client *h,
@@ -53,7 +52,8 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
                              EVP_BLOB_OPERATION op, const void *request,
                              struct EVP_BlobLocalStore *localStore,
                              EVP_BLOB_CALLBACK cb, void *userData);
-
+void Mock_SetAsyncMode(int enable);
+void Mock_SetCallbackTest(int enable);
 EVP_RESULT
 EVP_sendTelemetry(struct EVP_client *h,
                   const struct EVP_telemetry_entry *entries, size_t nentries,

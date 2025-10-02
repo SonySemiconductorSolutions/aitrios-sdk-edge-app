@@ -44,6 +44,7 @@ add_executable(test_edgeapp_core
   ${MOCKS_DIR}/device/mock_device.cpp
   ${MOCKS_DIR}/sensor/testing_utils.cpp
   ${MOCKS_DIR}/sm/mock_sm_api.cpp
+  ${MOCKS_DIR}/receive_data/mock_receive_data.cpp
   ${THIRD_DIR}/parson/parson.c
 )
 target_link_libraries(test_edgeapp_core
@@ -58,6 +59,7 @@ target_include_directories(test_edgeapp_core PUBLIC
   ${LIBS_DIR}/common/include
   ${ROOT_DIR}/include
   ${LIBS_DIR}/depend/edge_app
+  ${LIBS_DIR}/receive_data/include
   ${LIBS_DIR}/sm/include
   ${LIBS_DIR}/send_data/src/data_export/include
   ${LIBS_DIR}/send_data/src/process_format

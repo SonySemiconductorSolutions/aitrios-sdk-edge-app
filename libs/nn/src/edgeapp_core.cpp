@@ -22,6 +22,7 @@
 #include "edgeapp_core.h"
 
 #include <assert.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
@@ -45,17 +46,57 @@
 #include "log.h"
 #include "memory_manager.hpp"
 #include "nn.h"
+#include "receive_data.h"
 #include "send_data.h"
 #include "user_bridge_c.h"
 
 #define PORTNAME_META "metadata"
 #define PORTNAME_INPUT "input"
 #define PORTNAME_RAW "full"
+#define MAX_PATH_LEN 256
 
 using namespace EdgeAppLib;
 
 namespace EdgeAppCore {
 static uint32_t model_count = 0;  // Count of loaded models
+
+static bool IsRealFilename(const char *filename, const char *real_filename) {
+  if (strncmp(filename, real_filename, strlen(real_filename))) {
+    return false;
+  }
+  if (strlen(filename) == strlen(real_filename)) {
+    return true;
+  } else if (strlen(filename) > strlen(real_filename)) {
+    if (*(filename + strlen(real_filename)) == '.') {
+      return true;
+    }
+  }
+  return false;
+}
+
+static char *FindFilenameByRealFilename(const char *dir,
+                                        const char *real_filename) {
+  DIR *dir_p = opendir(dir);
+  if (!dir_p) {
+    LOG_ERR("Open directory failed.");
+    return nullptr;
+  }
+
+  struct dirent *entry;
+  char *filename = nullptr;
+  while ((entry = readdir(dir_p)) != NULL) {
+    if (entry->d_type == DT_REG &&
+        IsRealFilename(entry->d_name, real_filename)) {
+      filename = (char *)malloc(strlen(entry->d_name) + 1);
+      snprintf(filename, strlen(entry->d_name) + 1, "%s", entry->d_name);
+      break;
+    }
+  }
+
+  closedir(dir_p);
+  return filename;
+}
+
 EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
                             EdgeAppCoreCtx *shared_ctx) {
   if (model.model_name == nullptr || model.model_name[0] == '\0') {
@@ -92,8 +133,10 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
       return EdgeAppCoreResultFailure;
     }
     struct EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle = {};
-    snprintf(ai_model_bundle.ai_model_bundle_id, AI_MODEL_BUNDLE_ID_SIZE, "%s",
-             model.model_name);
+    if (snprintf(ai_model_bundle.ai_model_bundle_id, AI_MODEL_BUNDLE_ID_SIZE,
+                 "%s", model.model_name) >= AI_MODEL_BUNDLE_ID_SIZE) {
+      LOG_WARN("AI model bundle ID exceeds size limit");
+    }
 
     if (SensorStreamSetProperty(
             *ctx.sensor_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
@@ -106,9 +149,24 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
     }
   } else {
     EdgeAppLibGraph g;
-    if (EdgeAppLib::LoadModel(model.model_name, &g,
+    const char *path = EdgeAppLibReceiveDataStorePath();
+    char model_path[MAX_PATH_LEN] = {0};
+    char *model_file = FindFilenameByRealFilename(path, model.model_name);
+    if (model_file) {
+      if (snprintf(model_path, MAX_PATH_LEN, "%s/%s", path, model_file) >=
+          MAX_PATH_LEN) {
+        LOG_WARN("AI model file absolute path exceeds size limit");
+      }
+      free(model_file);
+    } else {
+      if (snprintf(model_path, MAX_PATH_LEN, "%s/%s", path, model.model_name) >=
+          MAX_PATH_LEN) {
+        LOG_WARN("AI model file absolute path exceeds size limit");
+      }
+    }
+    if (EdgeAppLib::LoadModel((const char *)model_path, &g,
                               (EdgeAppLibExecutionTarget)model.target) != 0) {
-      LOG_ERR("Failed to load model: %s", model.model_name);
+      LOG_ERR("Failed to load model: %s", model_path);
       return EdgeAppCoreResultFailure;
     }
 

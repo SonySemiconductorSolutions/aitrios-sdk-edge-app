@@ -1215,12 +1215,6 @@
                                                 "@type": "Object",
                                                 "fields": [
                                                     {
-                                                        "name": "ai_model_path",
-                                                        "displayName": "AI Model Path",
-                                                        "description": "Path to the AI model file.",
-                                                        "schema": "string"
-                                                    },
-                                                    {
                                                         "name": "parameters",
                                                         "displayName": "Parameters of AI Model",
                                                         "schema": {

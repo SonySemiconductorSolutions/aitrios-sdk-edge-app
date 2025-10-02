@@ -40,7 +40,6 @@ class AiModel : public JsonObject {
   const char *url_path = nullptr;  // URL path to the AI model
   const char *hash = nullptr;      // Hash of the AI model file
   bool failed = false;
-  char *get_filename_from_url(const char *url);
 };
 
 #endif /* DTDL_MODEL_OBJECTS_COMMON_SETTINGS_AI_MODEL_HPP \

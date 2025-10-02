@@ -181,8 +181,9 @@ The Data Receive provides an interface for dowloading data from HTTP or Azure Bl
 ### API lists
 
 | Function                    | Description                                                  |
-|----------------------------|---------------------------------------------------------------|
-| `EdgeAppLibReceiveData`    | Receive data files from a remote location                     |
+|-------------------------------------|------------------------------------------------------|
+| `EdgeAppLibReceiveData`             | Receive data files from a remote location            |
+| `EdgeAppLibReceiveDataStorePath`    | Get the file path after downloading                  |
 |                                                                                            |
 
 ## Usage Example
@@ -190,8 +191,8 @@ The Data Receive provides an interface for dowloading data from HTTP or Azure Bl
 ```cpp
 #include "receive_data.h"
 
-#define MODEL_URL "http://0.0.0.0:8000/network.pkg"
-#define DOWNLOAD_FILENAME "./network.pkg"
+#define MODEL_URL "http://0.0.0.0:8000/LPR.tflite"
+#define DOWNLOAD_FILENAME "lp_recognition"
 
 int onStart() {
   EdgeAppLibReceiveDataInfo info;
@@ -199,6 +200,7 @@ int onStart() {
   info.filenamelen = strlen(DOWNLOAD_FILENAME);
   info.url = strdup(MODEL_URL);
   info.urllen = strlen(MODEL_URL);
+  info.hash = strdup("6fb13ba628bd4dbf168c33f7099727f6cb21420be4fd32cdc8b319f2d0d736cf");
   EdgeAppLibReceiveDataResult ret2 = EdgeAppLibReceiveData(&info, -1);
   if (ret2 != EdgeAppLibReceiveDataResultSuccess) {
     LOG_ERR(
@@ -208,7 +210,12 @@ int onStart() {
   }
   LOG_INFO("EdgeAppLibReceiveData, download AI model from %s to local %s\n",
            info.url, info.filename);
+
+  const char *path = EdgeAppLibReceiveDataStorePath();
+  LOG_INFO("lpr_ai_model is downloaded in: %s/%s.%s", path, DOWNLOAD_FILENAME, "tflite");
+
   free(info.filename);
   free(info.url);
+  free(info.hash);
 }
 ```

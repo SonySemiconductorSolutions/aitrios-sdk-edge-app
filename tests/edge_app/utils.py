@@ -173,10 +173,12 @@ def manage_edge_app(app_path: str, file_path: str) -> Iterator[Tuple[dict, subpr
             data = json.load(f)["edge_app"]
 
         # send default configuration
+        print(f"data: {data}")
         send_data(json.dumps(data))
         yield data, process
     except Exception as e:
-        print(f"[ERROR] Exception in manage_edge_app: {e}")
+        print(f"[ERROR] Exception type in manage_python_edge_app: {type(e).__name__}")
+        print(f"[ERROR] Exception in manage_python_edge_app: {e}")
         raise
     finally:
         # trigger exit and cleanup
@@ -224,9 +226,11 @@ def manage_python_edge_app(app_path: str, file_path: str) -> Iterator[Tuple[dict
             data = json.load(f)["edge_app"]
 
         # send default configuration
+        print(f"data: {data}")
         send_data(json.dumps(data))
         yield data, process
     except Exception as e:
+        print(f"[ERROR] Exception type in manage_python_edge_app: {type(e).__name__}")
         print(f"[ERROR] Exception in manage_python_edge_app: {e}")
         raise
     finally:
