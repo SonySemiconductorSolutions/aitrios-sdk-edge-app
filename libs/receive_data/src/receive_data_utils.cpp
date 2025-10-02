@@ -14,8 +14,12 @@
  * limitations under the License.
  ****************************************************************************/
 
+#include "receive_data_utils.h"
+
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "log.h"
 extern "C" {
@@ -23,6 +27,35 @@ extern "C" {
 }
 
 #define SHA256_BUFSIZE 4096
+
+char *GetSuffixFromUrl(const char *url, int len) {
+  const char *p = url + len;
+  const char *q = nullptr;
+  while (p != url) {
+    p--;
+    if (*p == '?') {
+      q = q ? q : p;
+    }
+    if (*p == '/') {
+      return nullptr;
+    }
+    if (*p == '.') {
+      break;
+    }
+  }
+  if (p == url) {
+    return nullptr;
+  }
+  if (q == nullptr) {
+    q = url + len;
+  }
+  char *suffix = (char *)malloc(q - p + 1);
+  snprintf(suffix, q - p + 1, "%s", p);
+  LOG_INFO("Suffix of file to download from %s is %s.", url, suffix);
+  return suffix;
+}
+
+void ReleaseSuffixString(char *suffix) { free(suffix); }
 
 bool IsFileHashCorrect(const char *hash, const char *path) {
   if (!hash || strnlen(hash, SHA256_HEX_SIZE) != SHA256_HEX_SIZE - 1) {
@@ -66,4 +99,40 @@ bool IsFileHashCorrect(const char *hash, const char *path) {
   } else {
     return true;
   }
+}
+
+static bool IsRealFilename(const char *filename, const char *real_filename) {
+  if (strncmp(filename, real_filename, strlen(real_filename))) {
+    return false;
+  }
+  if (strlen(filename) == strlen(real_filename)) {
+    return true;
+  } else if (strlen(filename) > strlen(real_filename)) {
+    if (*(filename + strlen(real_filename)) == '.') {
+      return true;
+    }
+  }
+  return false;
+}
+
+void RemoveOutdatedFile(const char *dir, const char *filename) {
+  DIR *dir_p = opendir(dir);
+  if (!dir_p) {
+    LOG_ERR("Open directory failed.");
+    return;
+  }
+
+  struct dirent *entry;
+  char filepath[MAX_PATH_LEN];
+  while ((entry = readdir(dir_p)) != NULL) {
+    if (entry->d_type == DT_REG && IsRealFilename(entry->d_name, filename)) {
+      snprintf(filepath, MAX_PATH_LEN, "%s/%s", dir, entry->d_name);
+      LOG_INFO("Remove file: %s", filepath);
+      if (unlink(filepath)) {
+        LOG_ERR("Remove file failed.");
+      }
+    }
+  }
+
+  closedir(dir_p);
 }

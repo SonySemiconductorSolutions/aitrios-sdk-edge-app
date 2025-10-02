@@ -59,6 +59,7 @@ add_executable(test_event_functions
   ${MOCKS_DIR}/data_processor_api/mock_data_processor_api.cpp
   ${MOCKS_DIR}/lp_recog_data_processor/mock_lp_recog_data_processor.cpp
   ${MOCKS_DIR}/data_export/mock_data_export.cpp
+  ${MOCKS_DIR}/receive_data/mock_receive_data.cpp
   ${SAMPLE_APP_DIR}/lp_recog/src/sm.cpp
   ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
   ${LIBS_DIR}/third_party/parson/parson.c
@@ -73,6 +74,7 @@ target_include_directories (test_event_functions PUBLIC
   ${LIBS_DIR}/tests/unit/data_export/
   ${LIBS_DIR}/common/include
   ${LIBS_DIR}/send_data/src/data_export/include
+  ${LIBS_DIR}/receive_data/include
   ${LIBS_DIR}/sm/include
   ${MOCKS_DIR}/sensor
   ${MOCKS_DIR}/device

@@ -25,11 +25,17 @@ add_library(receive_data STATIC
 )
 
 target_include_directories(receive_data PUBLIC
+  ${LIBS_DIR}/third_party/parson
   ${AITRIOS_RECEIVE_DATA_ROOT_DIR}/include
+)
+target_include_directories(receive_data PRIVATE
   ${AITRIOS_RECEIVE_DATA_ROOT_DIR}/src
   ${LIBS_DIR}/depend/edge_app/evp_c_sdk
   ${LIBS_DIR}/third_party/SHA-256
+  ${LIBS_DIR}/third_party/parson
   ${ROOT_DIR}/include
+  ${LIBS_DIR}/sm/src
+  ${LIBS_DIR}/depend/edge_app
 )
 
 target_link_libraries(receive_data

@@ -43,8 +43,6 @@ The following models have been verified:
 ### CPU Model (Character Recognition)
 - The character recognition model must be **directly placed on the device**.
 - Model file should be a TensorFlow Lite (`.tflite`) format.
-- Default path: `/opt/senscord/share/tflite_models/LPR.tflite`
-- The model path can be configured via `custom_settings.ai_models_cpu.lp_recognition.ai_model_path`.
 
 ## Main Data Structures
 - **`Prediction`**: Detection result for one character (coordinates, score, category ID)
@@ -80,7 +78,6 @@ Configuration for the license plate detection model running on IMX500:
 #### ai_models_cpu.lp_recognition
 Configuration for the character recognition model running on CPU:
 
-- **`ai_model_path`**: Full path to the TensorFlow Lite model file on device (default: "/opt/senscord/share/tflite_models/LPR.tflite")
 - **`parameters`**:
   - `threshold` (float): Character recognition confidence threshold (default: 0.5)
 
@@ -107,7 +104,6 @@ Configuration for the character recognition model running on CPU:
     },
     "ai_models_cpu": {
       "lp_recognition": {
-        "ai_model_path": "/opt/senscord/share/tflite_models/LPR.tflite",
         "parameters": {
           "threshold": 0.5
         }

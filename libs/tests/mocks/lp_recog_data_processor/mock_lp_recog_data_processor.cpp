@@ -25,7 +25,6 @@ struct LPDataProcessorAnalyzeParam {
 };
 
 // Global variables used by lp_recog
-char lpr_ai_model_path[256] = {};
 bool LPRDataProcessorAnalyzeReturnValidData = true;
 char lpd_imx500_model_id[128];
 

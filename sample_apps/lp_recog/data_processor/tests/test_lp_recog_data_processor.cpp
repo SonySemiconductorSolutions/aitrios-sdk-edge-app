@@ -32,7 +32,6 @@ using EdgeAppLib::SensorCoreExit;
 using EdgeAppLib::SensorStreamGetProperty;
 
 EdgeAppLibSensorStream s_stream = 0;
-extern char lpr_ai_model_path[256];
 extern char lpd_imx500_model_id[AI_MODEL_BUNDLE_ID_SIZE];
 extern float lpr_threshold;
 
@@ -195,37 +194,6 @@ TEST(Finalize, FinalizeTest) {
   EXPECT_EQ(res, kDataProcessorOk);
 }
 
-TEST_F(ConfigureAnalyzeFixtureTests, CorrectConfigurationTest) {
-  char *output = NULL;
-
-  // Check initial state of global variable (should be default path)
-  const char *expected_default_path =
-      "/opt/senscord/share/tflite_models/LPR.tflite";
-  printf("Initial lpr_ai_model_path: '%s'\n", lpr_ai_model_path);
-  EXPECT_STREQ(lpr_ai_model_path, expected_default_path);
-
-  DataProcessorResultCode res = DataProcessorConfigure((char *)config, &output);
-  check_values(config_json_object);
-  printf("config: %s\n", config);
-  EXPECT_EQ(res, kDataProcessorOk);
-
-  // Check that the global variable was updated with the expected path
-  const char *expected_path = "/opt/senscord/share/tflite_models/LPR.tflite";
-  printf("Updated lpr_ai_model_path: '%s'\n", lpr_ai_model_path);
-  printf("Expected path: '%s'\n", expected_path);
-  EXPECT_STREQ(lpr_ai_model_path, expected_path);
-  EXPECT_EQ(lpr_threshold, 0.5f);
-
-  /* NOT SET AI MODEL BUNDLE ID to host */
-  // EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle;
-  // SensorStreamGetProperty(0, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
-  //                         &ai_model_bundle, sizeof(ai_model_bundle));
-
-  printf("ai_model_bundle.ai_model_bundle_id: %s\n", lpd_imx500_model_id);
-  printf("network_id: %s\n", network_id);
-  ASSERT_EQ(strncmp(lpd_imx500_model_id, network_id, sizeof(network_id)), 0);
-}
-
 TEST_F(ConfigureAnalyzeFixtureTests, DefaultValuesTest) {
   // Create a minimal configuration without parameters to test default values
   const char *minimal_config = R"({
@@ -257,9 +225,6 @@ TEST_F(ConfigureAnalyzeFixtureTests, DefaultValuesTest) {
   EXPECT_TRUE(detection_param.bbox_normalized);  // Default should be true
 
   // Check CPU model defaults
-  const char *expected_default_path =
-      "/opt/senscord/share/tflite_models/LPR.tflite";
-  EXPECT_STREQ(lpr_ai_model_path, expected_default_path);
   EXPECT_FLOAT_EQ(lpr_threshold, 0.5f);  // Default CPU threshold should be 0.5
 
   free(output);
@@ -278,9 +243,7 @@ TEST_F(ConfigureAnalyzeFixtureTests, PartialParametersTest) {
       }
     },
     "ai_models_cpu": {
-      "lp_recognition": {
-        "ai_model_path": "/custom/path/model.tflite"
-      }
+      "lp_recognition": {}
     },
     "metadata_settings": {
       "format": 0
@@ -305,8 +268,6 @@ TEST_F(ConfigureAnalyzeFixtureTests, PartialParametersTest) {
   EXPECT_TRUE(detection_param.bbox_normalized);   // Default applied
 
   // Check CPU model parameters
-  EXPECT_STREQ(lpr_ai_model_path,
-               "/custom/path/model.tflite");  // User specified
   EXPECT_FLOAT_EQ(lpr_threshold,
                   DEFAULT_THRESHOLD_CPU);  // Default applied (0.5)
 
@@ -429,32 +390,6 @@ TEST_F(ConfigureAnalyzeFixtureTests, AIModelCPUNullTest) {
   free(output);
 }
 
-TEST_F(ConfigureAnalyzeFixtureTests, AIModelCPUPathNullTest) {
-  testing::internal::CaptureStdout();
-  const char *default_path = "/opt/senscord/share/tflite_models/LPR.tflite";
-
-  // Set the AI model path to null
-  JSON_Status stat = json_object_dotremove(
-      config_json_object, "ai_models_cpu.lp_recognition.ai_model_path");
-  ASSERT_EQ(stat, JSONSuccess);
-  const char *config_mod = json_serialize_to_string_pretty(config_json_val);
-
-  char *output = NULL;
-  DataProcessorResultCode res =
-      DataProcessorConfigure((char *)config_mod, &output);
-  std::string output_str = testing::internal::GetCapturedStdout();
-  EXPECT_EQ(res, kDataProcessorOk);
-  EXPECT_NE(output_str.find("ai_model_path not found for CPU model"),
-            std::string::npos);
-
-  // Verify that the default path is still used when ai_model_path is not
-  // specified
-  EXPECT_STREQ(lpr_ai_model_path, default_path);
-
-  json_free_serialized_string((char *)config_mod);
-  free(output);
-}
-
 TEST_F(ConfigureAnalyzeFixtureTests, AIModelCPUParameterNullTest) {
   // Set the AI model path to null
   JSON_Status stat = json_object_dotremove(
@@ -550,25 +485,6 @@ TEST_F(ConfigureAnalyzeFixtureTests, DataProcessorGetDataTypeJson) {
 
   EdgeAppLibSendDataType data_type = DataProcessorGetDataType();
   EXPECT_EQ(data_type, EdgeAppLibSendDataJson);
-}
-
-TEST_F(ConfigureAnalyzeFixtureTests, GlobalVariableUpdateTest) {
-  char *output = NULL;
-
-  // Clear the global variable to ensure it starts with default value
-  const char *default_path = "/opt/senscord/share/tflite_models/LPR.tflite";
-  strcpy(lpr_ai_model_path, default_path);
-  EXPECT_STREQ(lpr_ai_model_path, default_path);
-
-  DataProcessorResultCode res = DataProcessorConfigure((char *)config, &output);
-  EXPECT_EQ(res, kDataProcessorOk);
-
-  // Verify the global variable was updated with the correct path
-  const char *expected_path = "/opt/senscord/share/tflite_models/LPR.tflite";
-  EXPECT_STREQ(lpr_ai_model_path, expected_path);
-
-  // Verify the path length is within bounds
-  EXPECT_LT(strlen(lpr_ai_model_path), sizeof(lpr_ai_model_path));
 }
 
 // LPR Data Processor Test Fixture

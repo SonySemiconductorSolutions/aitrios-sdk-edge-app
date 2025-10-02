@@ -429,6 +429,7 @@ def test_valgrind(app: str, python_bindings: bool, inject_fault: bool):
 
     manage = manage_python_edge_app if python_bindings else manage_edge_app
     app_path = PYTHON_APP_PATH if python_bindings else APP_PATH
+    print(f"app_path: {app_path}, file_path: {file_path}, app: {app}")
     with manage(app_path=app_path, file_path=file_path) as (data, process):
         checker = DTDLStateChecker()
 

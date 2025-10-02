@@ -38,14 +38,10 @@ extern EdgeAppLibSensorStream s_stream;
 #define IMX500_MODEL_NAME "lp_detection"
 #define CPU_MODEL_NAME "lp_recognition"
 
-// Default path for CPU AI model
-#define DEFAULT_LPR_MODEL_PATH "/opt/senscord/share/tflite_models/LPR.tflite"
-
 using EdgeAppLib::SensorStreamGetProperty;
 
 pthread_mutex_t data_processor_mutex;
 EdgeAppLibSendDataType metadata_format = EdgeAppLibSendDataBase64;
-char lpr_ai_model_path[256] = DEFAULT_LPR_MODEL_PATH;
 char lpd_imx500_model_id[AI_MODEL_BUNDLE_ID_SIZE];
 float lpr_threshold = DEFAULT_THRESHOLD_CPU;
 
@@ -141,13 +137,6 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
         json_object_dotget_string(object, "res_info.res_id"));
     json_value_free(value);
     return kDataProcessorInvalidParam;
-  }
-  const char *ai_model_path =
-      json_object_dotget_string(object_model_cpu, "ai_model_path");
-  if (ai_model_path != nullptr) {
-    snprintf(lpr_ai_model_path, sizeof(lpr_ai_model_path), "%s", ai_model_path);
-  } else {
-    LOG_WARN("ai_model_path not found for CPU model.");
   }
 
   JSON_Object *cpu_params =

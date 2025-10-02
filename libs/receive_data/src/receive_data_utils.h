@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
-#include "receive_data_private.h"
+#ifndef AITRIOS_RECEIVE_DATA_UTILS_H
+#define AITRIOS_RECEIVE_DATA_UTILS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataInitialize(void *evp_client) {
-  return EdgeAppLibReceiveDataResultSuccess;
-}
+#define MAX_PATH_LEN 256
 
-EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataUnInitialize() {
-  return EdgeAppLibReceiveDataResultSuccess;
-}
-
-EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
-    EdgeAppLibReceiveDataInfo *info, int timeout_ms) {
-  return EdgeAppLibReceiveDataResultSuccess;
-}
-
-const char *EdgeAppLibReceiveDataStorePath() {
-  return "/evp_data/instances/node/default_workspace";
-}
+char *GetSuffixFromUrl(const char *url, int len);
+void ReleaseSuffixString(char *suffix);
+bool IsFileHashCorrect(const char *hash, const char *path);
+void RemoveOutdatedFile(const char *dir, const char *filename);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
