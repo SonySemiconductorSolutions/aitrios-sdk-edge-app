@@ -50,17 +50,17 @@ static const std::vector<std::string> LP_CATEGORIES_KANJI = {
     "Shiga",        "Shimane",    "Hamamatsu", "Numazu",     "Fujisan",
     "Izu",          "Shizuoka",   "Tochigi",   "Utsunomiya", "Nasu",
     "Tokushima",    "Adachi",     "Hachiōji",  "Tama",       "Nerima",
-    "Suginami",     "Shinagawa",  "Ogasawara", "Setagaya",   "Tottori",
-    "Toyama",       "Wakayama",   "Shōnai",    "Yamagata",   "Yamaguchi",
-    "Shimonoseki",  "Yamanashi"};  // 2+10+117=129
+    "Suginami",     "Shinagawa",  "Setagaya",  "Tottori",    "Toyama",
+    "Wakayama",     "Shōnai",     "Yamagata",  "Yamaguchi",  "Shimonoseki",
+    "Yamanashi"};  // 2+10+116=128
 static const std::vector<std::string> LP_CATEGORIES_HIRAGANA = {
     "sa", "su", "se", "so", "ta", "chi", "tsu", "te", "to",
-    "na", "ni",  // 129+11=140
+    "na", "ni",  // 128+11=139
     "nu", "ne", "no", "ha", "hi", "fu",  "ho",  "ma", "mi",
-    "mu", "me",  // 140+11=151
+    "mu", "me",  // 139+11=150
     "mo", "ya", "yu", "yo", "ra", "ri",  "ru",  "ro", "re",
-    "wa", "a",                                                // 151+11=162
-    "i",  "u",  "e",  "ka", "ki", "ku",  "ke",  "ko", "wo"};  // 162+9=171
+    "wa", "a",                                                // 150+11=161
+    "i",  "u",  "e",  "ka", "ki", "ku",  "ke",  "ko", "wo"};  // 161+9=170
 
 static const std::vector<std::string> CATEGORIES = [] {
   std::vector<std::string> all_categories;

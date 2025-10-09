@@ -91,3 +91,28 @@ ifeq ($(IMAGE),)
 	@exit 1
 endif
 	$(call run_vm,debug,--debug)
+
+.PHONY: copy_edgeapplib
+
+# copy necessary files to each applications.
+# note:
+# - the top-level cmake file performs an equivalent automatically
+# - "utils" is excluded because it isn't an application
+copy_edgeapplib:
+	for x in sample_apps/*; do \
+		if [ "$${x}" = utils ]; then \
+			continue; \
+		fi; \
+		cp -R include libs $${x}; \
+	done
+
+.PHONY: clean_edgeapplib
+
+clean_edgeapplib:
+	for x in sample_apps/*; do \
+		if [ "$${x}" = utils ]; then \
+			continue; \
+		fi; \
+		rm -rf $${x}/libs; \
+		rm -f $${x}/include/*.h; \
+	done

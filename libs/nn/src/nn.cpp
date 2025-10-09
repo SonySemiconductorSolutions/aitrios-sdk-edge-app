@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,9 +75,9 @@ EdgeAppLibNNResult SetInput(EdgeAppLibGraphContext ctx, uint8_t *input_tensor,
   }
 
   uint32_t n = dims.buf[0];
-  uint32_t c = dims.buf[1];
-  uint32_t h = dims.buf[2];
-  uint32_t w = dims.buf[3];
+  uint32_t h = dims.buf[1];
+  uint32_t w = dims.buf[2];
+  uint32_t c = dims.buf[3];
   size_t num_elements = n * c * h * w;
 
   float *float_buffer = (float *)malloc(num_elements * sizeof(float));
@@ -85,27 +86,25 @@ EdgeAppLibNNResult SetInput(EdgeAppLibGraphContext ctx, uint8_t *input_tensor,
     return EDGEAPP_LIB_NN_TOO_LARGE;
   }
 
-  // Convert uint8 [0-255] -> float [0-1]
-  for (size_t i = 0; i < num_elements; ++i) {
-    float_buffer[i] = static_cast<float>(input_tensor[i]) / 255.0f;
+  // Normalize channel by channel uint8[0-255] would be mapped to float
+  // [0.0-1.0], then (value - mean) / norm
+  for (uint32_t ci = 0; ci < c; ++ci) {
+    for (uint32_t i = ci; i < num_elements; i += c) {
+      float val =
+          static_cast<float>(input_tensor[i]) / 255.0f;  // Scale to [0.0, 1.0]
+      float_buffer[i] = (val - mean_values[ci]) / norm_values[ci];
+    }
   }
-
-  // Apply normalization if provided
-  // if (mean_values != NULL && mean_size == c) {
-  //   for (size_t i = 0; i < num_elements; ++i) {
-  //     size_t channel = (i / (h * w)) % c;
-  //     float_buffer[i] -= mean_values[channel];
-  //   }
-  // }
 
   tensor tensor;
   tensor.dimensions = &dims;
   tensor.type = fp32;
   tensor.data = (uint8_t *)float_buffer;
 
-  // Call set_input
+  // Call wasi-nn set_input
   wasi_nn_error err = set_input((graph_execution_context)ctx, 0, &tensor);
 
+  // Clean up temporary buffers
   free(float_buffer);
   free(dims.buf);
 

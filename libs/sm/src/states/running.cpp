@@ -17,11 +17,11 @@
 #include "states/running.hpp"
 
 #include <assert.h>
+#include <pthread.h>
 
 #include "data_export_private.h"
 #include "evp_c_sdk/sdk.h"
 #include "log.h"
-#include "pthread.h"
 #include "sm.h"
 #include "sm_context.hpp"
 #include "states/state_defs.h"

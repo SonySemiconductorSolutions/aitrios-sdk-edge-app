@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
-set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
-set(TESTS_DIR ${ROOT_DIR}/tests)
-set(LIBS_DIR ${ROOT_DIR}/libs)
-
 add_library(data_processor_api
   ${TESTS_DIR}/apitest/data_processor/src/apitest_data_processor.cpp
   ${TESTS_DIR}/apitest/data_processor/src/apitest_util.cpp
@@ -31,7 +26,7 @@ add_library(data_processor_api
 target_include_directories(data_processor_api PUBLIC
   ${SAMPLE_APP_DIR}/utils/include
   ${TESTS_DIR}/apitest/data_processor/src
-  ${ROOT_DIR}/include
+  ${INCLUDE_DIR}
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/base64.c
   ${LIBS_DIR}/depend/edge_app

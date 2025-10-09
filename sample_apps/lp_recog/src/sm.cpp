@@ -47,9 +47,9 @@ extern char lpd_imx500_model_id[AI_MODEL_BUNDLE_ID_SIZE];
 
 // Define static vectors for model parameters
 static const std::vector<float> imx500_mean = {0.0f, 0.0f, 0.0f};
-static const std::vector<float> imx500_std = {0.0f, 0.0f, 0.0f};
+static const std::vector<float> imx500_std = {1.0f, 1.0f, 1.0f};
 static const std::vector<float> cpu_mean = {0.0f, 0.0f, 0.0f};
-static const std::vector<float> cpu_std = {0.0f, 0.0f, 0.0f};
+static const std::vector<float> cpu_std = {1.0f, 1.0f, 1.0f};
 
 EdgeAppCoreModelInfo models[2] = {
     {lpd_imx500_model_id, EdgeAppCoreTarget::edge_imx500, &imx500_mean,

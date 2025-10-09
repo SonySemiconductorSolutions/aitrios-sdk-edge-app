@@ -241,13 +241,11 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
     if (strncmp(image_property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
                 sizeof(AITRIOS_SENSOR_PIXEL_FORMAT_RGB24)) == 0) {
       src.format = AITRIOS_DRAW_FORMAT_RGB8;
-    } else if (strncmp(image_property.pixel_format,
-                       AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
-                       sizeof(AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR)) == 0) {
-      src.format = AITRIOS_DRAW_FORMAT_RGB8_PLANAR;
     } else {
       LOG_ERR("Unsupported pixel format: %s", image_property.pixel_format);
-      return AutoFrame(shared_ctx->sensor_stream, frame);  // Return anyway
+      return AutoFrame(
+          shared_ctx->sensor_stream,
+          frame);  // Not return error until RGB24 is supported by T4 senscord
     }
     src.size = data.size;
     src.address = data.address;
@@ -289,6 +287,10 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
       dst.stride_byte = dst.width * 3;  // RGB format, 3 bytes per pixel
       dst.size = dst_size;
       dst.address = (uint8_t *)malloc(dst_size);
+      if (dst.address == nullptr) {
+        LOG_ERR("Failed to allocate memory for cropped image.");
+        return AutoFrame(shared_ctx->sensor_stream, 0);  // Return anyway
+      }
       CropRectangle(&src, &dst, roi.left, roi.top, roi.left + roi.width - 1,
                     roi.top + roi.height - 1);
       ctx.temp_input.memory_owner = TensorMemoryOwner::App;
@@ -311,7 +313,8 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
 
     // Set input tensor and run inference
     if (ctx.graph_ctx != nullptr) {
-      uint32_t dims[4] = {1, 3, roi.height, roi.width};
+      // Give NHWC format based dimensions for unknown wasi-nn backends
+      uint32_t dims[4] = {1, roi.height, roi.width, 3};
       if (SetInput(*(ctx.graph_ctx), ctx.temp_input.buffer, dims,
                    ctx.mean_values->data(), ctx.mean_values->size(),
                    ctx.norm_values->data(), ctx.norm_values->size()) != 0) {

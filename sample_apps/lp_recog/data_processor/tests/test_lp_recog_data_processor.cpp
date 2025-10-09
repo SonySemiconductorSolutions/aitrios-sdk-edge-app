@@ -581,7 +581,7 @@ TEST_F(LPRDataProcessorTestFixture, LPRDataProcessorAnalyzeTest) {
   // The result should contain license plate interpretation
   std::string result_str(output_data);
 
-  std::string expected_str = "\"Nagoya 589, ka 45-67\"";
+  std::string expected_str = "\"Nagoya 589, ki 45-67\"";
   EXPECT_EQ(result_str, expected_str) << "Actual result: " << result_str
                                       << "\nExpected result: " << expected_str;
 
@@ -656,7 +656,7 @@ TEST_F(LPRDataProcessorTestFixture,
 
   // The result should contain license plate interpretation
   std::string result_str(output_data);
-  std::string expected_str = "\"Nagoya 589, ka 45-67\"";
+  std::string expected_str = "\"Nagoya 589, ki 45-67\"";
   EXPECT_EQ(result_str, expected_str) << "Actual result: " << result_str
                                       << "\nExpected result: " << expected_str;
 

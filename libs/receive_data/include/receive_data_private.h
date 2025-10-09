@@ -16,8 +16,9 @@
 #ifndef AITRIOS_RECEIVE_DATA_PRIVATE_H
 #define AITRIOS_RECEIVE_DATA_PRIVATE_H
 
+#include <pthread.h>
+
 #include "context.hpp"
-#include "pthread.h"
 #include "receive_data.h"
 
 #ifdef __cplusplus

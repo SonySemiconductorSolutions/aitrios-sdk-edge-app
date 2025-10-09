@@ -32,7 +32,6 @@ if(MOCK EQUAL 1)
     ${MOCKS_DIR}/sensor/mock_sensor.cpp
   )
   # this is PUBLIC only because it's moved from test/edge_app.
-  # i haven't checked if it's really nececssary or not.
   target_include_directories(mock1 PUBLIC
     ${SAMPLE_APP_DIR}/utils/include
     ${LIBS_DIR}/third_party/flatbuffers/include
@@ -61,7 +60,6 @@ if(MOCK EQUAL 1)
     ${MOCKS_DIR}/nn/mock_wasi_nn.c
   )
   # this is PUBLIC only because it's moved from test/edge_app.
-  # i haven't checked if it's really nececssary or not.
   target_include_directories(mock2 PUBLIC
     ${SAMPLE_APP_DIR}/utils/include
     ${LIBS_DIR}/third_party/flatbuffers/include
