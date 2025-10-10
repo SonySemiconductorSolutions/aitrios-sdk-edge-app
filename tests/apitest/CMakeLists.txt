@@ -27,7 +27,8 @@ set(MAX_MEMORY 10485760)
 set(INITIAL_MEMORY 2097152)
 include(edge_app)
 
-set(SAMPLE_APP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+set(SAMPLE_APP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../sample_apps)
+set(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 add_executable(edge_app
   src/sm.cpp
 )

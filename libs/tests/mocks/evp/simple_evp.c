@@ -16,6 +16,7 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +27,6 @@
 #include "evp_c_sdk/sdk.h"
 #include "log.h"
 #include "memory_manager.hpp"
-#include "pthread.h"
 #define PORT 8080
 #define MAX_CONNECTIONS 5
 /** buffer size depends on evp specification */

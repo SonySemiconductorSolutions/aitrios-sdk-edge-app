@@ -62,6 +62,22 @@ Character recognition model outputs category IDs mapped to Japanese license plat
 
 The application is configured via DTDL interface defined in [**`edge_app_lp_recog_interface.json`**](./package/edge_app_lp_recog_interface.json). For a sample configuration, see [**`configuration.json`**](./configuration/configuration.json).
 
+### Common Settings for Model File Download
+Model file of character recognition model used on CPU should be downloaded to the device before running.
+It can be done by using `ai_models` array in `common_settings`.
+
+Need to mention, this AI model file downloading feature is designed only for device types with large storage and higher CPU performance, such as RPi or T4. Do not use it on T3P.
+
+Be sure to use `"lp_recognition"` for the model name in the configuration in this sample, so that corresponding file can be found when loading model.
+
+#### ai_models[0]
+Configuration for character recognition model file downloading:
+
+- `name`: model name to identify multiple AI models in EdgeApp, as a key to find downloaded model file, please use **`"lp_recognition"`** here to align with model key in `"ai_models_cpu"`
+- `target`: target platform for the model, please use **`"cpu"`** here
+- `url_path`: URL to download the model file from, the file will be stored to local and renamed to model name, suffix of the file will be retained if any
+- `hash`: SHA256 hash value of the model file, if the file already exists according to this hash, download will be skipped
+
 ### Custom Settings Parameters
 
 #### ai_models_imx500.lp_detection
@@ -87,6 +103,24 @@ Configuration for the character recognition model running on CPU:
   - `1`: String
 
 ### Example Configuration
+
+#### Common Settings
+```json
+{
+  "common_settings": {
+    "ai_models": [
+      {
+        "name": "lp_recognition",
+        "target": "cpu",
+        "url_path": "http://192.0.2.0:8080/models/LPR.tflite",
+        "hash": "6fb13ba628bd4dbf168c33f7099727f6cb21420be4fd32cdc8b319f2d0d736cf"
+      }
+    ]
+  }
+}
+```
+
+#### Custom Settings
 ```json
 {
   "custom_settings": {

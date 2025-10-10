@@ -25,12 +25,12 @@
 #ifndef AITRIOS_DATA_EXPORT_PRIVATE_H
 #define AITRIOS_DATA_EXPORT_PRIVATE_H
 
+#include <pthread.h>
 #include <sys/stat.h>
 
 #include "context.hpp"
 #include "data_export_types.h"
 #include "evp_c_sdk/sdk.h"
-#include "pthread.h"
 
 #ifdef __cplusplus
 extern "C" {

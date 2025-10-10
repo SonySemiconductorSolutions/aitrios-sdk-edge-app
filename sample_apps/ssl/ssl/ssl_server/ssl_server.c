@@ -485,7 +485,7 @@ static int send_http_response(mbedtls_ssl_context *ssl, const char *response) {
   }
 
   LOG_INFO("HTTP response sent successfully (%d bytes)", ret);
-  return ret;
+  return 0;
 }
 
 // ============================================================================

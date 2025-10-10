@@ -35,7 +35,7 @@ TEST(LPRecogUtilsTest, SimplePlate) {
   // Category IDs depend on the order of CATEGORIES
   // KANJI: "Nagoya" → SPECIAL(2)+NUMBER(10)+KANJI(3)=15
   // Numbers: "5","8","9" → SPECIAL(2)+NUMBER(5,8,9)=7,10,11
-  // Hiragana: "ka" → SPECIAL(2)+NUMBER(10)+KANJI(90)+HIRAGANA(36)=138
+  // Hiragana: "ka" → SPECIAL(2)+NUMBER(10)+KANJI(116)+HIRAGANA(36)=164
   // Lower row numbers: "4","5","6","7" → SPECIAL(2)+NUMBER(4,5,6,7)=6,7,8,9
 
   std::vector<Prediction> preds = {
@@ -45,7 +45,7 @@ TEST(LPRecogUtilsTest, SimplePlate) {
       {0.67, 0.25667, 0.74, 0.4, 0.97, 10},      // 8
       {0.7425, 0.25667, 0.8125, 0.4, 0.96, 11},  // 9
       // Lower row
-      {0.1, 0.5, 0.225, 0.78667, 0.95, 165},    // ka (hiragana)
+      {0.1, 0.5, 0.225, 0.78667, 0.95, 164},    // ka (hiragana)
       {0.2375, 0.48667, 0.3925, 0.8, 0.94, 6},  // 4
       {0.3925, 0.48667, 0.5475, 0.8, 0.93, 7},  // 5
       {0.43, 0.48667, 0.52, 0.8, 0.93, 0},      // -
@@ -70,7 +70,7 @@ TEST_F(LPRecogUtilsTestFixture, NoKanjiPlate) {
       {0.33, 0.24, 0.40, 0.4, 0.98, 4},  // 2
       {0.41, 0.24, 0.48, 0.4, 0.97, 5},  // 3
       // Lower row
-      {0.1, 0.5, 0.225, 0.78667, 0.95, 129},    // sa (hiragana)
+      {0.1, 0.5, 0.225, 0.78667, 0.95, 128},    // sa (hiragana)
       {0.2375, 0.48667, 0.3925, 0.8, 0.94, 3},  // 1
       {0.3925, 0.48667, 0.5475, 0.8, 0.93, 4},  // 2
       {0.43, 0.48667, 0.52, 0.8, 0.93, 0},      // -
@@ -95,7 +95,7 @@ TEST_F(LPRecogUtilsTestFixture, DotPlate) {
       {0.33, 0.24, 0.40, 0.4, 0.98, 2},   // 2
       {0.41, 0.24, 0.48, 0.4, 0.97, 2},   // 3
       // Lower row
-      {0.1, 0.5, 0.225, 0.78667, 0.95, 161},  // a (hiragana)
+      {0.1, 0.5, 0.225, 0.78667, 0.95, 160},  // a (hiragana)
       {0.23, 0.48667, 0.32, 0.8, 0.94, 1},    // .
       {0.33, 0.48667, 0.42, 0.8, 0.93, 1},    // .
       {0.53, 0.48667, 0.62, 0.8, 0.92, 1},    // .
