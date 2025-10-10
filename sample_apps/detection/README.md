@@ -108,6 +108,24 @@ If area is included in Configuration, the count result of the objects within the
   >
   >The value of the parameter depends on the AI model.
 
+  A sample area configuration would look like this:
+  ```json
+  "custom_settings": {
+    "area": {
+      "coordinates": {
+        "left": 10,
+        "top": 15,
+        "right": 610,
+        "bottom": 415
+      },
+      "overlap": 0.5,
+      "class_id": [
+        1,
+        3
+      ]
+    }
+  }
+    ```
 
 ### metadata_settings
 
@@ -129,24 +147,11 @@ Even if the Custom Parameters are not specified in the "**Console for AITRIOS**"
                 "threshold": 0.3,
                 "input_width": 320,
                 "input_height": 320,
-                "bbox_order": "xyxy",
-                "bbox_normalization": false,
+                "bbox_order": "yxyx",
+                "bbox_normalization": true,
                 "class_score_order": "cls_score"
             }
         }
-    },
-    "area": {
-        "coordinates": {
-            "left": 10,
-            "top": 15,
-            "right": 610,
-            "bottom": 415
-        },
-        "overlap": 0.5,
-        "class_id": [
-            1,
-            3
-        ]
     },
     "metadata_settings": {
         "format": 0

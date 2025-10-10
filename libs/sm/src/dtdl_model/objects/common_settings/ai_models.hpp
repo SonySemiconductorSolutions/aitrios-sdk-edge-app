@@ -23,7 +23,7 @@
 #include "dtdl_model/objects/json_object.hpp"
 #include "macros.h"
 
-#define MAX_AI_MODELS_COUNT 3
+#define MAX_AI_MODELS_COUNT 8
 
 class AiModels {
  public:

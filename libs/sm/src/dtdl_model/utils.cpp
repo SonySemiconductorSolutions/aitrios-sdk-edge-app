@@ -21,8 +21,6 @@
 #include "properties.h"
 #include "sensor.h"
 
-#define BUFSIZE 128
-
 using namespace EdgeAppLib;
 
 bool IsAlmostEqual(double a, double b) { return fabs(a - b) < TOLERANCE; }
@@ -30,17 +28,7 @@ bool IsAlmostEqual(double a, double b) { return fabs(a - b) < TOLERANCE; }
 int IsInteger(double value) { return IsAlmostEqual(value - floor(value), 0.0); }
 
 EdgeAppLibSensorErrorCause SmUtilsPrintSensorError() {
-  uint32_t length = BUFSIZE;
-  char message_buffer[BUFSIZE] = {0};
-  SensorGetLastErrorString(
-      EdgeAppLibSensorStatusParam::AITRIOS_SENSOR_STATUS_PARAM_MESSAGE,
-      message_buffer, &length);
-
-  EdgeAppLibSensorErrorCause cause = SensorGetLastErrorCause();
-  LOG_ERR("level: %d - cause: %d - message: %s", SensorGetLastErrorLevel(),
-          cause, message_buffer);
-
-  return cause;
+  return EdgeAppLibLogSensorError();
 }
 
 void CodeFromSensorErrorCause(EdgeAppLibSensorErrorCause error_cause,

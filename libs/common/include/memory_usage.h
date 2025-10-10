@@ -14,9 +14,15 @@
  * limitations under the License.
  ****************************************************************************/
 
+#ifndef MEMORY_USAGE_H
+#define MEMORY_USAGE_H
+
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
   size_t used_bytes;
@@ -24,31 +30,10 @@ typedef struct {
   float fragmentation_rate;
 } MemoryMetrics;
 
-#include <atomic>
-static std::atomic<size_t> g_used_bytes{0};
-static std::atomic<size_t> g_free_bytes{0};
-static std::atomic<size_t> g_keepcost{0};
+void get_memory_metrics(MemoryMetrics *metrics);
 
-extern "C" {
-void memory_usage(size_t used, size_t fordblks, size_t keepcost) {
-  g_used_bytes.store(used);
-  g_free_bytes.store(fordblks);
-  g_keepcost.store(keepcost);
+#ifdef __cplusplus
 }
+#endif
 
-void get_memory_metrics(MemoryMetrics *metrics) {
-  if (!metrics) return;
-  size_t used = g_used_bytes.load();
-  size_t fordblks = g_free_bytes.load();
-  size_t keepcost = g_keepcost.load();
-  float frag_rate;
-  if (used == 0 || fordblks == 0) {
-    frag_rate = -1.0f;
-  } else {
-    frag_rate = 1.0f - ((float)keepcost / (float)fordblks);
-  }
-  metrics->used_bytes = used;
-  metrics->free_bytes = fordblks;
-  metrics->fragmentation_rate = frag_rate;
-}
-}
+#endif

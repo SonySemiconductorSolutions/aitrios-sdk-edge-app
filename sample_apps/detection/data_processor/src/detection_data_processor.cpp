@@ -44,13 +44,10 @@ EdgeAppLibSendDataType metadata_format = EdgeAppLibSendDataBase64;
 Area area = {};
 bool send_area_counts = false;
 
-DataProcessorCustomParam detection_param = {DEFAULT_MAX_DETECTIONS,
-                                            DEFAULT_THRESHOLD,
-                                            DEFAULT_INPUT_TENSOR_WIDTH,
-                                            DEFAULT_INPUT_TENSOR_HEIGHT,
-                                            "yxyx",
-                                            true,
-                                            "cls_score"};
+DataProcessorCustomParam detection_param = {
+    DEFAULT_MAX_DETECTIONS,      DEFAULT_THRESHOLD,  DEFAULT_INPUT_TENSOR_WIDTH,
+    DEFAULT_INPUT_TENSOR_HEIGHT, DEFAULT_BBOX_ORDER, DEFAULT_BBOX_NORMALIZED,
+    DEFAULT_CLASS_SCORE_ORDER};
 
 static DataProcessorResultCode (*extractors[])(JSON_Object *,
                                                DataProcessorCustomParam *) = {
@@ -155,10 +152,22 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   }
 
   // Get metadata settings
-  JSON_Object *object_format =
+  JSON_Object *object_metadata_settings =
       json_object_get_object(object, "metadata_settings");
-  metadata_format =
-      EdgeAppLibSendDataType(json_object_get_number(object_format, "format"));
+  if (object_metadata_settings == nullptr) {
+    LOG_ERR(
+        "Error accessing metadata_settings in JSON object. Add the default "
+        "format %d",
+        DEFAULT_OUTPUT_FORMAT);
+    json_object_dotset_number(object, "metadata_settings.format",
+                              DEFAULT_OUTPUT_FORMAT);
+    LOG_INFO("Added metadata_settings with default format %d",
+             DEFAULT_OUTPUT_FORMAT);
+  } else {
+    if ((act = ExtractMetadataSettings(object_metadata_settings,
+                                       &metadata_format)) != kDataProcessorOk)
+      res = act;
+  }
 
   if (res != kDataProcessorOk)
     *out_config_json = json_serialize_to_string(value);

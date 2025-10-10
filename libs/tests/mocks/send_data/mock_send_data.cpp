@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
-#include "mock_process_format.hpp"
+#include "mock_send_data.hpp"
+
+#include <stdlib.h>
 
 /* 0 = no called, 1 = called */
 static int EdgeAppLibSendDataSyncMetaCalled = 0;
@@ -60,7 +62,7 @@ EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
 
 EdgeAppLibSendDataResult SendDataSyncImage(
     void *data, int datalen, EdgeAppLibImageProperty *image_property,
-    uint64_t timestamp, int timeout_ms) {
+    uint64_t timestamp, int timeout_ms, uint32_t current, uint32_t division) {
   EdgeAppLibSendDataSyncImageCalled = 1;
   if (data != nullptr) {
     free(data);  // Free the data if it was allocated

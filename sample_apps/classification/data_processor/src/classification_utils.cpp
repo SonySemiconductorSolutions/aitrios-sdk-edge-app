@@ -41,6 +41,28 @@ DataProcessorResultCode ExtractMaxPredictions(
   return kDataProcessorInvalidParam;
 }
 
+static void top_n_indexes(const float *data, int ndata, int n,
+                          std::vector<int> *v) {
+  assert(n <= ndata);
+  assert(v->empty());
+  v->reserve(n);
+  for (int i = 0; i < ndata; i++) {
+    int j;
+    for (j = 0; j < v->size(); j++) {
+      if (data[i] > data[(*v)[j]]) {
+        break;
+      }
+    }
+    if (j < n) {
+      if (v->size() == n) {
+        v->pop_back();
+      }
+      v->insert(v->begin() + j, i);
+    }
+  }
+  assert(n == v->size());
+}
+
 JSON_Value *CreateClsOutputJson(float *out_data_pr, uint16_t num_elements,
                                 DataProcessorCustomParam cls_param) {
   LOG_DBG("Creating JSON from array of floats.");
@@ -88,32 +110,22 @@ int CreateClassificationFlatbuffer(float *out_data_pr, int num_elements,
     return -1;
   }
 
-  std::vector<ClassificationItem> class_data(num_elements);
-
-  for (int i = 0; i < num_elements; i++) {
-    class_data[i] = {i, out_data_pr[i]};
+  int nresults = num_elements;
+  if (nresults > cls_param.maxPredictions) {
+    nresults = cls_param.maxPredictions;
+    LOG_DBG("Maximum number of predictions to send %d", nresults);
   }
 
-  if (class_data.size() > 0) {
-    std::stable_sort(
-        class_data.begin(), class_data.end(),
-        [](const ClassificationItem &left, const ClassificationItem &right) {
-          return left.score > right.score;
-        });
-  }
-
-  if (num_elements > cls_param.maxPredictions) {
-    num_elements = cls_param.maxPredictions;
-    LOG_DBG("Maximum number of predictions to send %d", num_elements);
-  }
+  std::vector<int> results;
+  top_n_indexes(out_data_pr, num_elements, nresults, &results);
 
   std::vector<flatbuffers::Offset<SmartCamera::GeneralClassification>>
       gdata_vector;
 
-  for (int i = 0; i < num_elements; i++) {
-    LOG_DBG("class = %d, score = %f", class_data[i].index, class_data[i].score);
+  for (int i = 0; i < results.size(); i++) {
+    LOG_DBG("class = %d, score = %f", results[i], out_data_pr[results[i]]);
     auto general_data = SmartCamera::CreateGeneralClassification(
-        *builder, class_data[i].index, class_data[i].score);
+        *builder, results[i], out_data_pr[results[i]]);
     gdata_vector.push_back(general_data);
   }
 

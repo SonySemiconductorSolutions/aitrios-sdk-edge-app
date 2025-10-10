@@ -112,6 +112,8 @@ static EdgeAppLibReceiveDataFuture *InitializeFuture() {
   future->result = EdgeAppLibReceiveDataResultUninitialized;
   future->cond = PTHREAD_COND_INITIALIZER;
   future->mutex = PTHREAD_MUTEX_INITIALIZER;
+  future->module_vars.download = nullptr;
+  future->module_vars.filename = nullptr;
   return future;
 }
 

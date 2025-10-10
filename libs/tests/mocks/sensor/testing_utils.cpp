@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
-#include <stdint.h>
 
-#include <string>
+#include "testing_utils.hpp"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "log.h"
 
@@ -58,4 +62,55 @@ float *StringToFloatArray(const char *inputString,
   }
 
   return floatArray;
+}
+
+float **StringToFloatArrayForIT(const char *inputString,
+                                uint32_t *num_array_elements,
+                                uint32_t **out_lengths) {
+  const char *p = inputString;
+  float **result = NULL;
+  uint32_t *lengths = NULL;
+  uint32_t count = 0;
+
+  while ((p = strchr(p, '[')) != NULL) {
+    if (*(p + 1) == '[') {
+      p++;  // skip outer [[
+      continue;
+    }
+
+    const char *start = p + 1;
+    const char *end = strchr(start, ']');
+    if (!end) break;
+
+    size_t len = end - start;
+    char *line = (char *)malloc(len + 1);
+    strncpy(line, start, len);
+    line[len] = '\0';
+
+    // Parse this line into a float array
+    uint32_t cap = 32, len_count = 0;
+    float *array = (float *)malloc(cap * sizeof(float));
+    char *tok = strtok(line, ",");
+    while (tok) {
+      if (len_count >= cap) {
+        cap *= 2;
+        array = (float *)realloc(array, cap * sizeof(float));
+      }
+      array[len_count++] = strtof(tok, NULL);
+      tok = strtok(NULL, ",");
+    }
+
+    result = (float **)realloc(result, (count + 1) * sizeof(float *));
+    lengths = (uint32_t *)realloc(lengths, (count + 1) * sizeof(uint32_t));
+    result[count] = array;
+    lengths[count] = len_count;
+    count++;
+
+    free(line);
+    p = end + 1;
+  }
+
+  *num_array_elements = count;
+  *out_lengths = lengths;
+  return result;
 }

@@ -20,6 +20,7 @@
 #include "data_processor_utils.hpp"
 #include "device.h"
 #include "log.h"
+#include "memory_usage.h"
 #include "parson.h"
 #include "sensor.h"
 #include "sm_types.h"
@@ -40,6 +41,17 @@ DataProcessorResultCode DataProcessorInitialize() {
   LOG_INFO(
       "Successful call, although empty implementation of "
       "DataProcessorInitialize. App will continue to work normally");
+
+  // Test memory usage API
+  MemoryMetrics metrics;
+  get_memory_metrics(&metrics);
+  LOG_INFO(
+      "Memory Usage API Test - Used: %zu bytes, Free: %zu bytes, "
+      "Fragmentation: %.2f%%",
+      metrics.used_bytes, metrics.free_bytes,
+      metrics.fragmentation_rate >= 0 ? metrics.fragmentation_rate * 100.0f
+                                      : -1.0f);
+
   return kDataProcessorOk;
 }
 
@@ -139,6 +151,17 @@ DataProcessorResultCode DataProcessorJsonFormat(void *in_data, uint32_t in_size,
                                                 char **out_data,
                                                 uint32_t *out_size) {
   LOG_TRACE("DataProcessorFormat");
+
+  // Test memory usage API during processing
+  MemoryMetrics metrics;
+  get_memory_metrics(&metrics);
+  LOG_INFO(
+      "Memory during processing - Used: %zu bytes, Free: %zu bytes, "
+      "Fragmentation: %.2f%%",
+      metrics.used_bytes, metrics.free_bytes,
+      metrics.fragmentation_rate >= 0 ? metrics.fragmentation_rate * 100.0f
+                                      : -1.0f);
+
   if (in_data == nullptr) {
     const char *error_msg = "Invalid in_data param";
     LOG_ERR("%s", error_msg);

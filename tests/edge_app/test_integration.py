@@ -407,11 +407,17 @@ def python_bindings(pytestconfig) -> bool:
     return pytestconfig.getoption("python_bindings")
 
 @pytest.fixture(scope="session")
+def scope(pytestconfig) -> str:
+    scope = pytestconfig.getoption("scope")
+    assert scope in ["frame_repeat", "full"]
+    return scope
+
+@pytest.fixture(scope="session")
 def inject_fault(pytestconfig) -> bool:
     return pytestconfig.getoption("inject_fault")
 
 
-def test_valgrind(app: str, python_bindings: bool, inject_fault: bool):
+def test_valgrind(app: str, python_bindings: bool, scope: str, inject_fault: bool):
     # Clean up environment before starting test
     from utils import cleanup_test_environment
     cleanup_test_environment()
@@ -438,46 +444,52 @@ def test_valgrind(app: str, python_bindings: bool, inject_fault: bool):
         assert state_dict["res_info"]["res_id"]
 
         if app != "apitest":
-            change_pq_settings(data)
-            state_dict = checker.get_state()
-            validate_pq_settings(state_dict)
+            if scope == "full":
+                change_pq_settings(data)
+                state_dict = checker.get_state()
+                validate_pq_settings(state_dict)
 
-            change_number_iterations(data, 2)
-            state_dict = checker.get_state()
-            validate_number_iterations(state_dict, 2)
+                change_number_iterations(data, 2)
+                state_dict = checker.get_state()
+                validate_number_iterations(state_dict, 2)
 
-            codec = Codec.RAW
-            change_codec_settings(data, codec)
-            state_dict = checker.get_state()
-            validate_codec_settings(state_dict, codec)
+                codec = Codec.RAW
+                change_codec_settings(data, codec)
+                state_dict = checker.get_state()
+                validate_codec_settings(state_dict, codec)
 
-            codec = Codec.JPG
-            change_codec_settings(data, codec)
-            state_dict = checker.get_state()
-            validate_codec_settings(state_dict, codec)
+                codec = Codec.JPG
+                change_codec_settings(data, codec)
+                state_dict = checker.get_state()
+                validate_codec_settings(state_dict, codec)
+
+                # check configuration json max size
+                do_test_configuration_json_max_size(checker, app, data)
 
             if (inject_fault == True):
                 # inject fault
                 with open(INJECT_FAIL, "w") as f:
                     f.write("dummy")
 
-            CUSTOM_SETTINGS_PER_APP[app](data, "1")
-            state_dict = checker.get_state()
-            VALIDATE_CUSTOM_SETTINGS_PER_APP[app](state_dict, "1")
+            if scope == "frame_repeat":
+                change_number_iterations(data, 12)
+            else:
+                CUSTOM_SETTINGS_PER_APP[app](data, "1")
+                state_dict = checker.get_state()
+                VALIDATE_CUSTOM_SETTINGS_PER_APP[app](state_dict, "1")
 
-            # check the same custom_settings also processed
-            CUSTOM_SETTINGS_PER_APP[app](data, "2")
-            state_dict = checker.get_state()
-            VALIDATE_CUSTOM_SETTINGS_PER_APP[app](state_dict, "2")
+                # check the same custom_settings also processed
+                CUSTOM_SETTINGS_PER_APP[app](data, "2")
+                state_dict = checker.get_state()
+                VALIDATE_CUSTOM_SETTINGS_PER_APP[app](state_dict, "2")
 
-            # check configuration json max size
-            do_test_configuration_json_max_size(checker, app, data)
+                change_number_iterations(data, 2)
 
             state = State.IDLE
             method = Method.MQTT
+
             change_process_state(data, state, method)
             state_dict = get_and_validate_process_state(checker, state, method)
-
             state = State.RUNNING
             method = Method.MQTT
             req_id = "change_process_state_numofinf"
@@ -489,60 +501,62 @@ def test_valgrind(app: str, python_bindings: bool, inject_fault: bool):
 
             if os.path.exists(INJECT_FAIL):
                 os.remove(INJECT_FAIL)
+            if scope == "full":
 
-            change_number_iterations(data, 0)
-            state_dict = checker.get_state()
-            validate_number_iterations(state_dict, 0)
 
-            # inference with port_settings method MQTT
-            state = State.RUNNING
-            method = Method.MQTT
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                change_number_iterations(data, 0)
+                state_dict = checker.get_state()
+                validate_number_iterations(state_dict, 0)
 
-            state = State.IDLE
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                # inference with port_settings method MQTT
+                state = State.RUNNING
+                method = Method.MQTT
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
 
-            # inference with port_settings method BLOB
-            state = State.RUNNING
-            method = Method.BLOB
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                state = State.IDLE
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
 
-            state = State.IDLE
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                # inference with port_settings method BLOB
+                state = State.RUNNING
+                method = Method.BLOB
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
 
-            # inference with port_settings method HTTP
-            state = State.RUNNING
-            method = Method.HTTP
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                state = State.IDLE
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
 
-            state = State.IDLE
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                # inference with port_settings method HTTP
+                state = State.RUNNING
+                method = Method.HTTP
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
 
-            # inference with codec_settings format RAW
-            codec = Codec.RAW
-            change_codec_settings(data, codec)
-            state_dict = checker.get_state()
-            validate_codec_settings(state_dict, codec)
+                state = State.IDLE
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
 
-            state = State.RUNNING
-            method = Method.HTTP
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                # inference with codec_settings format RAW
+                codec = Codec.RAW
+                change_codec_settings(data, codec)
+                state_dict = checker.get_state()
+                validate_codec_settings(state_dict, codec)
 
-            state = State.IDLE
-            change_process_state(data, state, method)
-            state_dict = get_and_validate_process_state(checker, state, method)
+                state = State.RUNNING
+                method = Method.HTTP
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
 
-            codec = Codec.JPG
-            change_codec_settings(data, codec)
-            state_dict = checker.get_state()
-            validate_codec_settings(state_dict, codec)
+                state = State.IDLE
+                change_process_state(data, state, method)
+                state_dict = get_and_validate_process_state(checker, state, method)
+
+                codec = Codec.JPG
+                change_codec_settings(data, codec)
+                state_dict = checker.get_state()
+                validate_codec_settings(state_dict, codec)
 
             # inference with metadata format JSON
             if app == "detection" or app == "classification":
@@ -565,18 +579,19 @@ def test_valgrind(app: str, python_bindings: bool, inject_fault: bool):
                 state_dict = checker.get_state()
                 validate_custom_settings_metadata_format(state_dict, metadata_format)
 
-            # prepare
-            change_pq_settings(data)
-            state_dict = checker.get_state()
-            validate_pq_settings(state_dict)
+            if scope == "full":
+                # prepare
+                change_pq_settings(data)
+                state_dict = checker.get_state()
+                validate_pq_settings(state_dict)
 
-            # This data should be ignored because the req_id is the same as the previous one.
-            change_pq_settings(data)
+                # This data should be ignored because the req_id is the same as the previous one.
+                change_pq_settings(data)
 
-            # This checks error behavior when SensorSetProperty returns error.
-            change_pq_settings_error(data, app)
-            state_dict = checker.get_state()
-            validate_pq_settings_error(state_dict, app)
+                # This checks error behavior when SensorSetProperty returns error.
+                change_pq_settings_error(data, app)
+                state_dict = checker.get_state()
+                validate_pq_settings_error(state_dict, app)
         else:
             for scenario_id in range(1, APITEST_LAST_SCENARIO_ID + 1):
                 run_apitest_scenario(data, scenario_id)

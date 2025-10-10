@@ -19,6 +19,7 @@ set(AITRIOS_SENSOR_SRC_DIR ${AITRIOS_SENSOR_ROOT_DIR}/src)
 
 add_library(sensor STATIC
   ${AITRIOS_SENSOR_SRC_DIR}/sensor.cpp
+  ${AITRIOS_SENSOR_SRC_DIR}/sensor_utils.cpp
   ${AITRIOS_SENSOR_SRC_DIR}/sensor_wrapper.cpp
   ${AITRIOS_SENSOR_SRC_DIR}/sensor_wrapper_error.cpp
 )
