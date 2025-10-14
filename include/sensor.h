@@ -1182,6 +1182,8 @@ struct EdgeAppLibSensorInferenceGammaParameterProperty {
   uint8_t gamma_parameter[AI_MODEL_GAMMA_PARAMETER_SIZE];
 };
 
+EdgeAppLibSensorErrorCause EdgeAppLibLogSensorError();
+
 #ifdef __cplusplus
 }
 #endif

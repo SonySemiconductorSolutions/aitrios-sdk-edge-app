@@ -20,6 +20,7 @@ set(LIBS_DIR ${ROOT_DIR}/libs)
 include(${ROOT_DIR}/cmake/gtest.cmake)
 
 add_subdirectory(${LIBS_DIR}/common/src ${CMAKE_BINARY_DIR}/common)
+add_subdirectory(${LIBS_DIR}/log/src ${CMAKE_BINARY_DIR}/log)
 
 add_executable(test_context
 test_context.cpp
@@ -39,6 +40,17 @@ target_link_libraries(test_memory_manager
   GTest::gmock_main
 )
 
+add_executable(test_memory_usage
+test_memory_usage.cpp
+)
+target_link_libraries(test_memory_usage
+  common
+  log
+  GTest::gtest_main
+  GTest::gmock_main
+)
+
 include(GoogleTest)
 gtest_discover_tests(test_context)
 gtest_discover_tests(test_memory_manager)
+gtest_discover_tests(test_memory_usage)

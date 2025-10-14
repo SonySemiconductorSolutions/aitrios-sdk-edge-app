@@ -30,6 +30,7 @@ target_include_directories(data_processor_api PUBLIC
   ${LIBS_DIR}/third_party/parson
   ${LIBS_DIR}/third_party/base64.c
   ${LIBS_DIR}/depend/edge_app
+  ${LIBS_DIR}/common/include
 )
 
 # for MOCK_APITEST
@@ -37,4 +38,4 @@ target_include_directories(data_processor_api PRIVATE
   ${LIBS_DIR}/tests/mocks
 )
 
-target_link_libraries(data_processor_api log)
+target_link_libraries(data_processor_api log common)

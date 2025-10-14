@@ -25,6 +25,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -205,9 +206,13 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
   // Model-specific processing
   if (ctx.target == edge_imx500) {
     // For IMX500: just set the ROI on the sensor stream
-    SensorStreamSetProperty(*ctx.sensor_stream,
-                            AITRIOS_SENSOR_IMAGE_CROP_PROPERTY_KEY, &roi,
-                            sizeof(EdgeAppLibSensorImageCropProperty));
+    int32_t ret = SensorStreamSetProperty(
+        *ctx.sensor_stream, AITRIOS_SENSOR_IMAGE_CROP_PROPERTY_KEY, &roi,
+        sizeof(EdgeAppLibSensorImageCropProperty));
+    if (ret != 0) {
+      LOG_ERR("SensorStreamSetProperty failed with %" PRId32 ".", ret);
+      EdgeAppLibLogSensorError();
+    }
   } else {
     // Clean up any previous temporary input buffer
     if (ctx.temp_input.buffer) {
@@ -217,24 +222,33 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
 
     // Get the RAW_IMAGE channel
     EdgeAppLibSensorChannel channel;
-    int ret = SensorFrameGetChannelFromChannelId(
+    int32_t ret = SensorFrameGetChannelFromChannelId(
         frame, AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_RAW_IMAGE, &channel);
     if (ret < 0) {
-      LOG_WARN("SensorFrameGetChannelFromChannelId failed: ret=%d.", ret);
+      LOG_WARN("SensorFrameGetChannelFromChannelId failed: ret=%" PRId32 ".",
+               ret);
       return AutoFrame(shared_ctx->sensor_stream, frame);  // Return anyway
     }
 
     // Get the raw data
     struct EdgeAppLibSensorRawData data = {0};
-    SensorChannelGetRawData(channel, &data);
+    ret = SensorChannelGetRawData(channel, &data);
+    if (ret != 0) {
+      LOG_ERR("SensorChannelGetRawData failed with %" PRId32 ".", ret);
+      EdgeAppLibLogSensorError();
+    }
     LOG_DBG(
         "input_raw_data.address:%p\ninput_raw_data.size:%zu\ninput_raw_data."
         "timestamp:%llu\ninput_raw_data.type:%s",
         data.address, data.size, data.timestamp, data.type);
     EdgeAppLibDrawBuffer src{};
     EdgeAppLibSensorImageProperty image_property;
-    SensorChannelGetProperty(channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                             &image_property, sizeof(image_property));
+    ret = SensorChannelGetProperty(channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                                   &image_property, sizeof(image_property));
+    if (ret != 0) {
+      LOG_ERR("SensorChannelGetProperty failed with %" PRId32 ".", ret);
+      EdgeAppLibLogSensorError();
+    }
     src.width = image_property.width;
     src.height = image_property.height;
     src.stride_byte = image_property.stride_bytes;
@@ -260,9 +274,13 @@ AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
       LOG_WARN("Failed to get INPUT_IMAGE channel: ret=%d.", ret);
       return AutoFrame(shared_ctx->sensor_stream, frame);
     }
-    SensorChannelGetProperty(channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
-                             &it_image_property, sizeof(it_image_property));
-
+    ret =
+        SensorChannelGetProperty(channel, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                                 &it_image_property, sizeof(it_image_property));
+    if (ret != 0) {
+      LOG_ERR("SensorChannelGetProperty failed with %" PRId32 ".", ret);
+      EdgeAppLibLogSensorError();
+    }
     if (roi.width > it_image_property.width)
       roi.width = it_image_property.width;
     if (roi.height > it_image_property.height)

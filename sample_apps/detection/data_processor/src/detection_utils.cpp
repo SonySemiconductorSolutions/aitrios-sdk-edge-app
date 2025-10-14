@@ -57,8 +57,12 @@ DataProcessorResultCode ExtractBboxNorm(
     detection_param_pr->bbox_normalized = aux;
     return kDataProcessorOk;
   }
-  // Default value
-  detection_param_pr->bbox_normalized = true;
+  detection_param_pr->bbox_normalized = DEFAULT_BBOX_NORMALIZED;
+  LOG_INFO(
+      "DataProcessorConfigure: default value of 'bbox_normalization' parameter "
+      "is %s",
+      DEFAULT_BBOX_NORMALIZED ? "true" : "false");
+  json_object_set_boolean(json, "bbox_normalization", DEFAULT_BBOX_NORMALIZED);
   return kDataProcessorOk;
 }
 
@@ -70,8 +74,11 @@ DataProcessorResultCode ExtractBboxOrder(
     strncpy(detection_param_pr->bbox_order, aux, strlen(aux));
     return kDataProcessorOk;
   }
-  // Default value
-  strncpy(detection_param_pr->bbox_order, "yxyx", 4);
+  strncpy(detection_param_pr->bbox_order, DEFAULT_BBOX_ORDER, 4);
+  LOG_INFO(
+      "DataProcessorConfigure: default value of 'bbox_order' parameter is %s",
+      DEFAULT_BBOX_ORDER);
+  json_object_set_string(json, "bbox_order", DEFAULT_BBOX_ORDER);
   return kDataProcessorOk;
 }
 
@@ -89,8 +96,12 @@ DataProcessorResultCode ExtractClassOrder(
              detection_param_pr->class_score_order);
     return kDataProcessorOk;
   }
-  // Default value
-  strncpy(detection_param_pr->class_score_order, "cls_score", 9);
+  strncpy(detection_param_pr->class_score_order, DEFAULT_CLASS_SCORE_ORDER, 9);
+  LOG_INFO(
+      "DataProcessorConfigure: default value of 'class_score_order' parameter "
+      "is %s",
+      DEFAULT_CLASS_SCORE_ORDER);
+  json_object_set_string(json, "class_score_order", DEFAULT_CLASS_SCORE_ORDER);
   return kDataProcessorOk;
 }
 
@@ -567,5 +578,23 @@ DataProcessorResultCode MakeAreaFlatbuffer(
   auto out_data = SmartCamera::CreateObjectDetectionTop(
       *builder, perception, builder->CreateVector(cdata_vector));
   builder->Finish(out_data);
+  return kDataProcessorOk;
+}
+
+DataProcessorResultCode ExtractMetadataSettings(
+    JSON_Object *json, EdgeAppLibSendDataType *out_format) {
+  double aux = 0;
+  if (GetValueNumber(json, "format", &aux) == 0) {
+    if (aux >= 0 && aux < 2) {
+      *out_format = (EdgeAppLibSendDataType)(int)aux;
+      return kDataProcessorOk;
+    }
+  }
+  *out_format = DEFAULT_OUTPUT_FORMAT;
+  LOG_INFO(
+      "DataProcessorConfigure: default value of 'metadata_settings.format' "
+      "parameter is %d",
+      DEFAULT_OUTPUT_FORMAT);
+  json_object_set_number(json, "format", DEFAULT_OUTPUT_FORMAT);
   return kDataProcessorOk;
 }

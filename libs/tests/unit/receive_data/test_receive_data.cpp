@@ -87,3 +87,42 @@ TEST_F(ReceiveDataTest, Failure) {
   EXPECT_EQ(EdgeAppLibReceiveData(&info, 500),
             EdgeAppLibReceiveDataResultFailure);
 }
+
+TEST_F(ReceiveDataTest, HashMatchSkipDownload) {
+  // Test that when local file has same hash as remote, download is skipped
+  // and no memory errors occur
+  const char *workspace =
+      EVP_getWorkspaceDirectory(evp_client, EVP_WORKSPACE_TYPE_DEFAULT);
+  ASSERT_NE(workspace, nullptr);
+
+  // Create workspace directory if it doesn't exist
+  mkdir(workspace, 0755);
+
+  // Create a test file with known content
+  char filepath[256];
+  snprintf(filepath, sizeof(filepath), "%s/%s", workspace, DOWNLOAD_FILENAME);
+  FILE *f = fopen(filepath, "w");
+  ASSERT_NE(f, nullptr);
+  fprintf(f, "test content");
+  fclose(f);
+
+  // Calculate hash of the test file
+  // Hash of "test content" is:
+  // 6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72
+  const char *test_hash =
+      "6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72";
+  info.hash = strdup(test_hash);
+
+  Mock_SetAsyncMode(false);
+  // Even though we set this, blob callback should not be called because of hash
+  // match
+  setEvpBlobCallbackReason(EVP_BLOB_CALLBACK_REASON_DONE);
+
+  EXPECT_EQ(EdgeAppLibReceiveData(&info, 500),
+            EdgeAppLibReceiveDataResultSuccess);
+
+  // Clean up
+  free(info.hash);
+  info.hash = nullptr;
+  unlink(filepath);
+}

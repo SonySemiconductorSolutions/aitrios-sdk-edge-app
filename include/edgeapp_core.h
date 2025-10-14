@@ -27,6 +27,7 @@
 
 #include "data_export.h"
 #include "nn.h"
+#include "send_data.h"
 #include "sensor.h"
 
 #define MAX_TENSOR_DIMS 4
@@ -171,6 +172,8 @@ class AutoFrame {
     return *this;
   }
 
+  bool empty() const { return frame_ == 0 || stream_ == nullptr; }
+
   // Implicit cast to EdgeAppLibSensorFrame
   operator EdgeAppLibSensorFrame() const { return frame_; }
 
@@ -190,6 +193,9 @@ Tensor GetOutput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame,
 Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame);
 EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx);
 EdgeAppCoreResult SendInputTensor(Tensor *input_tensor);
+EdgeAppCoreResult SendInference(void *data, size_t datalen,
+                                EdgeAppLibSendDataType datatype,
+                                uint64_t timestamp);
 
 }  // namespace EdgeAppCore
 #endif  // __cplusplus

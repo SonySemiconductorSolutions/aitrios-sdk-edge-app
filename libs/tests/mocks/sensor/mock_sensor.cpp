@@ -19,8 +19,11 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
+#include <fstream>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -81,37 +84,80 @@ typedef struct {
 } MapValue;
 
 static std::map<std::string, MapValue> property_map;
+static uint32_t frame_number = 0;
+static float **data = nullptr;
+static uint32_t *lengths = nullptr;
+static uint32_t num_arrays = 0;
+static uint32_t tensor_size = 0;
+
+float *load_binary_file(const std::string &in_bin_file, uint32_t *out_size) {
+  float *data = nullptr;
+  std::ifstream ifs(in_bin_file, std::ios::in | std::ios::binary);
+
+  if (!ifs) {
+    return nullptr;
+  }
+
+  ifs.seekg(0, ifs.end);
+  uint32_t file_size = ifs.tellg();
+  ifs.seekg(0, ifs.beg);
+
+  uint32_t num_floats = file_size / sizeof(float);
+
+  data = static_cast<float *>(malloc(file_size));
+  if (!data) {
+    ifs.close();
+    return nullptr;
+  }
+
+  ifs.read(reinterpret_cast<char *>(data), file_size);
+  ifs.close();
+  *out_size = file_size;
+  return data;
+}
+char *load_jsonc_file(const char *filepath) {
+  JSON_Value *root = json_parse_file_with_comments(filepath);
+  if (root == NULL) {
+    fprintf(stderr, "Failed to parse JSONC file: %s\n", filepath);
+    return strdup("[]");
+  }
+
+  char *serialized = json_serialize_to_string(root);
+  char *json_buffer = strdup(serialized);
+
+  json_free_serialized_string(serialized);
+  json_value_free(root);
+
+  return json_buffer;
+}
 
 // Output tensor for classification to 18 categories.
 // Correct ppl parameters to process this output tensor
 // can be found in rearch/sample_apps/classification/test_data
+
 #ifdef MOCK_CLASSIFICATION
 #define MOCK_DATA                                                      \
   "[[0.171875, 0.01074225, 0.01074225, 0.195312, 0.070312, 0.050781, " \
   "0.027344,0.01074225, 0.027344, 0.01074225, 0.171875, 0.0625, "      \
   "0.042969, 0.09375, 0.01074225, 0.01074225, 0.01074225, 0.01074225 ]]"
-#endif
-
 // Output tensor for number of detection equal to 10 which has the order
 // y_min (10), x_min (10), y_max (10), x_max (10), class (10), score (10),
 // number_of_detections (1) Correct ppl parameters to process this output tensor
 // can be found in rearch/sample_apps/detection/test_data
-#ifdef MOCK_DETECTION
+#elif defined(MOCK_DETECTION)
 #define MOCK_DATA                                                              \
   "[[0.1, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.25, 0.35, "     \
   "0.45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.6, 0.7, 0.8, 0.0, 0.0, 0.0, "    \
   "0.0, 0.0, 0.0, 0.55, 0.65, 0.75, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 235, " \
   "132, 95, 187, 0, 0, 0, 0, 0, 0, 0.8, 0.2, 0.6, 0.4, 0.0, 0.0, 0.0, 0.0, "   \
   "0.0, 0.0,10]]"
-#endif
 
 // Correct ppl parameters to process this output tensor
 // can be found in rearch/sample_apps/segmentation/test_data
-#ifdef MOCK_SEGMENTATION
+#elif defined(MOCK_SEGMENTATION)
 #define MOCK_DATA "[ 1, 2, 1, 3, 2, 3, 1, 3, 2, 4, 1, 3, 2, 4, 4, 1 ]"
-#endif
 
-#ifdef MOCK_PASSTHROUGH
+#elif defined(MOCK_PASSTHROUGH)
 // To run onIterate() successful, set mock data
 #define MOCK_DATA                                                              \
   "[[0.1, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.25, 0.35, "     \
@@ -119,9 +165,8 @@ static std::map<std::string, MapValue> property_map;
   "0.0, 0.0, 0.0, 0.55, 0.65, 0.75, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 235, " \
   "132, 95, 187, 0, 0, 0, 0, 0, 0, 0.8, 0.2, 0.6, 0.4, 0.0, 0.0, 0.0, 0.0, "   \
   "0.0, 0.0,10]]"
-#endif
 
-#ifdef MOCK_APITEST
+#elif defined(MOCK_APITEST)
 // To run onIterate() successful, set mock data
 #define MOCK_DATA                                                              \
   "[[0.1, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.25, 0.35, "     \
@@ -129,9 +174,7 @@ static std::map<std::string, MapValue> property_map;
   "0.0, 0.0, 0.0, 0.55, 0.65, 0.75, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 235, " \
   "132, 95, 187, 0, 0, 0, 0, 0, 0, 0.8, 0.2, 0.6, 0.4, 0.0, 0.0, 0.0, 0.0, "   \
   "0.0, 0.0,10]]"
-#endif
-
-#ifdef MOCK_LP_RECOG
+#elif defined(MOCK_LP_RECOG)
 #define MOCK_DATA          \
   "[[0.8, 0.9, 0.7, 0.1, " \
   "0.1, 0.3, 0.5, 0.0, "   \
@@ -139,19 +182,31 @@ static std::map<std::string, MapValue> property_map;
   "0.2, 0.4, 0.6, 0.0, "   \
   "0.2, 0.4, 0.6, 0.0, "   \
   "4.0, 1.0, 2.0, 3.0, 0.0]]"
-#endif
-
-#ifdef MOCK_BARCODE
-#define MOCK_DATA
+#elif defined(MOCK_BARCODE)
 #define MOCK_DATA                                                              \
   "[[0.1, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.25, 0.35, "     \
   "0.45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.6, 0.7, 0.8, 0.0, 0.0, 0.0, "    \
   "0.0, 0.0, 0.0, 0.55, 0.65, 0.75, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 235, " \
   "132, 95, 187, 0, 0, 0, 0, 0, 0, 0.8, 0.2, 0.6, 0.4, 0.0, 0.0, 0.0, 0.0, "   \
   "0.0, 0.0,10]]"
-#endif
-
-#ifndef MOCK_DATA
+#elif defined(MOCK_GAZE)
+char *MOCK_DATA =
+    load_jsonc_file("./sample_apps/gaze/test_data/mock_gaze.jsonc");
+#elif defined(MOCK_POSENET)
+char *MOCK_DATA = (char *)load_binary_file(
+    "./sample_apps/posenet/test_data/westworld_out_w481_h353.bin",
+    &tensor_size);
+#elif defined(MOCK_SWITCH)
+#define MOCK_DATA                                                             \
+  "[[0.1, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.25, "          \
+  "0.35, "                                                                    \
+  "0.45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.6, 0.7, 0.8, 0.0, 0.0, 0.0, "   \
+  "0.0, 0.0, 0.0, 0.55, 0.65, 0.75, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15, " \
+  "132, 95, 187, 0, 0, 0, 0, 0, 0, "                                          \
+  "0.8, 0.2, 0.6, 0.4, 0.0, 0.0, "                                            \
+  "0.0, 0.0, 0.0, 0.0, "                                                      \
+  "10]]"
+#else
 #warning "Empty mock data"
 #define MOCK_DATA "[]"
 #endif
@@ -320,6 +375,7 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
       if (strncmp(ai_model_bundle_id_prop.ai_model_bundle_id, "000001",
                   strlen(ai_model_bundle_id_prop.ai_model_bundle_id)) == 0) {
         // mock data for switch_dnn detection
+        LOG_INFO("Using mock data for switch_dnn detection\n");
         const char *mock_data_detection =
             "[[0.1, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.25, "
             "0.35, "
@@ -333,10 +389,10 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
             "10]]";
         json_value_free(output_tensor_val);
         output_tensor_val = json_parse_string(mock_data_detection);
-      } else if (strncmp(ai_model_bundle_id_prop.ai_model_bundle_id, "000002",
-                         strlen(ai_model_bundle_id_prop.ai_model_bundle_id)) ==
-                 0) {
+      } else if (strcmp(ai_model_bundle_id_prop.ai_model_bundle_id,
+                        "${network_id_2}") == 0) {
         // mock data for switch_dnn classification
+        LOG_INFO("Using mock data for switch_dnn classification");
         char *mock_data_classification = (char *)malloc(10 * 1000);
         char *loc = mock_data_classification;
         size_t tempLen;
@@ -358,12 +414,23 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
         free(mock_data_classification);
       }
     }
-
     const char *output_tensor = json_serialize_to_string(output_tensor_val);
-    uint32_t tensor_size = 0;
-    raw_data->address = StringToFloatArray((char *)output_tensor, &tensor_size);
+    if (output_tensor_val != NULL) {
+      data = StringToFloatArrayForIT(output_tensor, &num_arrays, &lengths);
+      if (frame_number >= num_arrays) frame_number = 0;
+      LOG_INFO("num_arrays %d frame_number: %d lengths: %d\n", num_arrays,
+               frame_number, lengths[frame_number]);
+      raw_data->address = malloc(lengths[frame_number] * sizeof(float));
+      memcpy(raw_data->address, data[frame_number],
+             lengths[frame_number] * sizeof(float));
+      raw_data->size = lengths[frame_number] * sizeof(float);
+      frame_number++;
+    } else {
+      raw_data->address = (float *)MOCK_DATA;
+      raw_data->size = tensor_size;
+      printf("posenet MOCK_DATA size: %d\n", tensor_size);
+    }
     raw_data->type = strdup("float");
-    raw_data->size = tensor_size * sizeof(float);
     raw_data->timestamp = 10;
 
     struct EdgeAppLibSensorRawData *raw_data_cpy =
@@ -373,6 +440,7 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
 
     json_free_serialized_string((char *)output_tensor);
     json_value_free(output_tensor_val);
+
     return EdgeAppLibSensorChannelGetRawDataSuccess;
   }
   return -1;
@@ -451,15 +519,31 @@ int32_t SensorReleaseFrame(EdgeAppLibSensorStream stream,
     for (auto channel : channels_it->second) {
       auto data_it = map_channel_data.find(channel);
       if (data_it != map_channel_data.end()) {
-        auto data = data_it->second;
-        free(data->address);
-        free(data->type);
-        free(data);
+        auto data_relase = data_it->second;
+        // Don't free MOCK_DATA as it's statically allocated
+        if (data_relase->address != (void *)MOCK_DATA) {
+          free(data_relase->address);
+        }
+        free(data_relase->type);
+        free(data_relase);
         map_channel_data.erase(data_it);
       }
       map_channel_channel_id.erase(map_channel_channel_id.find(channel));
     }
     map_frame_channels.erase(channels_it);
+  }
+
+  if (data) {
+    for (uint32_t i = 0; i < num_arrays; ++i) {
+      free(data[i]);
+    }
+    free(data);
+    data = nullptr;
+  }
+
+  if (lengths) {
+    free(lengths);
+    lengths = nullptr;
   }
   EdgeAppLibSensorReleaseFrameCalled = 1;
   return EdgeAppLibSensorReleaseFrameSuccess;
@@ -770,4 +854,8 @@ void setEdgeAppLibSensorInputDataTypeEnableChannelFail() {
 }
 void resetEdgeAppLibSensorInputDataTypeEnableChannelSuccess() {
   EdgeAppLibSensorInputDataTypeEnableChannelSuccess = 0;
+}
+
+EdgeAppLibSensorErrorCause EdgeAppLibLogSensorError() {
+  return EdgeAppLib::SensorGetLastErrorCause();
 }

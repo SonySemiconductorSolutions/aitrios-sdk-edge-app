@@ -14,11 +14,21 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include <cstdint>
-#include <string>
+#include "log.h"
+#include "sensor.h"
 
-float **StringToFloatArrayForIT(const char *inputString,
-                                uint32_t *num_array_elements,
-                                uint32_t **out_lengths);
-float *StringToFloatArray(const char *inputString,
-                          uint32_t *num_array_elements);
+#define BUFSIZE 128
+
+EdgeAppLibSensorErrorCause EdgeAppLibLogSensorError() {
+  uint32_t length = BUFSIZE;
+  char message_buffer[BUFSIZE] = {0};
+  EdgeAppLib::SensorGetLastErrorString(
+      EdgeAppLibSensorStatusParam::AITRIOS_SENSOR_STATUS_PARAM_MESSAGE,
+      message_buffer, &length);
+
+  EdgeAppLibSensorErrorCause cause = EdgeAppLib::SensorGetLastErrorCause();
+  LOG_ERR("level: %d - cause: %d - message: %s",
+          EdgeAppLib::SensorGetLastErrorLevel(), cause, message_buffer);
+
+  return cause;
+}

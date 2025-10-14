@@ -127,6 +127,34 @@ class ConfigureAnalyzeFixtureTests : public ::testing::Test {
     uuid[32] = '\0';
     return uuid;
   }
+
+  void ValidateDetectionFlatbuffersData(char *p_out_buf) {
+    auto object_detection_root = SmartCamera::GetObjectDetectionTop(p_out_buf);
+
+    std::vector<uint32_t> expected_class = {235, 95};
+
+    std::vector<float> expected_score = {0.8, 0.6};
+
+    int expected_bbox[8] = {45, 30, 164, 150, 105, 90, 224, 209};
+    size_t expected_num_of_detections = 2;
+
+    auto obj_detection_data =
+        object_detection_root->perception()->object_detection_list();
+    ASSERT_EQ(obj_detection_data->size(), expected_num_of_detections);
+    for (int i = 0; i < obj_detection_data->size(); ++i) {
+      auto general_object = obj_detection_data->Get(i);
+
+      auto bbox = general_object->bounding_box_as_BoundingBox2d();
+
+      EXPECT_EQ(general_object->class_id(), expected_class[i]);
+      EXPECT_EQ(general_object->score(), expected_score[i]);
+      EXPECT_EQ(bbox->left(), expected_bbox[i * 4]);
+      EXPECT_EQ(bbox->top(), expected_bbox[i * 4 + 1]);
+      EXPECT_EQ(bbox->right(), expected_bbox[i * 4 + 2]);
+      EXPECT_EQ(bbox->bottom(), expected_bbox[i * 4 + 3]);
+    }
+  }
+
   char *output_tensor = nullptr;
   uint64_t nanoseconds = 0;
 };
@@ -360,30 +388,9 @@ TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeFlatbufferTest) {
   DataProcessorResultCode res =
       DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
   EXPECT_EQ(res, kDataProcessorOk);
-  auto object_detection_root = SmartCamera::GetObjectDetectionTop(p_out_buf);
 
-  std::vector<uint32_t> expected_class = {235, 95};
+  ValidateDetectionFlatbuffersData(p_out_buf);
 
-  std::vector<float> expected_score = {0.8, 0.6};
-
-  int expected_bbox[8] = {45, 30, 164, 150, 105, 90, 224, 209};
-  size_t expected_num_of_detections = 2;
-
-  auto obj_detection_data =
-      object_detection_root->perception()->object_detection_list();
-  ASSERT_EQ(obj_detection_data->size(), expected_num_of_detections);
-  for (int i = 0; i < obj_detection_data->size(); ++i) {
-    auto general_object = obj_detection_data->Get(i);
-
-    auto bbox = general_object->bounding_box_as_BoundingBox2d();
-
-    EXPECT_EQ(general_object->class_id(), expected_class[i]);
-    EXPECT_EQ(general_object->score(), expected_score[i]);
-    EXPECT_EQ(bbox->left(), expected_bbox[i * 4]);
-    EXPECT_EQ(bbox->top(), expected_bbox[i * 4 + 1]);
-    EXPECT_EQ(bbox->right(), expected_bbox[i * 4 + 2]);
-    EXPECT_EQ(bbox->bottom(), expected_bbox[i * 4 + 3]);
-  }
   free(p_out_buf);
   EXPECT_EQ(152, p_out_size);
 }
@@ -460,19 +467,24 @@ TEST_F(ConfigureAnalyzeFixtureTests, UndefinedDetectionFormatTest) {
                                                "metadata_settings.format", 10);
   const char *config_mod = json_serialize_to_string(config_json_val);
   char *output = NULL;
-  DataProcessorConfigure((char *)config_mod, &output);
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOk);
   char *p_out_buf = NULL;
   uint32_t p_out_size = 0;
 
   printf("out_size=%zu\n", out_size);
-  DataProcessorResultCode res =
-      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
-  EXPECT_EQ(res, kDataProcessorInvalidParam);
-  EXPECT_EQ(p_out_buf, nullptr);
-  EXPECT_EQ(p_out_size, 0);
+  res = DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorOk);
+
+  ASSERT_NE(p_out_buf, nullptr);
+  ASSERT_GT(p_out_size, 0);
+
+  ValidateDetectionFlatbuffersData(p_out_buf);
 
   json_free_serialized_string((char *)config_mod);
   free(p_out_buf);
+  free(output);
 }
 
 TEST_F(ConfigureAnalyzeFixtureTests, UndefinedAreaCountFormatTest) {
@@ -482,19 +494,23 @@ TEST_F(ConfigureAnalyzeFixtureTests, UndefinedAreaCountFormatTest) {
                                                "metadata_settings.format", 10);
   const char *config_mod = json_serialize_to_string(config_json_val);
   char *output = NULL;
-  DataProcessorConfigure((char *)config_mod, &output);
+  DataProcessorResultCode res =
+      DataProcessorConfigure((char *)config_mod, &output);
+  EXPECT_EQ(res, kDataProcessorOk);
   char *p_out_buf = NULL;
   uint32_t p_out_size = 0;
 
   printf("out_size=%zu\n", out_size);
-  DataProcessorResultCode res =
-      DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
-  EXPECT_EQ(res, kDataProcessorInvalidParam);
-  EXPECT_EQ(p_out_buf, nullptr);
-  EXPECT_EQ(p_out_size, 0);
+  res = DataProcessorAnalyze(out_data, out_size, &p_out_buf, &p_out_size);
+  EXPECT_EQ(res, kDataProcessorOk);
+  ASSERT_NE(p_out_buf, nullptr);
+  ASSERT_GT(p_out_size, 0);
+
+  ValidateDetectionFlatbuffersData(p_out_buf);
 
   json_free_serialized_string((char *)config_mod);
   free(p_out_buf);
+  free(output);
 }
 
 TEST_F(ConfigureAnalyzeFixtureTests, CorrectAnalyzeAreaCountFlatbuffersTest) {

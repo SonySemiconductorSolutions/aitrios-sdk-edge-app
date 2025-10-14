@@ -40,6 +40,10 @@
          // Console
 #define DEFAULT_THRESHOLD (0.3)
 #define DEFAULT_MAX_DETECTIONS (10)
+#define DEFAULT_BBOX_ORDER "yxyx"
+#define DEFAULT_BBOX_NORMALIZED true
+#define DEFAULT_CLASS_SCORE_ORDER "cls_score"
+#define DEFAULT_OUTPUT_FORMAT EdgeAppLibSendDataBase64
 #define CLASS_IDS_SIZE (10)
 #define BBOX_ORDER_SIZE (5)
 #define CLS_SCORE_SIZE (10)
@@ -142,5 +146,8 @@ DataProcessorResultCode ExtractBboxNorm(
     JSON_Object *json, DataProcessorCustomParam *detection_pram_pr);
 DataProcessorResultCode ExtractClassOrder(
     JSON_Object *json, DataProcessorCustomParam *detection_pram_pr);
+
+DataProcessorResultCode ExtractMetadataSettings(
+    JSON_Object *json, EdgeAppLibSendDataType *out_format);
 
 #endif  // DETECTION_UTILS_H
