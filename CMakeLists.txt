@@ -27,7 +27,6 @@ set(APPS_LIST
   "draw"
   "perfbench"
   "apitest"
-  "barcode"
   "lp_recog"
   "ssl"
 )

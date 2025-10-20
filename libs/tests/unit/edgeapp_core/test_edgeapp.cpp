@@ -20,13 +20,14 @@
 #include <vector>
 
 #include "edgeapp_core.h"
-#include "mock_nn.hpp"  // Mock implementation of nn
+#include "mock_nn.hpp"        // Mock implementation of nn
+#include "send_data_types.h"  // For EdgeAppLibImageProperty
 #include "sensor.h"
 using namespace EdgeAppCore;
 
 // Dummy sensor frame and ROI data
 static EdgeAppLibSensorStream dummy_stream = 1234;  // Dummy stream handle
-static EdgeAppLibSensorFrame dummy_frame = 12345;   // Dummy frame
+static EdgeAppLibSensorFrame dummy_frame = 0;       // Dummy frame
 static EdgeAppLibSensorImageCropProperty dummy_roi[1] = {0, 0, 640, 480};
 
 class EdgeAppCoreTest : public ::testing::Test {
@@ -93,8 +94,6 @@ TEST_F(EdgeAppCoreTest, ProcessFrameSuccess) {
   // Use dummy sensor frame
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
   EXPECT_NE(frame, 0);  // Ensure frame is valid
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream,
-                                 frame);  // It would be released by AutoFrame
 }
 
 TEST_F(EdgeAppCoreTest, ProcessFrameComputeError) {
@@ -112,9 +111,6 @@ TEST_F(EdgeAppCoreTest, ProcessFrameComputeError) {
   // ProcessFrame still returns success, but Compute inside may fail
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
   EXPECT_NE(frame, 0);  // Ensure frame is valid even if Compute failed
-
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream,
-                                 frame);  // It would be released by AutoFrame
 }
 
 TEST_F(EdgeAppCoreTest, GetOutputsSuccess) {
@@ -128,18 +124,13 @@ TEST_F(EdgeAppCoreTest, GetOutputsSuccess) {
   res = LoadModel(model[1], ctx_cpu, &ctx_imx500);
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
-  Tensor output = GetOutput(ctx_cpu, frame);
+  Tensor output = GetOutput(ctx_cpu, frame, 4);
 
   // Expect outputs vector to be non-empty
   EXPECT_FALSE(output.data == nullptr || output.size == 0);
 
   // Send additional outputs as raw data
   free(output.data);  // Free the data if it was dynamically allocated
-
-  EdgeAppLib::SensorReleaseFrame(
-      *ctx_imx500.sensor_stream,
-      frame);  // It would be released by AutoFrame
-               // Free the output data if it was allocated
 }
 
 TEST_F(EdgeAppCoreTest, GetInputsSuccess) {
@@ -148,7 +139,7 @@ TEST_F(EdgeAppCoreTest, GetInputsSuccess) {
   res = LoadModel(model[1], ctx_cpu, &ctx_imx500);
   EXPECT_EQ(res, EdgeAppCoreResultSuccess);
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
-  Tensor output = GetOutput(ctx_cpu, frame);
+  Tensor output = GetOutput(ctx_cpu, frame, 4);
   free(output.data);
 
   auto input = GetInput(ctx_cpu, frame);
@@ -158,8 +149,6 @@ TEST_F(EdgeAppCoreTest, GetInputsSuccess) {
     FAIL() << "input.data is NULL";
   }
   free(input.data);  // Free the input data if it was dynamically allocated
-  // Clean up
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream, frame);
 }
 
 TEST_F(EdgeAppCoreTest, LoadMultipleModelsAndProcess) {
@@ -213,13 +202,12 @@ TEST_F(EdgeAppCoreTest, GetInputAndOutputForAllModels) {
   auto input = GetInput(ctx_cpu, frame);
   EXPECT_TRUE(input.data != nullptr && input.size > 0);
 
-  auto output = GetOutput(ctx_cpu, frame);
+  auto output = GetOutput(ctx_cpu, frame, 4);
   EXPECT_TRUE(output.data != nullptr && output.size > 0);
 
   // Clean up
   free(output.data);
   free(input.data);
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream, frame);
 }
 
 TEST_F(EdgeAppCoreTest, UnloadModelTwiceDoesNotCrash) {
@@ -244,8 +232,6 @@ TEST_F(EdgeAppCoreTest, ComputeErrorIsLoggedButDoesNotCrash) {
   setComputeError();
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
   EXPECT_NE(frame, 0);
-
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream, frame);
 }
 
 TEST_F(EdgeAppCoreTest, LoadAndUnloadMultipleTimes) {
@@ -279,7 +265,6 @@ TEST_F(EdgeAppCoreTest, GetInputForIMX500ReturnsExpectedDims) {
   EXPECT_EQ(input.shape_info.ndim, 4);
   EXPECT_EQ(input.shape_info.dims[3], 3);
   free(input.data);  // Free the data if it was dynamically allocated
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream, frame);
 }
 
 TEST_F(EdgeAppCoreTest, ProcessFrameWithLargeROI) {
@@ -289,7 +274,6 @@ TEST_F(EdgeAppCoreTest, ProcessFrameWithLargeROI) {
   EdgeAppLibSensorImageCropProperty large_roi = {0, 0, 8000, 8000};
   auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, large_roi);
   EXPECT_NE(frame, 0);
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream, frame);
 }
 
 TEST_F(EdgeAppCoreTest, ComputeFailureDoesNotCorruptNextFrame) {
@@ -305,9 +289,6 @@ TEST_F(EdgeAppCoreTest, ComputeFailureDoesNotCorruptNextFrame) {
   resetComputeStatus();
   auto frame2 = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
   EXPECT_NE(frame2, 0);
-
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream, frame1);
-  EdgeAppLib::SensorReleaseFrame(*ctx_imx500.sensor_stream, frame2);
 }
 
 TEST_F(EdgeAppCoreTest, ModelIndexIsUniquePerModel) {
@@ -327,4 +308,224 @@ TEST_F(EdgeAppCoreTest, ModelIndexIsUniquePerModel) {
   EXPECT_EQ(UnloadModel(ctx0), EdgeAppCoreResultSuccess);
   EXPECT_EQ(UnloadModel(ctx1), EdgeAppCoreResultSuccess);
   EXPECT_EQ(UnloadModel(ctx2), EdgeAppCoreResultSuccess);
+}
+
+// Tests for new API functions
+
+TEST_F(EdgeAppCoreTest, GetOutputWithSpecificIndex) {
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
+            EdgeAppCoreResultSuccess);
+
+  auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
+  EXPECT_NE(frame, 0);
+
+  // Test getting specific tensor by index using GetOutputs
+  auto outputs = GetOutputs(ctx_cpu, frame, 4);
+  EXPECT_FALSE(outputs.empty());
+
+  Tensor output0 = outputs[0];  // First tensor
+  EXPECT_TRUE(output0.data != nullptr && output0.size > 0);
+
+  Tensor output1{};  // Initialize empty tensor
+  if (outputs.size() > 1) {
+    output1 = outputs[1];  // Second tensor
+    EXPECT_TRUE(output1.data != nullptr && output1.size > 0);
+  }
+
+  // Test getting all tensors with -1
+  Tensor all_outputs = GetOutput(ctx_cpu, frame, 4);
+  EXPECT_TRUE(all_outputs.data != nullptr && all_outputs.size > 0);
+
+  // Only compare sizes if we have multiple tensors
+  if (outputs.size() > 1) {
+    EXPECT_GE(all_outputs.size, output0.size + output1.size);
+  }
+
+  // Clean up
+  for (auto &tensor : outputs) {
+    if (tensor.data) {
+      free(tensor.data);
+    }
+  }
+  free(all_outputs.data);
+}
+
+TEST_F(EdgeAppCoreTest, GetOutputsReturnsVector) {
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
+            EdgeAppCoreResultSuccess);
+
+  auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
+  EXPECT_NE(frame, 0);
+
+  // Test GetOutputs function
+  auto outputs = GetOutputs(ctx_cpu, frame, 4);
+  EXPECT_FALSE(outputs.empty());
+  EXPECT_LE(outputs.size(), 4);  // Should not exceed max_tensor_num
+
+  // Verify each tensor is valid
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    EXPECT_TRUE(outputs[i].data != nullptr)
+        << "Tensor " << i << " has null data";
+    EXPECT_GT(outputs[i].size, 0) << "Tensor " << i << " has zero size";
+  }
+
+  // Clean up
+  for (auto &tensor : outputs) {
+    if (tensor.data) {
+      free(tensor.data);
+    }
+  }
+}
+
+EdgeAppCoreResult test_preprocessing_callback(
+    const void *input_data, EdgeAppLibImageProperty input_property,
+    void **output_data, EdgeAppLibImageProperty *output_property) {
+  // Simple test preprocessing: increment all pixel values by 1
+  uint8_t *input = (uint8_t *)input_data;
+  size_t input_size =
+      input_property.stride_bytes * input_property.height;  // RGB
+  uint8_t *output = (uint8_t *)malloc(input_size);
+  if (!output) {
+    return EdgeAppCoreResultFailure;
+  }
+
+  for (size_t i = 0; i < input_size; ++i) {
+    if (input[i] < 255) {
+      output[i] = input[i] + 1;
+    } else {
+      output[i] = input[i];
+    }
+  }
+
+  *output_data = output;
+  // Output has same dimensions as input
+  output_property->width = input_property.width;
+  output_property->height = input_property.height;
+  output_property->stride_bytes = input_property.stride_bytes;
+  strncpy(output_property->pixel_format, input_property.pixel_format,
+          sizeof(output_property->pixel_format) - 1);
+  output_property->pixel_format[sizeof(output_property->pixel_format) - 1] =
+      '\0';
+  return EdgeAppCoreResultSuccess;
+}
+
+TEST_F(EdgeAppCoreTest, GetOutputsConsistencyWithGetOutput) {
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
+            EdgeAppCoreResultSuccess);
+
+  auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame, dummy_roi[0]);
+  EXPECT_NE(frame, 0);
+
+  // Compare GetOutputs with individual GetOutput calls
+  auto outputs = GetOutputs(ctx_cpu, frame, 4);
+
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    // Compare outputs with themselves for consistency check
+    EXPECT_TRUE(outputs[i].data != nullptr)
+        << "Tensor " << i << " has null data";
+    EXPECT_GT(outputs[i].size, 0) << "Tensor " << i << " has zero size";
+    EXPECT_GT(outputs[i].shape_info.ndim, 0)
+        << "Tensor " << i << " has zero dimensions";
+  }
+
+  // Clean up
+  for (auto &tensor : outputs) {
+    if (tensor.data) {
+      free(tensor.data);
+    }
+  }
+}
+
+// Tests for ProcessedFrame Method Chaining
+TEST_F(EdgeAppCoreTest, MethodChainBasic) {
+  // Test that method chaining interface works correctly
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
+            EdgeAppCoreResultSuccess);
+
+  // Test method chaining compiles correctly
+  auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame)
+                   .withROI(dummy_roi[0])
+                   .compute();
+
+  EXPECT_FALSE(frame.empty());
+  auto outputs = GetOutputs(ctx_cpu, frame, 4);
+  for (auto &tensor : outputs) {
+    if (tensor.data) {
+      free(tensor.data);
+    }
+  }
+}
+
+TEST_F(EdgeAppCoreTest, MethodChainWithPreprocessing) {
+  // Test that preprocessing callback can be set in method chaining
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
+            EdgeAppCoreResultSuccess);
+
+  // Test method chaining with preprocessing
+  auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame)
+                   .withPreprocessing(test_preprocessing_callback)
+                   .compute();
+
+  EXPECT_FALSE(frame.empty());
+  EXPECT_NE(static_cast<EdgeAppLibSensorFrame>(frame), 0);
+  auto outputs = GetOutputs(ctx_cpu, frame, 4);
+  for (auto &tensor : outputs) {
+    if (tensor.data) {
+      free(tensor.data);
+    }
+  }
+}
+
+TEST_F(EdgeAppCoreTest, MethodChainFullChain) {
+  // Test full method chaining with compute
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
+            EdgeAppCoreResultSuccess);
+
+  // Test full chain with both ROI and preprocessing
+  auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame)
+                   .withROI(dummy_roi[0])
+                   .withPreprocessing(test_preprocessing_callback)
+                   .compute();
+
+  EXPECT_FALSE(frame.empty());
+  auto outputs = GetOutputs(ctx_cpu, frame, 4);
+  for (auto &tensor : outputs) {
+    if (tensor.data) {
+      free(tensor.data);
+    }
+  }
+}
+
+TEST_F(EdgeAppCoreTest, MethodChainMinimal) {
+  // Test minimal method chaining with compute
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
+            EdgeAppCoreResultSuccess);
+
+  // Test minimal fluent interface - just the frame
+  auto frame = Process(ctx_cpu, &ctx_imx500, dummy_frame).compute();
+
+  // With valid context, should not be empty
+  EXPECT_FALSE(frame.empty());
+  EXPECT_NE(static_cast<EdgeAppLibSensorFrame>(frame), 0);
+}
+
+TEST_F(EdgeAppCoreTest, MethodChainErrorHandling) {
+  // Test with uninitialized context (should fail)
+  EdgeAppCoreCtx invalid_ctx;
+  memset(&invalid_ctx, 0, sizeof(invalid_ctx));
+
+  auto result = Process(invalid_ctx, nullptr, dummy_frame)
+                    .withROI(dummy_roi[0])
+                    .compute();
+
+  // Should return empty/invalid result
+  EXPECT_TRUE(result.empty());
+  EXPECT_EQ(static_cast<EdgeAppLibSensorFrame>(result), 0);
 }

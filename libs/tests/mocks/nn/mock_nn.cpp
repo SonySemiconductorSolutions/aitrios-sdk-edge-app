@@ -41,9 +41,11 @@ void resetComputeStatus() { ComputeStatus = EDGEAPP_LIB_NN_SUCCESS; }
 void setGetOutputError() { GetOutputStatus = EDGEAPP_LIB_NN_RUNTIME_ERROR; }
 void resetGetOutputStatus() { GetOutputStatus = EDGEAPP_LIB_NN_SUCCESS; }
 
+namespace EdgeAppLib {
+
 // Mock implementation of LoadModel
 EdgeAppLibNNResult LoadModel(const char *model_name, EdgeAppLibGraph *g,
-                             EdgeAppLibGraphContext target) {
+                             EdgeAppLibExecutionTarget target) {
   if (LoadModelStatus != EDGEAPP_LIB_NN_SUCCESS) return LoadModelStatus;
   *g = (EdgeAppLibGraph)123;  // Dummy graph handle
   return EDGEAPP_LIB_NN_SUCCESS;
@@ -76,12 +78,39 @@ EdgeAppLibNNResult GetOutput(EdgeAppLibGraphContext ctx, uint32_t index,
                              float *out_tensor, uint32_t *out_size) {
   if (GetOutputStatus != EDGEAPP_LIB_NN_SUCCESS) return GetOutputStatus;
 
-  *out_size = 5;  // Dummy output size
-  for (uint32_t i = 0; i < 5; ++i) {
-    out_tensor[i] = (float)i;  // Dummy output data
+  // Return different sizes for different tensor indices to simulate multiple
+  // outputs
+  uint32_t tensor_sizes[] = {10, 8, 6,
+                             4};  // Different sizes for up to 4 tensors
+
+  // Validate index - only support tensors 0-3
+  if (index >= 4) {
+    *out_size = 0;
+    return EDGEAPP_LIB_NN_RUNTIME_ERROR;  // Return error for invalid index
+  }
+
+  uint32_t size = tensor_sizes[index];
+
+  *out_size = size;
+  for (uint32_t i = 0; i < size; ++i) {
+    // Generate different data patterns for different tensor indices
+    out_tensor[i] = (float)(index * 100 + i);
   }
   return EDGEAPP_LIB_NN_SUCCESS;
 }
+
+// Mock implementation of SetInputFromTensor
+EdgeAppLibNNResult SetInputFromTensor(EdgeAppLibGraphContext ctx,
+                                      uint8_t *input_tensor, uint32_t (*dim)[4],
+                                      EdgeAppLibTensorType type) {
+  (void)ctx;
+  (void)input_tensor;
+  (void)dim;
+  (void)type;
+  return EDGEAPP_LIB_NN_SUCCESS;
+}
+
+}  // namespace EdgeAppLib
 
 #include <stdlib.h>
 

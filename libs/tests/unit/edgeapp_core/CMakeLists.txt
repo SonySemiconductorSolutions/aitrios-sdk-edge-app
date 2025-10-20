@@ -30,7 +30,6 @@ add_subdirectory (
   ${CMAKE_CURRENT_BINARY_DIR}/log
 )
 add_subdirectory(${LIBS_DIR}/common/src ${CMAKE_BINARY_DIR}/common)
-add_subdirectory(${LIBS_DIR}/nn/src ${CMAKE_BINARY_DIR}/nn)
 add_subdirectory(${LIBS_DIR}/draw/src ${CMAKE_BINARY_DIR}/draw)
 
 add_executable(test_edgeapp_core
@@ -51,7 +50,6 @@ target_link_libraries(test_edgeapp_core
   log
   common
   draw
-  nn
   GTest::gtest_main
   GTest::gmock_main
 )

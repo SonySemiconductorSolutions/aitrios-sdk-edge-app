@@ -324,3 +324,245 @@ TEST_F(EdgeAppLibDrawApiTest, NoStrideByteSetting) {
   delete[] reinterpret_cast<uint8_t *>(src.address);
   delete[] reinterpret_cast<uint8_t *>(dst.address);
 }
+
+// ===================== ResizeRectangle tests (Bilinear) =====================
+
+TEST_F(EdgeAppLibDrawApiTest,
+       ResizeRectangleBilinear_RGB8_Downscale_2x2_to_1x1) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 2;
+  src.height = 2;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.stride_byte = 2 * 3;
+  src.size = src.stride_byte * src.height;
+  src.address = new uint8_t[src.size];
+
+  // Fill a 2x2 image with distinct RGB values per pixel
+  // Layout (x,y): (0,0) (1,0)
+  //               (0,1) (1,1)
+  auto *s = reinterpret_cast<uint8_t *>(src.address);
+  // (0,0)
+  s[0] = 10;
+  s[1] = 20;
+  s[2] = 30;
+  // (1,0)
+  s[3] = 40;
+  s[4] = 50;
+  s[5] = 60;
+  // (0,1)
+  s[6] = 70;
+  s[7] = 80;
+  s[8] = 90;
+  // (1,1)
+  s[9] = 100;
+  s[10] = 110;
+  s[11] = 120;
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 1;
+  dst.height = 1;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.stride_byte = 1 * 3;
+  dst.size = dst.stride_byte * dst.height;
+  dst.address = new uint8_t[dst.size];
+
+  ASSERT_EQ(ResizeRectangle(&src, &dst), 0);
+
+  auto *d = reinterpret_cast<uint8_t *>(dst.address);
+  // Bilinear at center with pixel-center mapping equals the average of 4 pixels
+  int exp_r = (10 + 40 + 70 + 100) / 4;
+  int exp_g = (20 + 50 + 80 + 110) / 4;
+  int exp_b = (30 + 60 + 90 + 120) / 4;
+
+  EXPECT_NEAR(d[0], exp_r, 1);
+  EXPECT_NEAR(d[1], exp_g, 1);
+  EXPECT_NEAR(d[2], exp_b, 1);
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, ResizeRectangleBilinear_RGB8_Identity_3x3) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 3;
+  src.height = 3;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.stride_byte = 3 * 3;
+  src.size = src.stride_byte * src.height;
+  src.address = new uint8_t[src.size];
+
+  // Fill with a simple ramp so we can compare byte-wise
+  auto *s = reinterpret_cast<uint8_t *>(src.address);
+  for (uint32_t y = 0; y < src.height; ++y) {
+    for (uint32_t x = 0; x < src.width; ++x) {
+      size_t idx = y * src.stride_byte + x * 3;
+      s[idx + 0] = static_cast<uint8_t>(x + y * 3);    // R
+      s[idx + 1] = static_cast<uint8_t>(100 + x + y);  // G
+      s[idx + 2] = static_cast<uint8_t>(200 - x - y);  // B
+    }
+  }
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 3;
+  dst.height = 3;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.stride_byte = 3 * 3;
+  dst.size = dst.stride_byte * dst.height;
+  dst.address = new uint8_t[dst.size];
+
+  ASSERT_EQ(ResizeRectangle(&src, &dst), 0);
+
+  auto *d = reinterpret_cast<uint8_t *>(dst.address);
+  for (uint32_t i = 0; i < dst.size; ++i) {
+    EXPECT_EQ(d[i], s[i]);  // Identity ResizeRectangle should match exactly
+  }
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, ResizeRectangleBilinear_RGB8_WithPaddingStride) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 4;
+  src.height = 3;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.stride_byte = 4 * 3 + 4;  // add padding per row
+  src.size = src.stride_byte * src.height;
+  src.address = new uint8_t[src.size];
+
+  // Initialize all bytes to a known pad, then fill valid pixels
+  auto *s = reinterpret_cast<uint8_t *>(src.address);
+  memset(s, 7, src.size);
+  for (uint32_t y = 0; y < src.height; ++y) {
+    for (uint32_t x = 0; x < src.width; ++x) {
+      size_t idx = y * src.stride_byte + x * 3;
+      s[idx + 0] = static_cast<uint8_t>(10 * x);
+      s[idx + 1] = static_cast<uint8_t>(20 * y);
+      s[idx + 2] = 200;
+    }
+  }
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 2;
+  dst.height = 2;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.stride_byte = 2 * 3;
+  dst.size = dst.stride_byte * dst.height;
+  dst.address = new uint8_t[dst.size];
+
+  ASSERT_EQ(ResizeRectangle(&src, &dst), 0);
+
+  auto *d = reinterpret_cast<uint8_t *>(dst.address);
+  // Spot-check: values should be within valid 0..255 range and not equal to
+  // padding
+  for (uint32_t i = 0; i < dst.size; ++i) {
+    EXPECT_NE(d[i], 7);
+  }
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest,
+       ResizeRectangleBilinear_RGB8Planar_Upscale_2x2_to_4x4) {
+  EdgeAppLibDrawBuffer src{};
+  src.width = 2;
+  src.height = 2;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8_PLANAR;
+  src.stride_byte = 2;  // planar: bytes per row per plane
+  src.size = src.stride_byte * src.height * 3;
+  src.address = new uint8_t[src.size];
+
+  // Planar layout: R-plane (0..wh-1), G-plane (next), B-plane (next)
+  auto *base = reinterpret_cast<uint8_t *>(src.address);
+  uint8_t *r = base + src.stride_byte * src.height * 0;
+  uint8_t *g = base + src.stride_byte * src.height * 1;
+  uint8_t *b = base + src.stride_byte * src.height * 2;
+
+  // Fill a simple pattern
+  // R plane
+  r[0] = 10;
+  r[1] = 20;
+  r[2] = 30;
+  r[3] = 40;
+  // G plane
+  g[0] = 50;
+  g[1] = 60;
+  g[2] = 70;
+  g[3] = 80;
+  // B plane
+  b[0] = 90;
+  b[1] = 100;
+  b[2] = 110;
+  b[3] = 120;
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 4;
+  dst.height = 4;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8_PLANAR;
+  dst.stride_byte = 4;  // planar: bytes per row per plane
+  dst.size = dst.stride_byte * dst.height * 3;
+  dst.address = new uint8_t[dst.size];
+
+  ASSERT_EQ(ResizeRectangle(&src, &dst), 0);
+
+  // Sanity: center pixels should be between min/max of corresponding source
+  // plane
+  auto *base_d = reinterpret_cast<uint8_t *>(dst.address);
+  uint8_t *rd = base_d + dst.stride_byte * dst.height * 0;
+  uint8_t *gd = base_d + dst.stride_byte * dst.height * 1;
+  uint8_t *bd = base_d + dst.stride_byte * dst.height * 2;
+
+  uint8_t r_min = 10, r_max = 40;
+  uint8_t g_min = 50, g_max = 80;
+  uint8_t b_min = 90, b_max = 120;
+
+  // Check a few positions
+  EXPECT_GE(rd[2 + 2 * dst.stride_byte], r_min);
+  EXPECT_LE(rd[2 + 2 * dst.stride_byte], r_max);
+  EXPECT_GE(gd[2 + 2 * dst.stride_byte], g_min);
+  EXPECT_LE(gd[2 + 2 * dst.stride_byte], g_max);
+  EXPECT_GE(bd[2 + 2 * dst.stride_byte], b_min);
+  EXPECT_LE(bd[2 + 2 * dst.stride_byte], b_max);
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+
+TEST_F(EdgeAppLibDrawApiTest, ResizeRectangleBilinear_FailureCases) {
+  // Format mismatch
+  EdgeAppLibDrawBuffer src{};
+  src.width = 2;
+  src.height = 2;
+  src.format = AITRIOS_DRAW_FORMAT_RGB8;
+  src.stride_byte = 2 * 3;
+  src.size = src.stride_byte * src.height;
+  src.address = new uint8_t[src.size];
+
+  EdgeAppLibDrawBuffer dst{};
+  dst.width = 4;
+  dst.height = 4;
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8_PLANAR;  // mismatch on purpose
+  dst.stride_byte = 4;
+  dst.size = dst.stride_byte * dst.height * 3;
+  dst.address = new uint8_t[dst.size];
+
+  EXPECT_EQ(ResizeRectangle(&src, &dst), -1);
+
+  // Null source
+  EXPECT_EQ(ResizeRectangle(nullptr, &dst), -1);
+  // Null destination
+  EXPECT_EQ(ResizeRectangle(&src, nullptr), -1);
+
+  // Zero dst size
+  dst.format = AITRIOS_DRAW_FORMAT_RGB8;
+  dst.width = 0;
+  dst.height = 4;
+  dst.stride_byte = 0;
+  dst.size = 0;
+  EXPECT_EQ(ResizeRectangle(&src, &dst), -1);
+
+  delete[] reinterpret_cast<uint8_t *>(src.address);
+  delete[] reinterpret_cast<uint8_t *>(dst.address);
+}
+// ===================== End of ResizeRectangle tests =====================

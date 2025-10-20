@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "data_export.h"
+#include "log.h"
 #include "nn.h"
 #include "send_data.h"
 #include "sensor.h"
@@ -51,7 +52,7 @@ struct EdgeAppCoreModelInfo {
 };
 
 #define MAX_GRAPH_CONTEXTS 8
-#define MAX_OUTPUT_TENSORS_SIZE 2822400 * 2  // 4 MB for output tensors
+#define MAX_OUTPUT_TENSORS_SIZE 512 * 1024  // 500KB for output tensors
 #define MAX_OUTPUT_TENSOR_NUM 4
 
 enum TensorMemoryOwner {
@@ -86,9 +87,11 @@ typedef struct {
 namespace EdgeAppCore {
 
 enum TensorDataType : uint8_t {
-  TensorTypeFloat32 = 0,
-  TensorTypeUInt8 = 1,
-  TensorTypeInt32 = 2
+  TensorTypeFloat16 = 0,
+  TensorTypeFloat32 = 1,
+  TensorTypeUInt8 = 2,
+  TensorTypeInt32 = 3,
+  TensorTypeInt64 = 4
   // Extend as needed
 };
 
@@ -133,63 +136,217 @@ struct Tensor {
   }
 };
 
+// Preprocess callback function type
+// Parameters: input_data, input_property, output_data, output_property
+// Returns: EdgeAppCoreResult (success/failure)
+typedef EdgeAppCoreResult (*PreprocessCallback)(
+    const void *input_data, EdgeAppLibImageProperty input_property,
+    void **output_data, EdgeAppLibImageProperty *output_property);
+
+// Preprocess callback function type
+// Parameters: input_data, input_property, tensor
+// Returns: EdgeAppCoreResult (success/failure)
+typedef EdgeAppCoreResult (*PreprocessCallbackTensor)(
+    const void *input_data, EdgeAppLibImageProperty input_property,
+    Tensor *output_tensor);
 /**
  * @brief Automatically releases the frame when it goes out of scope.
  */
-class AutoFrame {
+class ProcessedFrame {
  public:
-  AutoFrame(EdgeAppLibSensorStream *s, EdgeAppLibSensorFrame f)
-      : stream_(s), frame_(f) {}
+  ProcessedFrame(EdgeAppLibSensorStream *s, EdgeAppLibSensorFrame f)
+      : ctx_(nullptr),
+        shared_ctx_(nullptr),
+        stream_(s),
+        frame_(f),
+        roi_(nullptr),
+        preprocess_callback_(nullptr),
+        preprocess_tensor_callback_(nullptr),
+        is_computed_(true),
+        preprocessed_data_(nullptr),
+        preprocessed_memory_owner_(TensorMemoryOwner::Unknown),
+        owns_frame_(true) {}
 
-  // Destructor ensures frame is released
-  ~AutoFrame() {
-    if (stream_ && frame_) {
+  // Constructor for method chaining
+  ProcessedFrame(EdgeAppCoreCtx *ctx, EdgeAppCoreCtx *shared_ctx,
+                 EdgeAppLibSensorFrame f)
+      : ctx_(ctx),
+        shared_ctx_(shared_ctx),
+        stream_(shared_ctx ? shared_ctx->sensor_stream : nullptr),
+        frame_(f),
+        roi_(nullptr),
+        preprocess_callback_(nullptr),
+        preprocess_tensor_callback_(nullptr),
+        is_computed_(false),
+        preprocessed_data_(nullptr),
+        preprocessed_memory_owner_(TensorMemoryOwner::Unknown),
+        owns_frame_(false) {}
+
+  // Constructor for empty/failed ProcessedFrame
+  ProcessedFrame()
+      : ctx_(nullptr),
+        shared_ctx_(nullptr),
+        stream_(nullptr),
+        frame_(0),
+        roi_(nullptr),
+        preprocess_callback_(nullptr),
+        preprocess_tensor_callback_(nullptr),
+        is_computed_(false),
+        preprocessed_data_(nullptr),
+        preprocessed_memory_owner_(TensorMemoryOwner::Unknown),
+        owns_frame_(false) {}
+
+  // Destructor ensures frame is released only if we own it
+  ~ProcessedFrame() {
+    if (owns_frame_ && stream_ && frame_ != 0) {
       if (EdgeAppLib::SensorReleaseFrame(*stream_, frame_) < 0) {
         abort();  // Handle error appropriately
       }
       frame_ = 0;  // Reset frame to avoid double release
     }
+    // Note: preprocessed data memory management is handled by GetInput or
+    // UnloadModel
   }
 
-  // Prevent copying
-  AutoFrame(const AutoFrame &) = delete;
-  AutoFrame &operator=(const AutoFrame &) = delete;
-
-  // Allow move semantics
-  AutoFrame(AutoFrame &&other) noexcept
-      : stream_(other.stream_), frame_(other.frame_) {
-    other.stream_ = nullptr;
-    other.frame_ = 0;
+  // Move constructor, transfer ownership of the frame from source to this.
+  ProcessedFrame(ProcessedFrame &&source) noexcept
+      : ctx_(source.ctx_),
+        shared_ctx_(source.shared_ctx_),
+        stream_(source.stream_),
+        frame_(source.frame_),
+        roi_(source.roi_),
+        preprocess_callback_(source.preprocess_callback_),
+        preprocess_tensor_callback_(source.preprocess_tensor_callback_),
+        is_computed_(source.is_computed_),
+        preprocessed_data_(source.preprocessed_data_),
+        preprocessed_memory_owner_(source.preprocessed_memory_owner_),
+        owns_frame_(source.owns_frame_) {
+    source.ctx_ = nullptr;
+    source.shared_ctx_ = nullptr;
+    source.stream_ = nullptr;
+    source.frame_ = 0;
+    source.roi_ = nullptr;
+    source.preprocess_callback_ = nullptr;
+    source.preprocess_tensor_callback_ = nullptr;
+    source.is_computed_ = false;
+    source.preprocessed_data_ = nullptr;
+    source.preprocessed_memory_owner_ = TensorMemoryOwner::Unknown;
+    source.owns_frame_ = false;
   }
 
-  AutoFrame &operator=(AutoFrame &&other) noexcept {
-    if (this != &other) {
-      stream_ = other.stream_;
-      frame_ = other.frame_;
-      other.stream_ = nullptr;
-      other.frame_ = 0;
+  // Prevent copying frames to avoid double free
+  ProcessedFrame(const ProcessedFrame &) = delete;
+  ProcessedFrame &operator=(const ProcessedFrame &) = delete;
+
+  // Define move assignment operator
+  ProcessedFrame &operator=(ProcessedFrame &&source) noexcept {
+    if (this != &source) {
+      // Clean up current preprocessed data if we own it
+      if (preprocessed_data_ &&
+          preprocessed_memory_owner_ == TensorMemoryOwner::App) {
+        free(preprocessed_data_);
+      }
+
+      // Move all members from source
+      ctx_ = source.ctx_;
+      shared_ctx_ = source.shared_ctx_;
+      stream_ = source.stream_;
+      frame_ = source.frame_;
+      roi_ = source.roi_;
+      preprocess_callback_ = source.preprocess_callback_;
+      preprocess_tensor_callback_ = source.preprocess_tensor_callback_;
+      is_computed_ = source.is_computed_;
+      preprocessed_data_ = source.preprocessed_data_;
+      preprocessed_memory_owner_ = source.preprocessed_memory_owner_;
+      owns_frame_ = source.owns_frame_;
+
+      // Clear source
+      source.ctx_ = nullptr;
+      source.shared_ctx_ = nullptr;
+      source.stream_ = nullptr;
+      source.frame_ = 0;
+      source.roi_ = nullptr;
+      source.preprocess_callback_ = nullptr;
+      source.preprocess_tensor_callback_ = nullptr;
+      source.is_computed_ = false;
+      source.preprocessed_data_ = nullptr;
+      source.preprocessed_memory_owner_ = TensorMemoryOwner::Unknown;
+      source.owns_frame_ = false;
     }
     return *this;
   }
 
-  bool empty() const { return frame_ == 0 || stream_ == nullptr; }
+  // Implicit cast to EdgeAppLibSensorFrame for passing next Process call
+  operator EdgeAppLibSensorFrame() const {
+    if (!is_computed_) {
+      return 0;  // Return invalid frame number
+    }
+    return frame_;
+  }
 
-  // Implicit cast to EdgeAppLibSensorFrame
-  operator EdgeAppLibSensorFrame() const { return frame_; }
+  // Methods for chaining:
+  // withROI(roi).withPreprocessing(callback).compute()
+  ProcessedFrame &withROI(const EdgeAppLibSensorImageCropProperty &roi) {
+    roi_ = &roi;
+    return *this;
+  }
+
+  // Templated preprocessing setter: accepts either callback type
+  template <typename Callback>
+  ProcessedFrame &withPreprocessing(Callback callback) {
+    if constexpr (std::is_same_v<Callback, PreprocessCallback>) {
+      preprocess_callback_ = callback;
+      preprocess_tensor_callback_ = nullptr;
+    } else if constexpr (std::is_same_v<Callback, PreprocessCallbackTensor>) {
+      preprocess_tensor_callback_ = callback;
+      preprocess_callback_ = nullptr;
+    } else {
+      static_assert(!sizeof(Callback),
+                    "Unsupported preprocessing callback type");
+    }
+    return *this;
+  }
+
+  ProcessedFrame compute();
+
+  bool empty() const {
+    if (!is_computed_) {
+      return true;
+    }
+    return frame_ == 0 || stream_ == nullptr;
+  }
 
  private:
+  void ProcessInternal(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
+                       EdgeAppLibSensorFrame frame,
+                       EdgeAppLibSensorImageCropProperty &roi);
+  EdgeAppCoreCtx *ctx_ = nullptr;
+  EdgeAppCoreCtx *shared_ctx_ = nullptr;
   EdgeAppLibSensorStream *stream_ = nullptr;
   EdgeAppLibSensorFrame frame_ = 0;
+  const EdgeAppLibSensorImageCropProperty *roi_ = nullptr;
+
+  // Support both callback types
+  PreprocessCallback preprocess_callback_ = nullptr;
+  PreprocessCallbackTensor preprocess_tensor_callback_ = nullptr;
+  bool is_computed_ = false;
+  void *preprocessed_data_ = nullptr;
+  TensorMemoryOwner preprocessed_memory_owner_ = TensorMemoryOwner::Unknown;
+  bool owns_frame_ = false;  // If true, destructor will release the frame
 };
 
 // C++ only APIs
 EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo models, EdgeAppCoreCtx &ctx,
                             EdgeAppCoreCtx *shared_ctx);
-AutoFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
-                  EdgeAppLibSensorFrame frame,
-                  EdgeAppLibSensorImageCropProperty &roi);
+ProcessedFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
+                       EdgeAppLibSensorFrame frame);
+ProcessedFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
+                       EdgeAppLibSensorFrame frame,
+                       EdgeAppLibSensorImageCropProperty &roi);
 Tensor GetOutput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame,
-                 uint32_t max_tensor_num = MAX_OUTPUT_TENSOR_NUM);
+                 uint32_t max_tensor_num = 1);
+std::vector<Tensor> GetOutputs(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame,
+                               uint32_t max_tensor_num);
 Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame);
 EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx);
 EdgeAppCoreResult SendInputTensor(Tensor *input_tensor);

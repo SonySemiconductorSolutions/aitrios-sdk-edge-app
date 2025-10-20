@@ -61,6 +61,31 @@ EdgeAppLibNNResult InitContext(EdgeAppLibGraph g, EdgeAppLibGraphContext *ctx) {
   return convert_err_code_from_wasi_nn(err);
 }
 
+EdgeAppLibNNResult SetInputFromTensor(EdgeAppLibGraphContext ctx,
+                                      uint8_t *input_tensor, uint32_t (*dim)[4],
+                                      EdgeAppLibTensorType type) {
+  tensor_dimensions dims;
+  dims.size = INPUT_TENSOR_DIMS;
+  dims.buf = (uint32_t *)malloc(dims.size * sizeof(uint32_t));
+  if (dims.buf == NULL) return EDGEAPP_LIB_NN_TOO_LARGE;
+
+  for (int i = 0; i < dims.size; ++i) {
+    dims.buf[i] = (*dim)[i];
+  }
+  tensor tensor;
+  tensor.dimensions = &dims;
+  tensor.type = (tensor_type)type;
+  tensor.data = (uint8_t *)input_tensor;
+
+  // Call wasi-nn set_input
+  wasi_nn_error err = set_input((graph_execution_context)ctx, 0, &tensor);
+
+  // Clean up temporary buffers
+  free(dims.buf);
+
+  return convert_err_code_from_wasi_nn(err);
+}
+
 EdgeAppLibNNResult SetInput(EdgeAppLibGraphContext ctx, uint8_t *input_tensor,
                             uint32_t *dim, const float *mean_values,
                             size_t mean_size, const float *norm_values,

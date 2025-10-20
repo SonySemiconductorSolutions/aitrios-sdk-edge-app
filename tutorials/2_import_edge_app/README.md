@@ -41,16 +41,10 @@ The version of manifest file.
     "file_name": "edge_app.wasm",
     "version": "1.0.0",
     "app_dtdl_file": "edge_app_interface.json",
-    "referred_dtdl_files": [],
-    "compiled_flg": false,
-    "schema_info": ""
+    "compiled_flg": false
   }
 }
 ```
-
-> **NOTE**
->
-> **`referred_dtdl_files`** and **`schema_info`** are not used. Please specify them as an empty array and an empty string respectively, like the preceding sample.
 
 2. Create a folder with any name and store the these three files ("**Edge Application**", DTDL and **`manifest.json`**) in the folder
 

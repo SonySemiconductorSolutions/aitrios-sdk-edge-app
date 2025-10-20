@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
-
 #include "draw.h"
+
+#include <cmath>
 
 #include "log.h"
 
@@ -156,6 +157,91 @@ static void CropRectangle(const struct EdgeAppLibDrawBuffer *src,
   }
 }
 
+// Bilinear resize using float precision (RGB8 / RGB8_PLANAR)
+template <enum EdgeAppLibDrawFormat FMT>
+static void ResizeRectangle(const EdgeAppLibDrawBuffer *src,
+                            EdgeAppLibDrawBuffer *dst) {
+  uint8_t *src_r, *src_g, *src_b;
+  uint8_t *dst_r, *dst_g, *dst_b;
+  FormatTraits<FMT>::PixelComponents(const_cast<EdgeAppLibDrawBuffer *>(src),
+                                     &src_r, &src_g, &src_b);
+  FormatTraits<FMT>::PixelComponents(dst, &dst_r, &dst_g, &dst_b);
+
+  const uint32_t src_w = src->width, src_h = src->height;
+  const uint32_t dst_w = dst->width, dst_h = dst->height;
+  const uint32_t src_stride = src->stride_byte, dst_stride = dst->stride_byte;
+
+  // Pixel-center mapping
+  const float scale_x = static_cast<float>(src_w) / static_cast<float>(dst_w);
+  const float scale_y = static_cast<float>(src_h) / static_cast<float>(dst_h);
+
+  for (uint32_t y = 0; y < dst_h; ++y) {
+    float sy = (static_cast<float>(y) + 0.5f) * scale_y - 0.5f;
+    int y0 = static_cast<int>(std::floor(sy));
+    float wy = sy - static_cast<float>(y0);
+    int y1 = y0 + 1;
+    if (y0 < 0) {
+      y0 = 0;
+      wy = 1.0f;
+    }
+    if (y1 >= static_cast<int>(src_h)) y1 = static_cast<int>(src_h) - 1;
+    if (y0 >= static_cast<int>(src_h)) y0 = static_cast<int>(src_h) - 1;
+
+    for (uint32_t x = 0; x < dst_w; ++x) {
+      float sx = (static_cast<float>(x) + 0.5f) * scale_x - 0.5f;
+      int x0 = static_cast<int>(std::floor(sx));
+      float wx = sx - static_cast<float>(x0);
+      int x1 = x0 + 1;
+      if (x0 < 0) {
+        x0 = 0;
+        wx = 1.0f;
+      }
+      if (x1 >= static_cast<int>(src_w)) x1 = static_cast<int>(src_w) - 1;
+      if (x0 >= static_cast<int>(src_w)) x0 = static_cast<int>(src_w) - 1;
+
+      const int i00 = PixelOffset<FMT>(src_stride, x0, y0);
+      const int i10 = PixelOffset<FMT>(src_stride, x1, y0);
+      const int i01 = PixelOffset<FMT>(src_stride, x0, y1);
+      const int i11 = PixelOffset<FMT>(src_stride, x1, y1);
+      const int o = PixelOffset<FMT>(dst_stride, x, y);
+
+      // R
+      {
+        float v0 = src_r[i00] * (1.0f - wx) + src_r[i10] * wx;
+        float v1 = src_r[i01] * (1.0f - wx) + src_r[i11] * wx;
+        float v = v0 * (1.0f - wy) + v1 * wy;
+        if (v < 0.0f)
+          v = 0.0f;
+        else if (v > 255.0f)
+          v = 255.0f;
+        dst_r[o] = static_cast<uint8_t>(v + 0.5f);
+      }
+      // G
+      {
+        float v0 = src_g[i00] * (1.0f - wx) + src_g[i10] * wx;
+        float v1 = src_g[i01] * (1.0f - wx) + src_g[i11] * wx;
+        float v = v0 * (1.0f - wy) + v1 * wy;
+        if (v < 0.0f)
+          v = 0.0f;
+        else if (v > 255.0f)
+          v = 255.0f;
+        dst_g[o] = static_cast<uint8_t>(v + 0.5f);
+      }
+      // B
+      {
+        float v0 = src_b[i00] * (1.0f - wx) + src_b[i10] * wx;
+        float v1 = src_b[i01] * (1.0f - wx) + src_b[i11] * wx;
+        float v = v0 * (1.0f - wy) + v1 * wy;
+        if (v < 0.0f)
+          v = 0.0f;
+        else if (v > 255.0f)
+          v = 255.0f;
+        dst_b[o] = static_cast<uint8_t>(v + 0.5f);
+      }
+    }
+  }
+}
+
 int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
                       uint32_t top, uint32_t right, uint32_t bottom,
                       struct EdgeAppLibColor color) {
@@ -184,6 +270,40 @@ int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
       break;
     default:
       LOG_ERR("DrawRectangle: Unknown format %d", buffer->format);
+      return -1;
+  }
+
+  return 0;
+}
+
+int32_t ResizeRectangle(const struct EdgeAppLibDrawBuffer *src,
+                        struct EdgeAppLibDrawBuffer *dst) {
+  if (!IsValidDrawBuffer(const_cast<EdgeAppLibDrawBuffer *>(src)) ||
+      !IsValidDrawBuffer(dst)) {
+    LOG_ERR("ResizeRectangle: Invalid buffer");
+    return -1;
+  }
+
+  if (src->format != dst->format) {
+    LOG_ERR("ResizeRectangle: Format mismatch between source and destination");
+    return -1;
+  }
+
+  if (src->width == dst->width && src->height == dst->height) {
+    // No resizing needed, just copy the data
+    memcpy(dst->address, src->address, src->size);
+    return 0;
+  }
+
+  switch (src->format) {
+    case AITRIOS_DRAW_FORMAT_RGB8:
+      ResizeRectangle<AITRIOS_DRAW_FORMAT_RGB8>(src, dst);
+      break;
+    case AITRIOS_DRAW_FORMAT_RGB8_PLANAR:
+      ResizeRectangle<AITRIOS_DRAW_FORMAT_RGB8_PLANAR>(src, dst);
+      break;
+    default:
+      LOG_ERR("ResizeRectangle: Unknown format %d", src->format);
       return -1;
   }
 

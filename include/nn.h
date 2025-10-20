@@ -52,6 +52,15 @@ typedef enum {
   EDGEAPP_TARGET_OTHER
 } EdgeAppLibExecutionTarget;
 
+typedef enum {
+  TensorTypeFloat16 = 0,
+  TensorTypeFloat32 = 1,
+  TensorTypeUInt8 = 2,
+  TensorTypeInt32 = 3,
+  TensorTypeInt64 = 4
+  // Extend as needed
+} EdgeAppLibTensorType;
+
 // API functions
 EdgeAppLibNNResult LoadModel(const char *model_name, EdgeAppLibGraph *graph,
                              EdgeAppLibExecutionTarget target);
@@ -61,11 +70,16 @@ EdgeAppLibNNResult SetInput(EdgeAppLibGraphContext ctx, uint8_t *input_tensor,
                             uint32_t *dim, const float *mean_values,
                             size_t mean_size, const float *norm_values,
                             size_t norm_size);
+
+EdgeAppLibNNResult SetInputFromTensor(EdgeAppLibGraphContext ctx,
+                                      uint8_t *input_tensor, uint32_t (*dim)[4],
+                                      EdgeAppLibTensorType type);
 EdgeAppLibNNResult Compute(EdgeAppLibGraphContext ctx);
 EdgeAppLibNNResult GetOutput(EdgeAppLibGraphContext ctx, uint32_t index,
                              float *out_tensor, uint32_t *out_size);
 
 #ifdef __cplusplus
+
 }  // extern "C"
 }  // namespace EdgeAppCore
 #endif

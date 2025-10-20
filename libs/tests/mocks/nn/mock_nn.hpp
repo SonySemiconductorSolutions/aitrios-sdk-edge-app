@@ -40,7 +40,7 @@ namespace EdgeAppLib {
 
 // Mock implementation of LoadModel
 EdgeAppLibNNResult LoadModel(const char *model_name, EdgeAppLibGraph *g,
-                             EdgeAppLibGraphContext target);
+                             EdgeAppLibExecutionTarget target);
 
 // Mock implementation of InitContext
 EdgeAppLibNNResult InitContext(EdgeAppLibGraph g, EdgeAppLibGraphContext *ctx);

@@ -20,8 +20,7 @@
         "file_name",
         "version",
         "app_dtdl_file",
-        "compiled_flg",
-        "schema_info"
+        "compiled_flg"
       ],
       "properties": {
         "app_name": {
@@ -40,20 +39,9 @@
           "type": "string",
           "description": "The file name of the DTDL schema for the app."
         },
-        "referred_dtdl_files": {
-          "type": "array",
-          "description": "List of referenced DTDL files.",
-          "items": {
-            "type": "string"
-          }
-        },
         "compiled_flg": {
           "type": "boolean",
           "description": "Flag indicating whether the Edge App is compiled to AoT file."
-        },
-        "schema_info": {
-          "type": "string",
-          "description": "Additional schema information."
         }
       }
     }
