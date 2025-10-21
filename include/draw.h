@@ -106,6 +106,19 @@ int32_t CropRectangle(struct EdgeAppLibDrawBuffer *src,
                       struct EdgeAppLibDrawBuffer *dst, uint32_t left,
                       uint32_t top, uint32_t right, uint32_t bottom);
 
+/**
+ * @brief Resize an image buffer using bilinear interpolation.
+ * @param[in] src Source image buffer to resize from.
+ * @param[out] dst Destination image buffer to store the resized image.
+ * @return Zero for success or negative value for failure
+ * @details If the source and destination sizes are the same, the image data
+ * is copied directly without resizing.
+ * Supported formats: AITRIOS_DRAW_FORMAT_RGB8, AITRIOS_DRAW_FORMAT_RGB8_PLANAR
+ */
+
+int32_t ResizeRectangle(const struct EdgeAppLibDrawBuffer *src,
+                        struct EdgeAppLibDrawBuffer *dst);
+
 #ifdef __cplusplus
 }
 #endif

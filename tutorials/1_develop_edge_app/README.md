@@ -65,7 +65,7 @@ The rest of the tutorial is structurized as follows. We start with introducing t
 
 ## 1. Event-based architecture of Edge Application
 
-The "**Edge Application**" design is following an event-based architecture approach that allows a developer to focus on implementing only the app-specific code. To this end they should provide the event functions declared in [**`sm.h`**](../../include/sm.h). These event functions are further used by the State Machine. The life cycle of an application is depicted in the [following state diagram](../../docs/design_document.md#state-machine-diagram) that outlines the transitions and events within the Event-based architecture.
+The "**Edge Application**" design is following an event-based architecture approach that allows developers to focus on implementing only the app-specific code. To this end they should provide the event functions declared in [**`sm.h`**](../../include/sm.h). These event functions are further used by the State Machine. The life cycle of an application is depicted in the [following state diagram](../../docs/design_document.md#state-machine-diagram) that outlines the transitions and events within the Event-based architecture.
 
 The states include Creating, Running, Idle, and Destroying, with transitions triggered by specific events. In each of this states, event functions declared in [**`sm.h`**](../../include/sm.h) are called. Here is a description of the states:
 
@@ -113,7 +113,7 @@ Here the content of **`custom_settings`** field is decided by the developers.
 >
 >Do not edit the parameters that cannot be customized: **`req_info`**, **`res_info`** and **`common_settings`**. If you edit it, the app may not work properly.
 
-The Custom Parameters are used to configure the "**Edge Application**". The developer can set his own settings for the app.
+The Custom Parameters are used to configure the "**Edge Application**". The developers can set their own settings for the app.
 
 The DTDL of "**Edge Application**" has the following structure.
 
@@ -421,4 +421,4 @@ You can retrieve logs of Wasm running on a Edge AI Device. For that purpose we p
 The version of FlatBuffers used in "**Edge Application SDK**" is 23.1.21
 
 - [WASI SDK](https://github.com/WebAssembly/wasi-sdk)<br>
-The version of WASI SDK used in "**Edge Application SDK**" is wasi-sdk-22
+The version of WASI SDK used in "**Edge Application SDK**" is wasi-sdk-24

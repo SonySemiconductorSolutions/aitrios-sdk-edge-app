@@ -186,18 +186,6 @@ def validate_switch_dnn_custom_settings(data: dict, id_suffix: str) -> None:
     assert data["common_settings"]["number_of_inference_per_message"] == 2
 
 
-def change_barcode_custom_settings(data: dict, id_suffix: str) -> None:
-    data["req_info"]["req_id"] = f"barcode_custom_settings{id_suffix}"
-    data["custom_settings"]["ai_models"]["detection"]["parameters"]["max_detections"] = 10
-    send_data(data)
-    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
-
-def validate_barcode_custom_settings(data: dict, id_suffix: str) -> None:
-    assert data["res_info"]["res_id"] == f"barcode_custom_settings{id_suffix}"
-    assert data["custom_settings"]["res_info"]["res_id"] == f"barcode_custom_settings{id_suffix}"
-    if "ai_models" in data["custom_settings"]:
-        assert data["custom_settings"]["ai_models"]["detection"]["parameters"]["max_detections"] == 10
-
 def change_lp_recog_custom_settings(data: dict, id_suffix: str) -> None:
     data["req_info"]["req_id"] = f"lp_recog_custom_settings{id_suffix}"
     # Add lp_recog specific settings - it uses ai_models_imx500 and ai_models_cpu
@@ -335,7 +323,6 @@ CUSTOM_SETTINGS_PER_APP = {
     "segmentation": change_segmentation_custom_settings,
     "apitest": change_apitest_custom_settings,
     "switch_dnn": change_switch_dnn_custom_settings,
-    "barcode": change_barcode_custom_settings,  # barcode is same as detection
     "lp_recog": change_lp_recog_custom_settings,  # lp_recog is similar to detection
     "ssl": change_ssl_custom_settings,
 }
@@ -350,7 +337,6 @@ VALIDATE_CUSTOM_SETTINGS_PER_APP = {
     "segmentation": validate_segmentation_custom_settings,
     "apitest": validate_apitest_custom_settings,
     "switch_dnn": validate_switch_dnn_custom_settings,
-    "barcode": validate_barcode_custom_settings,  # barcode is same as draw
     "lp_recog": validate_lp_recog_custom_settings,  # lp_recog is similar to detection
     "ssl": validate_ssl_custom_settings,
 }

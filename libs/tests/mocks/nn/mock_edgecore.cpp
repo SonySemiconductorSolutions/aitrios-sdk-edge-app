@@ -34,8 +34,8 @@ static bool process_result = true;     // Simulate successful processing
 static Tensor g_mock_tensor = {};
 static EdgeAppLibSensorFrame g_mock_sensor_frame = 0x1234;
 static EdgeAppLibSensorStream g_mock_sensor_stream = 0x5678;
-static AutoFrame g_mock_frame =
-    AutoFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
+static ProcessedFrame g_mock_frame =
+    ProcessedFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
 
 /* 0 = no called, 1 = called */
 static int EdgeAppCoreLoadModelCalled = 0;
@@ -75,7 +75,7 @@ void reset_mock_core_state() {
   process_result = true;
   g_mock_sensor_frame = 0x1234;
   g_mock_sensor_stream = 0x5678;
-  g_mock_frame = AutoFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
+  g_mock_frame = ProcessedFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
 }
 
 // Set dummy data values into tensor data
@@ -151,13 +151,23 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo, EdgeAppCoreCtx &ctx,
   return load_model_result;
 }
 
-AutoFrame Process(EdgeAppCoreCtx &, EdgeAppCoreCtx *, EdgeAppLibSensorFrame,
-                  EdgeAppLibSensorImageCropProperty &) {
+ProcessedFrame Process(EdgeAppCoreCtx &, EdgeAppCoreCtx *,
+                       EdgeAppLibSensorFrame,
+                       EdgeAppLibSensorImageCropProperty &) {
   EdgeAppCoreProcessCalled = 1;
   if (!process_result) {
-    return AutoFrame(nullptr, 0);  // Simulate failure
+    return ProcessedFrame();  // Simulate failure
   }
-  return AutoFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
+  return ProcessedFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
+}
+
+ProcessedFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
+                       EdgeAppLibSensorFrame frame) {
+  EdgeAppCoreProcessCalled = 1;
+  if (!process_result) {
+    return ProcessedFrame();  // Simulate failure
+  }
+  return ProcessedFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
 }
 
 Tensor GetOutput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame, uint32_t) {
@@ -173,6 +183,66 @@ Tensor GetOutput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame, uint32_t) {
     LOG_WARN("Mock GetOutput: Simulated error, returning empty tensor");
     return g_mock_tensor;  // Return empty tensor
   }
+}
+
+// New function for GetOutputs (returns vector)
+std::vector<Tensor> GetOutputs(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame,
+                               uint32_t max_tensor_num) {
+  EdgeAppCoreGetOutputCalled = 1;
+  std::vector<Tensor> outputs;
+
+  if (get_output_result) {
+    for (int i = 0; i < g_mock_output_count; ++i) {
+      if (g_mock_outputs[i].ctx == &ctx) {
+        LOG_WARN("Mock GetOutputs for ctx[%d] with max_tensor_num[%d]", i,
+                 max_tensor_num);
+
+        // Generate mock tensors - up to max_tensor_num or 4, whichever is
+        // smaller
+        uint32_t num_tensors = (max_tensor_num < 4) ? max_tensor_num : 4;
+        for (uint32_t t = 0; t < num_tensors; ++t) {
+          Tensor tensor = g_mock_outputs[i].output_tensor;
+          tensor.size =
+              (10 - t * 2) * sizeof(float);  // Different sizes: 10, 8, 6, 4
+          outputs.push_back(tensor);
+        }
+        return outputs;
+      }
+    }
+  } else {
+    LOG_WARN("Mock GetOutputs: Simulated error, returning empty vector");
+  }
+
+  return outputs;  // Return empty vector
+}
+
+// New overload for Process with PreprocessCallback parameter
+ProcessedFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
+                       EdgeAppLibSensorFrame frame,
+                       EdgeAppLibSensorImageCropProperty &roi,
+                       PreprocessCallback preprocess_func) {
+  EdgeAppCoreProcessCalled = 1;
+  if (!process_result) {
+    return ProcessedFrame();  // Simulate failure
+  }
+
+  // For testing purposes, we don't actually call the preprocess_func in the
+  // mock Just return the same result as the original Process function
+  LOG_WARN("Mock Process with preprocessing callback called");
+  return ProcessedFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
+}
+
+// 5-argument Process function for compute() method
+ProcessedFrame Process(EdgeAppCoreCtx &ctx, EdgeAppCoreCtx *shared_ctx,
+                       EdgeAppLibSensorFrame frame,
+                       EdgeAppLibSensorImageCropProperty roi,
+                       PreprocessCallback preprocess_func) {
+  EdgeAppCoreProcessCalled = 1;
+  if (!process_result) {
+    return ProcessedFrame();  // Simulate failure
+  }
+  LOG_WARN("Mock Process with 5 arguments called");
+  return ProcessedFrame(&g_mock_sensor_stream, g_mock_sensor_frame);
 }
 
 Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame) {
