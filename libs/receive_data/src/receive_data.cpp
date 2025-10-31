@@ -50,7 +50,7 @@ extern "C" {
 /*
  * Concurrent calls with the same evp_client_ are not safe,
  * To avoid this, the EdgeAppLibReceiveData should not
- * be called in onIterate untill evp_agent provides a way
+ * be called in onIterate until evp_agent provides a way
  * to assure evp_client_'s security.
  */
 static struct EVP_client *evp_client_;
@@ -60,20 +60,20 @@ static bool is_main_thread(void) { return g_main_thread == pthread_self(); }
 
 static void blob_cb(EVP_BLOB_CALLBACK_REASON reason, const void *vp,
                     void *userData) {
-  assert(userData != nullptr);
+  assert(userData != nullptr); /* LCOV_EXCL_BR_LINE: null check */
   const struct EVP_BlobResultAzureBlob *result;
   LOG_TRACE("Entering blob_cb");
   module_vars_t *module_vars = (module_vars_t *)userData;
 
   EdgeAppLibReceiveDataFuture *future =
       (EdgeAppLibReceiveDataFuture *)map_pop(module_vars);
-  if (future == nullptr) {
+  if (future == nullptr) { /* LCOV_EXCL_BR_LINE: null check */
     LOG_ERR(
         "State might be corrupted. SendData called but buffer not in "
-        "map.");
-    free(module_vars->download);
-    free(module_vars->filename);
-    return;
+        "map.");                 /* LCOV_EXCL_LINE: null check */
+    free(module_vars->download); /* LCOV_EXCL_LINE: null check */
+    free(module_vars->filename); /* LCOV_EXCL_LINE: null check */
+    return;                      /* LCOV_EXCL_LINE: null check */
   }
   pthread_t cb_tid = pthread_self();
   pthread_mutex_lock(&future->mutex);
@@ -88,7 +88,7 @@ static void blob_cb(EVP_BLOB_CALLBACK_REASON reason, const void *vp,
           result->result, result->http_status, result->error);
       break;
     case EVP_BLOB_CALLBACK_REASON_EXIT:
-      assert(vp == nullptr);
+      assert(vp == nullptr); /* LCOV_EXCL_BR_LINE: null check */
       future->result = EdgeAppLibReceiveDataResultDenied;
       break;
     default:
@@ -105,9 +105,10 @@ static void blob_cb(EVP_BLOB_CALLBACK_REASON reason, const void *vp,
 static EdgeAppLibReceiveDataFuture *InitializeFuture() {
   EdgeAppLibReceiveDataFuture *future = (EdgeAppLibReceiveDataFuture *)xmalloc(
       sizeof(EdgeAppLibReceiveDataFuture));
-  if (future == nullptr) {
-    LOG_ERR("Error when performing malloc for the future.");
-    return nullptr;
+  if (future == nullptr) { /* LCOV_EXCL_BR_LINE: null check */
+    LOG_ERR("Error when performing malloc for the future."); /* LCOV_EXCL_LINE:
+                                                                null check */
+    return nullptr; /* LCOV_EXCL_LINE: null check */
   }
   future->result = EdgeAppLibReceiveDataResultUninitialized;
   future->cond = PTHREAD_COND_INITIALIZER;
@@ -180,7 +181,7 @@ static EdgeAppLibReceiveDataFuture *Download_Blob(
 
   EdgeAppLibReceiveDataFuture *future = InitializeFuture();
   if (future == nullptr) {
-    return nullptr;
+    return nullptr; /* LCOV_EXCL_LINE: null check */
   }
 
   const char *workspace =
@@ -190,7 +191,7 @@ static EdgeAppLibReceiveDataFuture *Download_Blob(
     future->result = EdgeAppLibReceiveDataResultFailure;
     return future;
   }
-  char *suffix = GetSuffixFromUrl((const char *)(info->url), info->urllen);
+  char *suffix = GetSuffixFromUrl((const char *)(info->url));
   if (suffix) {
     snprintf(full_path, MAX_PATH_LEN, "%s/%s%s", workspace, info->filename,
              suffix);
@@ -254,14 +255,18 @@ EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataUnInitialize() {
 
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
     EdgeAppLibReceiveDataInfo *info, int timeout_ms) {
-  if (evp_client_ == nullptr) {
-    LOG_ERR("EVP client is not initialized");
-    return EdgeAppLibReceiveDataResultUninitialized;
+  if (evp_client_ == nullptr) { /* LCOV_EXCL_BR_LINE: null check */
+    LOG_ERR("EVP client is not initialized"); /* LCOV_EXCL_LINE: null check */
+    return EdgeAppLibReceiveDataResultUninitialized; /* LCOV_EXCL_LINE: null
+                                                        check */
   }
 
-  if (info == nullptr || info->url == nullptr || info->filename == nullptr) {
-    LOG_ERR("Invalid parameters for EdgeAppLibReceiveData");
-    return EdgeAppLibReceiveDataResultInvalidParam;
+  if (info == nullptr || info->url == nullptr ||
+      info->filename == nullptr) { /* LCOV_EXCL_BR_LINE: null check */
+    LOG_ERR("Invalid parameters for EdgeAppLibReceiveData"); /* LCOV_EXCL_LINE:
+                                                                null check */
+    return EdgeAppLibReceiveDataResultInvalidParam; /* LCOV_EXCL_LINE: null
+                                                       check */
   }
 
   LOG_DBG("EdgeAppLibReceiveData: url=%s, filename=%s, timeout_ms=%d",
@@ -269,9 +274,10 @@ EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
 
   EdgeAppLibReceiveDataFuture *future = Download_Blob(info);
   EdgeAppLibReceiveDataResult result = future->result;
-  if (future == nullptr) {
-    LOG_ERR("Download_Blob failed to initialize future");
-    goto error;
+  if (future == nullptr) { /* LCOV_EXCL_BR_LINE: null check */
+    LOG_ERR("Download_Blob failed to initialize future"); /* LCOV_EXCL_LINE:
+                                                             null check */
+    goto error; /* LCOV_EXCL_LINE: null check */
   }
   if (result != EdgeAppLibReceiveDataResultFailure &&
       result != EdgeAppLibReceiveDataResultDenied) {
@@ -279,6 +285,7 @@ EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
   } else {
     LOG_ERR("Download_Blob failed with EdgeAppLibReceiveDataResult: %d",
             future->result);
+    free(future);
     goto error;
   }
   return result;

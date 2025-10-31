@@ -64,6 +64,9 @@ static EVP_TELEMETRY_CALLBACK_REASON evpTelemetryCallbackReason =
 static EVP_TELEMETRY_CALLBACK_REASON telemetry_cb_reason =
     EVP_TELEMETRY_CALLBACK_REASON_DENIED;
 
+static char tmp_workspace[] = "/tmp/workspace";
+static char *workspace = tmp_workspace;
+
 static EVP_STATE_CALLBACK _state_cb = NULL;
 static void *_state_userData = NULL;
 static int dummy_handle = 1;
@@ -75,6 +78,10 @@ static int callback_test = 0;
 void Mock_SetCallbackTest(int enable) { callback_test = enable; }
 
 void Mock_SetAsyncMode(int enable) { mock_async_mode = enable; }
+
+void Mock_SetNullWorkspace(int is_null) {
+  workspace = is_null ? nullptr : tmp_workspace;
+}
 
 EVP_RESULT EVP_setConfigurationCallback(struct EVP_client *h,
                                         EVP_CONFIGURATION_CALLBACK cb,
@@ -100,7 +107,7 @@ void resetSendTelemetryResult() { evpsendTelemetryResult = EVP_OK; }
 
 const char *EVP_getWorkspaceDirectory(struct EVP_client *h,
                                       EVP_WORKSPACE_TYPE type) {
-  return "/tmp/workspace";
+  return workspace;
 };
 
 EVP_RESULT EVP_processEvent(struct EVP_client *evp_client, int timeout_ms) {

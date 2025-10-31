@@ -82,7 +82,7 @@ void EdgeAppLibLogCritical(const char *context, const char *message);
 
 typedef void (*EdgeAppLibLogType)(const char *context, const char *message);
 
-#define LOGBUGSIZE 128
+#define LOGBUGSIZE 256
 
 #define FILENAME(file) (strrchr(file, '/') ? strrchr(file, '/') + 1 : file)
 

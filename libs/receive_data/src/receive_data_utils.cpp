@@ -24,34 +24,40 @@
 #include "log.h"
 extern "C" {
 #include "sha256.h"
+#include "uriparser/Uri.h"
 }
 
 #define SHA256_BUFSIZE 4096
 
-char *GetSuffixFromUrl(const char *url, int len) {
-  const char *p = url + len;
-  const char *q = nullptr;
-  while (p != url) {
-    p--;
-    if (*p == '?') {
-      q = q ? q : p;
+char *GetSuffixFromUrl(const char *url) {
+  char *suffix = nullptr;
+  UriUriA uri;
+  UriParserStateA state;
+  state.uri = &uri;
+  if (uriParseUriA(&state, url) == URI_SUCCESS) {
+    UriPathSegmentA *tail = uri.pathTail;
+    if (tail) {
+      size_t len = (size_t)(tail->text.afterLast - tail->text.first);
+      const char *p = tail->text.first + len;
+      while (p != tail->text.first) {
+        p--;
+        if (*p == '.') {
+          break;
+        }
+      }
+      if (p != tail->text.first) {
+        suffix = (char *)malloc(tail->text.first + len - p + 1);
+        if (!suffix) {
+          LOG_ERR("Memory allocation for suffix string failed.");
+          uriFreeUriMembersA(&uri);
+          return nullptr;
+        }
+        snprintf(suffix, tail->text.first + len - p + 1, "%s", p);
+        LOG_INFO("Suffix of file to download from %s is %s.", url, suffix);
+      }
     }
-    if (*p == '/') {
-      return nullptr;
-    }
-    if (*p == '.') {
-      break;
-    }
+    uriFreeUriMembersA(&uri);
   }
-  if (p == url) {
-    return nullptr;
-  }
-  if (q == nullptr) {
-    q = url + len;
-  }
-  char *suffix = (char *)malloc(q - p + 1);
-  snprintf(suffix, q - p + 1, "%s", p);
-  LOG_INFO("Suffix of file to download from %s is %s.", url, suffix);
   return suffix;
 }
 
@@ -115,24 +121,28 @@ static bool IsRealFilename(const char *filename, const char *real_filename) {
   return false;
 }
 
-void RemoveOutdatedFile(const char *dir, const char *filename) {
+int RemoveOutdatedFile(const char *dir, const char *filename) {
   DIR *dir_p = opendir(dir);
   if (!dir_p) {
     LOG_ERR("Open directory failed.");
-    return;
+    return OPEN_DIR_FAILED;
   }
 
   struct dirent *entry;
   char filepath[MAX_PATH_LEN];
+  int ret = 0;
   while ((entry = readdir(dir_p)) != NULL) {
     if (entry->d_type == DT_REG && IsRealFilename(entry->d_name, filename)) {
       snprintf(filepath, MAX_PATH_LEN, "%s/%s", dir, entry->d_name);
       LOG_INFO("Remove file: %s", filepath);
+      ret += REMOVE_FILE_ATTEMPT;
       if (unlink(filepath)) {
         LOG_ERR("Remove file failed.");
+        ret += REMOVE_FILE_FAILED;
       }
     }
   }
 
   closedir(dir_p);
+  return ret;
 }

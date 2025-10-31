@@ -170,7 +170,7 @@ int onIterate() {
     // Send plate number if recognized data is valid as Japanese number plate
     if (is_valid_japanese_number_plate(recognized_data)) {
       if (SendDataSyncMeta((void *)recognized_data, recognized_data_size,
-                           DataProcessorGetDataType(), output_cpu.timestamp) !=
+                           DataProcessorGetDataType(), input.timestamp) !=
           EdgeAppLibSendDataResultSuccess) {
         LOG_ERR("Failed to send inference data.");
       }

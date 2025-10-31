@@ -226,3 +226,56 @@ mosquitto_pub -h localhost -p 1883 \
   -t v1/devices/me/attributes \
   -m '{"deployment": {"deploymentId":"test","instanceSpecs":{},"modules":{},"publishTopics":{},"subscribeTopics":{}}}'
 ```
+
+## Download AI models
+EdgeApp SDK supports the deployment of multiple AI models. In addition to AI models deployed on the imx500, it can also support AI models running on CPU/GPU via wasi-nn. These AI models need to be downloaded in advance. The SDK provides DTDL commands for downloading the models.
+### How to download the AI Model
+Author the DTDL command. The format of this command is defined below in [edge_app_lp_recog_interface](../sample_apps/lp_recog/package/edge_app_lp_recog_interface.json). And one example for how to write the [configuration](../sample_apps/lp_recog/configuration/configuration.json) is
+```bash
+  "common_settings": {
+      "number_of_inference_per_message": 1,
+        "ai_models": [
+        {
+          "name": "lp_recognition",
+          "target": "cpu",
+          "url_path": "http://localhost:8080/models/LPR.tflite",
+          "hash": "6fb13ba628bd4dbf168c33f7099727f6cb21420be4fd32cdc8b319f2d0d736cf"
+        }
+      ]
+  },
+```
+### API list for downloading
+| Function     | Description                                                                 |
+| -------------| --------------------------------------------------------------------------- |
+| `name`       | The name field serves as the index for the model on the edge side. The EdgeAppCore API will use it to load the model, but users do not need to concern themselves with the physical storage location of the model. |
+| `target`     | The target field specifies the execution method (or runtime environment) for the model, the target value can be: `cpu`, `gpu`, `npu`|
+| `url_path`   | Before preparing to send this command, please place your AI model in the LAN or WAN, ensuring it is accessible from the edge device. The url_path field specifies this network address.|
+| `hash`       | The hash field stores the SHA-256 checksum of the model file, which is used for verification during deployment. |
+
+**NOTICE:** The file extension in the url_path is significant, as it determines which AI backend will be used to interpret and execute the AI model. The currently supported backends are ONNX and TFLite. The corresponding file extensions are as follows:
+| File extension name       | to be loaded by the engine of |
+| --------------| ---------------------------------------------- |
+| `.onnx`       | The AI model in ONNX format will be loaded and executed by the ONNX Runtime inference engine.                             |
+| `.tflite`     | The tflite file, which is a TensorFlow Lite format model, will be loaded and executed by the TFLite interpreter/engine.   |
+| `.gguf`       | Load and run the LLaMA-compatible Large Language Model file using the LLaMA engine.                                       |
+| `.bin`+`.xml` | The OpenVINO model will be loaded and executed using the OpenVINO Runtime. `.bin`+`.xml` indicates the model consists of two files with the same name but different extensions. The AI engine only needs to know the name to load two files correctly. |
+
+
+So in the example, the LPR.tflite will be loaded by tflite engine.
+
+**WARNING:** If the url_path does not specify a file extension, the system will default to using the ONNX engine. If the model is not in the ONNX format, the inference will fail.
+
+### How to start inference using downloaded AI model
+The downloaded AI model can be loaded using the EdgeAppCore API. The EdgeAppCore API knows the storage location of the recently downloaded model. We only need to provide the name of this AI model, which is specified by the name field mentioned above.
+```bash
+  EdgeAppCoreModelInfo model_info[2] = {
+    {"000000", EdgeAppCoreTarget::edge_imx500, {}, {}},
+    {"lp_recognition", EdgeAppCoreTarget::edge_cpu, &mean_values, &norm_values}
+  };
+  ...
+  if (LoadModel(model_info[1], ctx_cpu, &shared_ctx) != EdgeAppCoreResultSuccess) {
+    LOG_ERR("Failed to load model.");
+    return -1;
+  }
+```
+For details on wasi-nn programming, please refer to [EdgeAppCore_API_specification](api/EdgeAppCore_API_specification.md), chapter Usage Example

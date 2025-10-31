@@ -11,12 +11,12 @@
             },
             "pq_settings": {
                 "camera_image_size": {
-                    "width": 4056,
-                    "height": 3040,
+                    "width": 2028,
+                    "height": 1520,
                     "scaling_policy": 1
                 },
                 "frame_rate": {
-                    "num": 2997,
+                    "num": 999,
                     "denom": 100
                 },
                 "digital_zoom": 1.0,
@@ -54,8 +54,8 @@
                 "image_cropping": {
                     "left": 0,
                     "top": 0,
-                    "width": 4056,
-                    "height": 3040
+                    "width": 2028,
+                    "height": 1520
                 },
                 "image_rotation": 0
             },
