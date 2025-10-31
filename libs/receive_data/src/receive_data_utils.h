@@ -21,11 +21,14 @@ extern "C" {
 #endif
 
 #define MAX_PATH_LEN 256
+#define OPEN_DIR_FAILED -1
+#define REMOVE_FILE_ATTEMPT 1
+#define REMOVE_FILE_FAILED 9999
 
-char *GetSuffixFromUrl(const char *url, int len);
+char *GetSuffixFromUrl(const char *url);
 void ReleaseSuffixString(char *suffix);
 bool IsFileHashCorrect(const char *hash, const char *path);
-void RemoveOutdatedFile(const char *dir, const char *filename);
+int RemoveOutdatedFile(const char *dir, const char *filename);
 
 #ifdef __cplusplus
 }
