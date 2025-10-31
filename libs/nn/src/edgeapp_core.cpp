@@ -947,6 +947,8 @@ ProcessedFrame ProcessedFrame::compute() {
 
   if (!owns_frame_ && frame_ != 0) {
     ProcessedFrame new_frame(shared_ctx_->sensor_stream, frame_);
+    new_frame.preprocess_callback_ = preprocess_callback_;
+    new_frame.preprocess_tensor_callback_ = preprocess_tensor_callback_;
     new_frame.ProcessInternal(*ctx_, shared_ctx_, frame_, roi);
     new_frame.is_computed_ = true;
     new_frame.owns_frame_ = true;

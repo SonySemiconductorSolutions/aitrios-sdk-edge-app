@@ -17,3 +17,6 @@
 [submodule "libs/third_party/SHA-256"]
 	path = libs/third_party/SHA-256
 	url = https://github.com/983/SHA-256.git
+[submodule "libs/third_party/uriparser"]
+	path = libs/third_party/uriparser
+	url = https://github.com/uriparser/uriparser.git

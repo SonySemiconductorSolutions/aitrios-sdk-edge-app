@@ -17,8 +17,8 @@ project(receive_data_test)
 
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(LIBS_DIR ${ROOT_DIR}/libs)
-set(RECIEVE_DATA_ROOT_DIR ${LIBS_DIR}/receive_data)
-set(RECIEVE_DATA_ROOT_DIR_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(RECEIVE_DATA_ROOT_DIR ${LIBS_DIR}/receive_data)
+set(RECEIVE_DATA_ROOT_DIR_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
 
 include(${ROOT_DIR}/cmake/gtest.cmake)
@@ -42,7 +42,7 @@ add_subdirectory (
   ${CMAKE_CURRENT_BINARY_DIR}/common
 )
 add_subdirectory (
-  ${RECIEVE_DATA_ROOT_DIR}/src
+  ${RECEIVE_DATA_ROOT_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/receive_data
 )
 
@@ -62,8 +62,9 @@ target_include_directories (${TEST_NAME} PUBLIC
   ${MOCKS_DIR}
   ${MOCKS_DIR}/device/
   ${MOCKS_DIR}/sensor/
-  ${RECIEVE_DATA_ROOT_DIR_TEST_DIR}
+  ${RECEIVE_DATA_ROOT_DIR_TEST_DIR}
   ${LIBS_DIR}/receive_data/include
+  ${LIBS_DIR}/receive_data/src
   ${LIBS_DIR}/sm/include
   ${LIBS_DIR}/sm/src
 )

@@ -48,7 +48,7 @@ int main() {
 
   EdgeAppCoreModelInfo model_info[2] = {
     {"000000", EdgeAppCoreTarget::edge_imx500, {}, {}},
-    {"/opt/model.onnx", EdgeAppCoreTarget::edge_cpu, &mean_values, &norm_values}
+    {"lp_recognition", EdgeAppCoreTarget::edge_cpu, &mean_values, &norm_values}
   };
 
   // Step 2: Initialize contexts

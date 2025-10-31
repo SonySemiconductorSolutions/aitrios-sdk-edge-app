@@ -48,7 +48,7 @@ extern "C" {
 /**
  * @brief Receive data from AITRIOS synchronously.
  *
- * This function initiates a synchronous operation to recieve data from AITRIOS.
+ * This function initiates a synchronous operation to receive data from AITRIOS.
  *
  * @param info The description for received data.
  * @param timeout_ms Timeout in milliseconds. -1 to wait until operation

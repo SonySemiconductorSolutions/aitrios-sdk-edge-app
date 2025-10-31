@@ -54,6 +54,7 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
                              EVP_BLOB_CALLBACK cb, void *userData);
 void Mock_SetAsyncMode(int enable);
 void Mock_SetCallbackTest(int enable);
+void Mock_SetNullWorkspace(int is_null);
 EVP_RESULT
 EVP_sendTelemetry(struct EVP_client *h,
                   const struct EVP_telemetry_entry *entries, size_t nentries,
