@@ -93,6 +93,11 @@ void updateProperty(EdgeAppLibSensorStream stream, const char *property_key,
         (EdgeAppLibSensorCameraFrameRateProperty *)value;
     pq->GetFrameRate()->StoreValue(frameRate->num, frameRate->denom);
   } else if (compare_string(property_key,
+                            AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY)) {
+    EdgeAppLibSensorCameraFrameRateProperty *isp_frame_rate =
+        (EdgeAppLibSensorCameraFrameRateProperty *)value;
+    pq->GetFrameRate()->StoreValue(isp_frame_rate->num, isp_frame_rate->denom);
+  } else if (compare_string(property_key,
                             AITRIOS_SENSOR_WHITE_BALANCE_MODE_PROPERTY_KEY)) {
     EdgeAppLibSensorWhiteBalanceModeProperty *white_balance_mode =
         (EdgeAppLibSensorWhiteBalanceModeProperty *)value;
