@@ -38,6 +38,11 @@ PortSetting::PortSetting(PortSettingOption ps_opt) {
       {.property = ENABLED, .validation = kType, .value = JSONBoolean},
   };
   SetValidations(s_validations, sizeof(s_validations) / sizeof(Validation));
+  json_object_set_number(json_obj, METHOD, 0);
+  json_object_set_string(json_obj, STORAGE_NAME, "");
+  json_object_set_string(json_obj, ENDPOINT, "");
+  json_object_set_string(json_obj, PATH, "");
+  json_object_set_boolean(json_obj, ENABLED, false);
 }
 
 int PortSetting::Apply(JSON_Object *obj) {

@@ -27,6 +27,7 @@ class PortSettings : public JsonObject {
  public:
   PortSettings();
 
+  int Verify(JSON_Object *obj);
   int Apply(JSON_Object *obj);
 
   PortSetting *GetMetadata();

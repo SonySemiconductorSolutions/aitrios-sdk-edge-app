@@ -13,6 +13,8 @@ The following three files are required:
 Prepare an application file. Check the [README](../1_develop_edge_app/README.md) to learn how to develop an app.
 - DTDL (.json)<br>
 Prepare a DTDL file.
+- Configuration (.json)<br>
+Optional: If you want to import the default configuration of EdgeApp together, please configure it.
 - **`manifest.json`**<br>
 Prepare manifest file. Refer to the following for how to create it.
 
@@ -29,6 +31,8 @@ The version of manifest file.
   The version of "**Edge Application**".
   - **`app_dtdl_file`**<br>
   The file name of DTDL.
+  - **`configuration_file`**<br>
+  Optional: The file name of configuration.
   - **`compiled_flg`**<br>
   Specify `false`.
 
@@ -41,6 +45,7 @@ The version of manifest file.
     "file_name": "edge_app.wasm",
     "version": "1.0.0",
     "app_dtdl_file": "edge_app_interface.json",
+    "configuration_file": "edge_app_configuration.json",
     "compiled_flg": false
   }
 }
@@ -52,6 +57,7 @@ The version of manifest file.
 edgeapp_pkg
 ├── edge_app.wasm            (Edge Application)
 ├── edge_app_interface.json  (DTDL)
+├── edge_app_configuration.json  (Default Configuration)
 └── manifest.json
 ```
 

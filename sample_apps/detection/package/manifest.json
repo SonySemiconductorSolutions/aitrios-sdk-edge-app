@@ -5,6 +5,7 @@
     "file_name": "edge_app_od.wasm",
     "version": "1.0.0",
     "app_dtdl_file": "edge_app_od_interface.json",
+    "configuration_file": "edge_app_od_configuration.json",
     "referred_dtdl_files": [],
     "compiled_flg": false
   }

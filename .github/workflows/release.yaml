@@ -51,6 +51,7 @@ jobs:
         cp sample_apps/${{ matrix.app }}/package/* artifacts
         jq '.edge_app.version = "${{ inputs.version }}" |
             .edge_app.file_name = "edge_app_${{ matrix.app }}.wasm" |
+            .edge_app.configuration_file = (.edge_app.app_name + "_configuration.json") |
             .edge_app.compiled_flg = false' artifacts/manifest.json > tmp.json && mv tmp.json artifacts/manifest.json
 
         cp bin/edge_app.wasm \
@@ -92,4 +93,4 @@ jobs:
         tag_name: ${{ inputs.version }}
         generate_release_notes: true
         files: |
-          *.zip
+         *.zip

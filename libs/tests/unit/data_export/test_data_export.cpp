@@ -455,7 +455,7 @@ TEST_F(EdgeAppLibDataExportApiTest, SendDataRawDisabled) {
       dummy_data.size, dummy_data.timestamp);
   EXPECT_EQ(wasEvpBlobOperationCalled(), 0);
   EXPECT_EQ(future, nullptr);
-  free(dummy_data.array);
+  // Lifetime management responsibility of Input Tensor is at SDK side
 }
 
 TEST_F(EdgeAppLibDataExportApiTest, IsEnabled) {
