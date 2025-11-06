@@ -222,6 +222,9 @@ EdgeAppLibDataExportFuture *DataExportSendData(
   LOG_TRACE("Entering SendData");
 
   if (!DataExportIsEnabled(datatype)) {
+    if (datatype == EdgeAppLibDataExportRaw) {
+      free(data);
+    }
     return nullptr;
   }
 

@@ -38,8 +38,10 @@
 #define DOWNLOAD_FILENAME_WITH_SUFFIX "download_filename.suffix"
 #define DOWNLOAD_URL "download_file_url"
 #define DOWNLOAD_URL_WITH_SUFFIX "download_file_url.suffix"
-#define TEMP_DIR "./tmp"
-#define TEMP_FILENAME "./tmp/temp_file"
+#define TEMP_DIR_1 "./tmp1"
+#define TEMP_FILENAME_1 "./tmp1/temp_file"
+#define TEMP_DIR_2 "./tmp2"
+#define TEMP_FILENAME_2 "./tmp2/temp_file"
 #define TEMP_FILE_CONTENT "abcd1234\n"
 #define TEMP_FILE_HASH \
   "1e534db63466deec283cc815a27b44aa5396e7f4454e6ebef31b33060f7861df"
@@ -305,39 +307,39 @@ TEST_F(ReceiveDataTest, GetSuffixDownloadUrlNoDomain) {
 }
 
 TEST_F(ReceiveDataTest, HashCheckNormal) {
-  mkdir(TEMP_DIR, 0755);
-  FILE *f = fopen(TEMP_FILENAME, "wb");
+  mkdir(TEMP_DIR_1, 0755);
+  FILE *f = fopen(TEMP_FILENAME_1, "wb");
   if (f) {
     fwrite(TEMP_FILE_CONTENT, 1, strlen(TEMP_FILE_CONTENT), f);
     fclose(f);
   }
-  EXPECT_EQ(IsFileHashCorrect(TEMP_FILE_HASH, TEMP_FILENAME), true);
-  EXPECT_EQ(IsFileHashCorrect(WRONG_TEMP_FILE_HASH, TEMP_FILENAME), false);
-  remove(TEMP_FILENAME);
-  rmdir(TEMP_DIR);
+  EXPECT_EQ(IsFileHashCorrect(TEMP_FILE_HASH, TEMP_FILENAME_1), true);
+  EXPECT_EQ(IsFileHashCorrect(WRONG_TEMP_FILE_HASH, TEMP_FILENAME_1), false);
+  remove(TEMP_FILENAME_1);
+  rmdir(TEMP_DIR_1);
 }
 
 TEST_F(ReceiveDataTest, HashCheckWrongInput) {
-  mkdir(TEMP_DIR, 0755);
-  FILE *f = fopen(TEMP_FILENAME, "wb");
+  mkdir(TEMP_DIR_2, 0755);
+  FILE *f = fopen(TEMP_FILENAME_2, "wb");
   if (f) {
     fwrite(TEMP_FILE_CONTENT, 1, strlen(TEMP_FILE_CONTENT), f);
     fclose(f);
   }
-  EXPECT_EQ(IsFileHashCorrect(nullptr, TEMP_FILENAME), false);
+  EXPECT_EQ(IsFileHashCorrect(nullptr, TEMP_FILENAME_2), false);
   EXPECT_EQ(IsFileHashCorrect(TEMP_FILE_HASH, nullptr), false);
-  EXPECT_EQ(IsFileHashCorrect("too_short_hash", TEMP_FILENAME), false);
+  EXPECT_EQ(IsFileHashCorrect("too_short_hash", TEMP_FILENAME_2), false);
   EXPECT_EQ(IsFileHashCorrect(TEMP_FILE_HASH, "not_a_real_file_name"), false);
-  remove(TEMP_FILENAME);
-  rmdir(TEMP_DIR);
+  remove(TEMP_FILENAME_2);
+  rmdir(TEMP_DIR_2);
 }
 
 /*
 TEST_F(ReceiveDataTest, HashCheckMallocFailure) {
-  mkdir(TEMP_DIR, 0755);
+  mkdir(TEMP_DIR_3, 0755);
   // How to wrap malloc to make it fail?
-  EXPECT_EQ(IsFileHashCorrect(TEMP_FILE_HASH, TEMP_FILENAME), false);
-  rmdir(TEMP_DIR);
+  EXPECT_EQ(IsFileHashCorrect(TEMP_FILE_HASH, TEMP_FILENAME_3), false);
+  rmdir(TEMP_DIR_3);
 }
 */
 

@@ -624,6 +624,7 @@ static Tensor GetOutputByIndexInternal(EdgeAppCoreCtx &ctx,
       output_tensor.size = MAX_OUTPUT_TENSORS_SIZE * sizeof(float);
       output_tensor.shape_info.ndim = 0;
       output_tensor.type = TensorDataType::TensorTypeFloat32;
+      output_tensor.memory_owner = TensorMemoryOwner::App;
       output_tensor.timestamp = ctx.temp_input.timestamp;
 
       for (size_t j = 0; j < max_tensor_num; ++j) {
@@ -677,6 +678,7 @@ static Tensor GetOutputByIndexInternal(EdgeAppCoreCtx &ctx,
       output_tensor.data = output_data;
       output_tensor.size = outsize;
       output_tensor.type = TensorDataType::TensorTypeFloat32;
+      output_tensor.memory_owner = TensorMemoryOwner::App;
       output_tensor.timestamp = ctx.temp_input.timestamp;
       output_tensor.shape_info.ndim = 1;
       output_tensor.shape_info.dims[0] = outsize / sizeof(float);

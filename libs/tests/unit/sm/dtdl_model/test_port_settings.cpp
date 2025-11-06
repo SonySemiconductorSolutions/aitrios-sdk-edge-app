@@ -90,6 +90,7 @@ TEST_F(PortSettingsTest, Parse) {
 TEST_F(PortSettingsTest, EmptyJson) {
   PortSettings obj;
   JSON_Value *value = json_parse_string("{}");
+  obj.Verify(json_object(value));
   obj.Apply(json_object(value));
   json_value_free(value);
 }
@@ -99,6 +100,7 @@ TEST_F(PortSettingsTest, PortSettingsSetMode0) {
   JSON_Object *object = json_object(value);
 
   PortSettings ps;
+  ps.Verify(object);
   ps.Apply(object);
 
   // input tensor only enabled -> 0
@@ -113,6 +115,7 @@ TEST_F(PortSettingsTest, PortSettingsSetMode1) {
   JSON_Object *object = json_object(value);
 
   PortSettings ps;
+  ps.Verify(object);
   ps.Apply(object);
 
   // both enabled -> 1
@@ -127,6 +130,7 @@ TEST_F(PortSettingsTest, PortSettingsSetMode2) {
   JSON_Object *object = json_object(value);
 
   PortSettings ps;
+  ps.Verify(object);
   ps.Apply(object);
 
   // input "metadata only enabled -> 2
@@ -141,12 +145,13 @@ TEST_F(PortSettingsTest, PortSettingsSetModeError) {
   JSON_Object *object = json_object(value);
 
   PortSettings ps;
+  ps.Verify(object);
   ps.Apply(object);
 
   DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
   ASSERT_EQ(dtdl->GetResInfo()->GetCode(), CODE_INVALID_ARGUMENT);
   ASSERT_STREQ(dtdl->GetResInfo()->GetDetailMsg(),
-               "Neither input tensor or metadata are enabled");
+               "Neither input tensor nor metadata are enabled");
 
   ps.Delete();
   json_value_free(value);
@@ -157,6 +162,7 @@ TEST_F(PortSettingsTest, PortSettingsSetModeSensorInputDisabled) {
   JSON_Object *object = json_object(value);
 
   PortSettings ps;
+  ps.Verify(object);
   ps.Apply(object);
 
   // both enabled -> 1
@@ -177,6 +183,7 @@ TEST_F(PortSettingsTest, PortSettingsSetModeSensorInputDisabled) {
 
   AssertStreamChannelsOT();
 
+  ps.Verify(object);
   ps.Apply(object);
   // both enabled -> 1
   AssertStreamChannelsITOT();
@@ -190,6 +197,7 @@ TEST_F(PortSettingsTest, PortSettingsSetModeSensorMetadataDisabled) {
   JSON_Object *object = json_object(value);
 
   PortSettings ps;
+  ps.Verify(object);
   ps.Apply(object);
 
   // both enabled -> 1
@@ -210,6 +218,7 @@ TEST_F(PortSettingsTest, PortSettingsSetModeSensorMetadataDisabled) {
 
   AssertStreamChannelsIT();
 
+  ps.Verify(object);
   ps.Apply(object);
   // both enabled -> 1
   AssertStreamChannelsITOT();
@@ -223,6 +232,7 @@ TEST_F(PortSettingsTest, ApplyStreamChannelsError) {
   JSON_Object *object = json_object(value);
   setEdgeAppLibSensorStreamSetPropertyFail();
   PortSettings ps;
+  ps.Verify(object);
   ps.Apply(object);
 
   DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();

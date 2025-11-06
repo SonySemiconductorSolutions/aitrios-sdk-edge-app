@@ -170,7 +170,7 @@ class CommonSettingsIdle : public ::testing::Test {
 
 TEST_F(CommonSettingsRunningToIdle, Parse) {
   CommonSettings common_settings;
-  ASSERT_EQ(common_settings.Verify(json_obj), 0);
+  ASSERT_EQ(common_settings.Verify(json_obj), -1);
   common_settings.Apply(json_obj);
   ASSERT_EQ(common_settings.GetProcessState(), 1);
 }

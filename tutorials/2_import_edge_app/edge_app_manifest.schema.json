@@ -39,6 +39,10 @@
           "type": "string",
           "description": "The file name of the DTDL schema for the app."
         },
+        "configuration_file": {
+          "type": "string",
+          "description": "The file name of the configuration file for the app."
+        },
         "compiled_flg": {
           "type": "boolean",
           "description": "Flag indicating whether the Edge App is compiled to AoT file."
