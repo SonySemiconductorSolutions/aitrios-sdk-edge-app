@@ -66,7 +66,7 @@ The application is configured via DTDL interface defined in [**`edge_app_lp_reco
 Model file of character recognition model used on CPU should be downloaded to the device before running.
 It can be done by using `ai_models` array in `common_settings`.
 
-Need to mention, this AI model file downloading feature is designed only for device types with large storage and higher CPU performance, such as RPi or T4. Do not use it on T3P.
+**Note**: This model download feature requires devices with large storage and high CPU performance (e.g., Raspberry Pi). It is not supported on CSV26.
 
 Be sure to use `"lp_recognition"` for the model name in the configuration in this sample, so that corresponding file can be found when loading model.
 

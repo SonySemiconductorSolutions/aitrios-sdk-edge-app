@@ -44,8 +44,14 @@ void FrameRate::InitializeValues() {
   EdgeAppLibSensorStream stream =
       StateMachineContext::GetInstance(nullptr)->GetSensorStream();
 
-  SensorStreamGetProperty(stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY,
-                          &framerate, sizeof(framerate));
+  int result = SensorStreamGetProperty(
+      stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY, &framerate,
+      sizeof(framerate));
+  if (result != 0) {
+    SensorStreamGetProperty(stream,
+                            AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY,
+                            &framerate, sizeof(framerate));
+  }
 
   json_object_set_number(json_obj, NUM, framerate.num);
   json_object_set_number(json_obj, DEN, framerate.denom);
@@ -87,8 +93,13 @@ int FrameRate::Apply(JSON_Object *obj) {
       StateMachineContext::GetInstance(nullptr)->GetSensorStream();
 
   int result = SensorStreamSetProperty(
-      stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &aux_framerate,
+      stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY, &aux_framerate,
       sizeof(aux_framerate));
+  if (result != 0) {
+    result = SensorStreamSetProperty(
+        stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &aux_framerate,
+        sizeof(aux_framerate));
+  }
 
   /* LCOV_EXCL_START: error check division by 0 */
   if (result != 0) {

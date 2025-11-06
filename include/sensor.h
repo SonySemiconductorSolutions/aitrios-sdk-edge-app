@@ -338,6 +338,14 @@ struct EdgeAppLibSensorCameraFrameRateProperty {
   uint32_t denom;
 };
 
+/* == IspFrameRateProperty == */
+/**
+ * @def AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY
+ * @brief Key of EdgeAppLibSensorIspFrameRateProperty
+ * @details String of key to set/get property
+ */
+#define AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY "isp_frame_rate_property"
+
 /* == CameraImageSizeProperty == */
 /**
  * @def AITRIOS_SENSOR_CAMERA_IMAGE_SIZE_PROPERTY_KEY
