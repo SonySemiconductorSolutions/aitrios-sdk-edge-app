@@ -184,7 +184,9 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
       return EdgeAppCoreResultFailure;
     }
   }
+  LOG_TRACE("Model loaded: %s model_count: %d", model.model_name, model_count);
   ctx.model_idx = model_count++;
+
   return EdgeAppCoreResultSuccess;
 }
 
@@ -855,18 +857,16 @@ Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame) {
   return input_tensor;
 }
 
+static bool pending_sensor_shutdown = false;
+static EdgeAppCoreCtx *pending_ctx = nullptr;
+
 EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx) {
-  if (ctx.target == edge_imx500 && ctx.sensor_stream != 0) {
-    SensorStop(*ctx.sensor_stream);
-    SensorCoreCloseStream(*ctx.sensor_core, *ctx.sensor_stream);
-    SensorCoreExit(*ctx.sensor_core);
-
-    free(ctx.sensor_stream);
-    ctx.sensor_stream = nullptr;
-    free(ctx.sensor_core);
-    ctx.sensor_core = nullptr;
+  LOG_TRACE("UnloadModel: Unloading model index: %d", ctx.model_idx);
+  // For IMX500 models, mark for sensor shutdown at last model unload
+  if (ctx.target == edge_imx500) {
+    pending_sensor_shutdown = true;
+    pending_ctx = &ctx;
   }
-
   // For CPU/NPU models, free the temporary input buffer only if we own it
   if (ctx.temp_input.buffer != nullptr && ctx.target != edge_imx500) {
     if (ctx.temp_input.memory_owner == TensorMemoryOwner::App) {
@@ -876,11 +876,36 @@ EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx) {
     ctx.temp_input.memory_owner = TensorMemoryOwner::Unknown;
   }
 
-  if (ctx.graph_ctx != nullptr && ctx.graph_ctx != 0) {
+  // Free graph ctx
+  if (ctx.graph_ctx != nullptr) {
     free(ctx.graph_ctx);
     ctx.graph_ctx = nullptr;
   }
+
+  // Decrease model count
   model_count--;
+
+  // If this was the last model, stop the sensor
+  if (model_count == 0) {
+    if (pending_sensor_shutdown && pending_ctx != nullptr &&
+        pending_ctx->sensor_stream != 0) {
+      LOG_INFO("UnloadModel: All models unloaded. Stopping IMX500 sensor.");
+
+      SensorStop(*pending_ctx->sensor_stream);
+      SensorCoreCloseStream(*pending_ctx->sensor_core,
+                            *pending_ctx->sensor_stream);
+
+      free(pending_ctx->sensor_stream);
+      pending_ctx->sensor_stream = nullptr;
+
+      free(pending_ctx->sensor_core);
+      pending_ctx->sensor_core = nullptr;
+
+      pending_sensor_shutdown = false;
+      pending_ctx = nullptr;
+    }
+  }
+
   return EdgeAppCoreResultSuccess;
 }
 
