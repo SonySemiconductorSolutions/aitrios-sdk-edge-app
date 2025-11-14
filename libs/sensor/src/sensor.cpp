@@ -137,7 +137,31 @@ int32_t SensorReleaseFrame(EdgeAppLibSensorStream stream,
   }
   int32_t result = senscord_stream_release_frame(stream, frame);
   if (result != 0) {
-    LOG_ERR("senscord_stream_release_frame %d", result);
+    LOG_INFO("senscord_stream_release_frame %d %08x", result, frame);
+
+    // Get detailed error information
+    EdgeAppLibSensorErrorLevel level = SensorGetLastErrorLevel();
+    EdgeAppLibSensorErrorCause cause = SensorGetLastErrorCause();
+
+    char error_buffer[256] = {0};
+    uint32_t buffer_length = sizeof(error_buffer);
+    if (SensorGetLastErrorString(AITRIOS_SENSOR_STATUS_PARAM_MESSAGE,
+                                 error_buffer, &buffer_length) == 0) {
+      LOG_DBG("Detailed error: Level=%d, Cause=%d, Message=%s", level, cause,
+              error_buffer);
+    } else {
+      LOG_DBG("Detailed error: Level=%d, Cause=%d (Failed to get error string)",
+              level, cause);
+    }
+
+    // Handle "not managed frame" error - likely indicates core was already
+    // exited
+    if (strstr(error_buffer, "not managed frame") != NULL) {
+      LOG_INFO("Frame is no longer managed at host side");
+      // Don't treat this as a critical error since cleanup may have already
+      // occurred
+      result = 0;
+    }
   }
 
   LOG_TRACE("SensorReleaseFrame end");

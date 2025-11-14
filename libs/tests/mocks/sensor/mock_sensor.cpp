@@ -566,6 +566,10 @@ int32_t SensorCoreCloseStream(EdgeAppLibSensorCore core,
                               EdgeAppLibSensorStream stream) {
   core = 0;
   EdgeAppLibSensorCoreCloseStreamCalled = 1;
+  for (auto it = property_map.begin(); it != property_map.end();) {
+    if (it->second.value) free(it->second.value);
+    it = property_map.erase(it);
+  }
   return EdgeAppLibSensorCoreCloseStreamSuccess;
 }
 enum EdgeAppLibSensorErrorLevel SensorGetLastErrorLevel(void) {

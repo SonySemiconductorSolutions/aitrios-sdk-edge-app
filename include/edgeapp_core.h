@@ -200,7 +200,7 @@ class ProcessedFrame {
   ~ProcessedFrame() {
     if (owns_frame_ && stream_ && frame_ != 0) {
       if (EdgeAppLib::SensorReleaseFrame(*stream_, frame_) < 0) {
-        abort();  // Handle error appropriately
+        LOG_ERR("SensorReleaseFrame failed in ProcessedFrame destructor.");
       }
       frame_ = 0;  // Reset frame to avoid double release
     }

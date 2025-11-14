@@ -18,6 +18,7 @@
 #define DTDL_MODEL_OBJECTS_COMMON_SETTINGS_PQ_SETTINGS_HPP
 
 #include <math.h>
+#include <stdlib.h>
 
 #include <cstdint>
 
