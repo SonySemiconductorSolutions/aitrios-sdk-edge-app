@@ -129,7 +129,7 @@ TEST(FrameRate, CheckNotification) {
   EdgeAppLibSensorStream stream = context->GetSensorStream();
 
   EdgeAppLibSensorCameraFrameRateProperty frameRate = {.num = 0, .denom = 0};
-  SensorStreamGetProperty(stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
+  SensorStreamGetProperty(stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY,
                           &frameRate, sizeof(frameRate));
   ASSERT_EQ(frameRate.num, 3);
   ASSERT_EQ(frameRate.denom, 1);

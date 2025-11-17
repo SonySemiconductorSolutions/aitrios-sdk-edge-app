@@ -341,7 +341,7 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
     return -1;
   }
 
-  LOG_WARN("mapped_flag: %d, channel_id: %u", mapped_flag, channel_id);
+  LOG_DBG("mapped_flag: %d, channel_id: %u", mapped_flag, channel_id);
 
   if (mapped_flag != -1) {
     if (IsInferenceMetaChannel(channel_id)) {
