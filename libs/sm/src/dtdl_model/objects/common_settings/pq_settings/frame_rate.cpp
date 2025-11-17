@@ -45,12 +45,14 @@ void FrameRate::InitializeValues() {
       StateMachineContext::GetInstance(nullptr)->GetSensorStream();
 
   int result = SensorStreamGetProperty(
-      stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY, &framerate,
+      stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &framerate,
       sizeof(framerate));
   if (result != 0) {
-    SensorStreamGetProperty(stream,
-                            AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY,
-                            &framerate, sizeof(framerate));
+    SmUtilsPrintSensorError();
+    DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
+    dtdl->GetResInfo()->SetDetailMsg(
+        "Camera FrameRate property failed to be get.");
+    dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
   }
 
   json_object_set_number(json_obj, NUM, framerate.num);
@@ -93,13 +95,8 @@ int FrameRate::Apply(JSON_Object *obj) {
       StateMachineContext::GetInstance(nullptr)->GetSensorStream();
 
   int result = SensorStreamSetProperty(
-      stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY, &aux_framerate,
+      stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &aux_framerate,
       sizeof(aux_framerate));
-  if (result != 0) {
-    result = SensorStreamSetProperty(
-        stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &aux_framerate,
-        sizeof(aux_framerate));
-  }
 
   /* LCOV_EXCL_START: error check division by 0 */
   if (result != 0) {
@@ -110,6 +107,13 @@ int FrameRate::Apply(JSON_Object *obj) {
     dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
     /* LCOV_EXCL_STOP */
   }
+  // Temporary set fixed ISP framerate because of no clear spec
+  aux_framerate.num = 999;
+  aux_framerate.denom = 100;
+  // Don't care about the result of ISP framerate setting
+  SensorStreamSetProperty(stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
+                          &aux_framerate, sizeof(aux_framerate));
+
   return result;
 }
 

@@ -158,9 +158,9 @@ static ProcessFormatResult HandleJpegFormat(
     enc_param.input_adr_handle = (uint64_t)(uintptr_t)in_data.u.p;
     enc_param.out_buf.output_adr_handle =
         (uint64_t)(uintptr_t)malloc(enc_param.out_buf.output_buf_size);
-    LOG_WARN("JPEG encoding: input_adr_handle=%p, output_adr_handle=%p",
-             (void *)enc_param.input_adr_handle,
-             (void *)enc_param.out_buf.output_adr_handle);
+    LOG_DBG("JPEG encoding: input_adr_handle=%p, output_adr_handle=%p",
+            (void *)enc_param.input_adr_handle,
+            (void *)enc_param.out_buf.output_adr_handle);
 
     if (!enc_param.out_buf.output_adr_handle) {
       LOG_ERR("Memory allocation failed.");

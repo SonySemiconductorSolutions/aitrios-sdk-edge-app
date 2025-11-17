@@ -65,7 +65,7 @@ EdgeAppLibSendDataResult SendDataSyncImage(
     return EdgeAppLibSendDataResultSuccess;
   }
 
-  LOG_WARN(
+  LOG_DBG(
       "Data length is greater than the size of the image. "
       "Processing the data as an image.");
   JSON_Object *json_object = getCodecSettings();

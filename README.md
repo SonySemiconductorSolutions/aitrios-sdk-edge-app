@@ -42,7 +42,6 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 | [classification] | Outputs encoded inference results into FlatBuffers after post-processing for classification task on IMX500.|
 | [detection]      | Outputs encoded inference results into FlatBuffers after post-processing for objectdetection task on IMX500.|
 | [posenet] | Outputs encoded inference results into FlatBuffers after post-processing for posenet task on IMX500.|
-| [gaze]    | Outputs encoded inference results into FlatBuffers after post-processing for gaze task on IMX500.|
 | [segmentation]   | Outputs encoded inference results into FlatBuffers after post-processing for segmentation task on IMX500.|
 | [switch_dnn]     | Sample application for switching between multiple DNNs on IMX500.|
 | [draw]           | Sample application for drawing bounding box on input tensor from IMX500.|
@@ -54,7 +53,6 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 [classification]: sample_apps/classification
 [detection]: sample_apps/detection
 [posenet]: sample_apps/posenet
-[gaze]: sample_apps/gaze
 [segmentation]: sample_apps/segmentation
 [switch_dnn]: sample_apps/switch_dnn
 [draw]: sample_apps/draw
