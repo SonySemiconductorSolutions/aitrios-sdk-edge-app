@@ -27,46 +27,81 @@ You only need to add:
 
 ---
 
-## Step-by-Step Development Guide
+## 🚀 Time-Saving Improvements
 
-The following table breaks down all the work needed to build your `tiny_vest_counter` Edge App. Time estimates assume you are a beginner using GitHub Copilot for assistance.
+Before diving into the steps, here are key strategies to **reduce development time by up to 50%**:
 
-| Step | Task Name | Description | Estimated Time |
-|------|-----------|-------------|----------------|
-| **Step 1** | **Understand the Repository** | Clone the repository, explore the folder structure (`sample_apps/`, `libs/`, `include/`), and read the main `README.md` to understand how Edge Apps work. | 1-2 hours |
-| **Step 2** | **Set Up Development Environment** | Install Docker (for building), set up your IDE, and run `git submodule update --init --recursive` to get all dependencies. | 1-2 hours |
-| **Step 3** | **Build & Test Classification Sample** | Build the classification sample with `make CMAKE_FLAGS="-DAPPS_SELECTION=classification"` and verify it compiles successfully. This confirms your environment works. | 30 min - 1 hour |
-| **Step 4** | **Study the Classification Sample Code** | Read through `sample_apps/classification/src/sm.cpp` and `data_processor/src/classification_data_processor.cpp` to understand how inference results are received and processed. | 1-2 hours |
-| **Step 5** | **Create the New App Folder** | Copy the `classification` folder to create `sample_apps/tiny_vest_counter/`. Rename internal files appropriately (e.g., `classification_utils.cpp` → `vest_counter_utils.cpp`). | 30 min - 1 hour |
-| **Step 6** | **Understand Tiny Model Output** | Learn that your Tiny AI model outputs 2 float scores: one for "vest" and one for "no vest". The higher score indicates the classification result. | 30 min - 1 hour |
-| **Step 7** | **Add Threshold Parameter** | Modify the configuration to accept a `threshold` parameter (default: 0.7). Update `vest_counter_utils.hpp` to include this in `DataProcessorCustomParam`. | 1-2 hours |
-| **Step 8** | **Implement Counter Logic** | Add a static counter variable that increments when the vest score exceeds the threshold. Reset logic is optional based on your needs. | 1-2 hours |
-| **Step 9** | **Define Metadata Structure** | Create a new FlatBuffers schema (`.fbs`) or JSON structure with fields: `timestamp`, `vest_detected` (bool), `vest_count` (int), `score` (float). | 1-2 hours |
-| **Step 10** | **Compile FlatBuffers Schema** | If using FlatBuffers, run `tools/compile_fbs.sh vest_counter.fbs include/schemas/` to generate the C++ header. | 30 min |
-| **Step 11** | **Implement Metadata Creation** | Modify `vest_counter_data_processor.cpp` to create metadata with your custom fields instead of classification list. | 1-2 hours |
-| **Step 12** | **Add Console Logging** | Add `LOG_INFO` statements to output a one-line summary: `"[VestCounter] vest_detected=true, count=5, score=0.85"`. | 30 min - 1 hour |
-| **Step 13** | **Update CMakeLists.txt** | Create `sample_apps/tiny_vest_counter/CMakeLists.txt` and `data_processor/src/CMakeLists.txt` with correct file paths and dependencies. | 30 min - 1 hour |
-| **Step 14** | **Update Main CMakeLists.txt** | Add `tiny_vest_counter` to the `APPS_LIST` in the root `CMakeLists.txt` so the build system recognizes your app. | 15 min |
-| **Step 15** | **Create Configuration Files** | Create `configuration/configuration.json` with your app's parameters (threshold, process_state, etc.). | 30 min - 1 hour |
-| **Step 16** | **Create Package Files** | Create `package/manifest.json` and `package/edge_app_vc_interface.json` (DTDL) for deployment. | 30 min - 1 hour |
-| **Step 17** | **Build Your App** | Build with `make CMAKE_FLAGS="-DAPPS_SELECTION=tiny_vest_counter"` and fix any compilation errors. | 1-2 hours |
-| **Step 18** | **Test with Mock Data** | Create test data files and run unit tests to verify your logic works correctly. | 1-2 hours |
-| **Step 19** | **Test on Raspberry Pi** | Deploy to Raspberry Pi, connect to IMX500 camera with your Tiny AI model, and verify end-to-end functionality. | 2-3 hours |
-| **Step 20** | **Write README** | Document your app: what it does, how to configure it, expected outputs, and usage examples. | 1-2 hours |
+| Improvement | Original Approach | Optimized Approach | Time Saved |
+|-------------|-------------------|-------------------|------------|
+| **Use JSON metadata** | FlatBuffers schema + compilation | Direct JSON output (already supported) | ~1.5 hours |
+| **Reuse sm.cpp** | Modify state machine code | Use classification's sm.cpp as-is | ~1 hour |
+| **Script-based setup** | Manual file copy/rename | Use `cp -r` + `sed` commands | ~30 min |
+| **Skip unit tests initially** | Write tests before deployment | Test on device first, add tests later | ~1.5 hours |
+| **Use sample configs as templates** | Create from scratch | Copy and modify existing files | ~30 min |
+| **Combine similar steps** | 20 separate steps | 12 consolidated steps | ~1 hour |
+
+### Quick-Start Commands
+
+```bash
+# 1. Clone and set up (Step 1-2 combined)
+git clone --recursive https://github.com/SonySemiconductorSolutions/aitrios-sdk-edge-app.git
+cd aitrios-sdk-edge-app
+
+# 2. Create app from template (Step 5 automated)
+cp -r sample_apps/classification sample_apps/tiny_vest_counter
+cd sample_apps/tiny_vest_counter/data_processor/src
+# Rename files (works on all Linux/macOS)
+for f in classification_*; do mv "$f" "${f/classification_/vest_counter_}"; done
+
+# 3. Build (after modifications)
+cd ../../../..
+make CMAKE_FLAGS="-DAPPS_SELECTION=tiny_vest_counter"
+```
 
 ---
 
-## Total Estimated Time
+## Step-by-Step Development Guide (Optimized)
+
+The following table uses an **optimized workflow** that consolidates steps and leverages existing code. Time estimates assume you are a beginner using GitHub Copilot for assistance.
+
+| Step | Task Name | Description | Estimated Time |
+|------|-----------|-------------|----------------|
+| **Step 1** | **Clone & Setup Environment** | Clone the repository with `--recursive` flag, install Docker, and build the classification sample to verify your environment: `make CMAKE_FLAGS="-DAPPS_SELECTION=classification"` | 1 - 1.5 hours |
+| **Step 2** | **Study Sample Code** | Read through `sample_apps/classification/data_processor/src/classification_data_processor.cpp` focusing on `DataProcessorAnalyze()` function. Understand how scores are processed. | 30 min - 1 hour |
+| **Step 3** | **Create App from Template** | Copy classification folder: `cp -r sample_apps/classification sample_apps/tiny_vest_counter`. Rename files using find/sed or manually rename `classification_*` files to `vest_counter_*`. | 15 - 30 min |
+| **Step 4** | **Add Threshold & Counter Logic** | Modify `vest_counter_data_processor.cpp`: add static counter, threshold check, increment logic, and `LOG_INFO` for console output. | 1 - 1.5 hours |
+| **Step 5** | **Switch to JSON Metadata** | Use `EdgeAppLibSendDataJson` format instead of FlatBuffers. Create JSON with parson library: `{"timestamp":..., "vest_detected":..., "vest_count":..., "score":...}`. No schema compilation needed! | 45 min - 1 hour |
+| **Step 6** | **Update Configuration** | Copy and modify `configuration/configuration.json` to add `threshold` parameter and set `metadata_settings.format` to `1` (JSON). | 15 - 30 min |
+| **Step 7** | **Update CMakeLists.txt** | Update paths in `data_processor/src/CMakeLists.txt` to point to your renamed files. The main CMakeLists.txt auto-discovers apps. | 15 - 30 min |
+| **Step 8** | **Build & Fix Errors** | Build with `make CMAKE_FLAGS="-DAPPS_SELECTION=tiny_vest_counter"`. Fix any compilation errors (usually typos or missing includes). | 30 min - 1 hour |
+| **Step 9** | **Test on Raspberry Pi** | Deploy to Raspberry Pi with your Tiny AI model. Use Local Console to view metadata output and verify counter increments correctly. | 1.5 - 2 hours |
+| **Step 10** | **Create Package Files** | Create `package/manifest.json` and DTDL interface file for Console deployment. Copy from classification sample and modify app name. | 15 - 30 min |
+| **Step 11** | **Write README** | Document your app: purpose, configuration parameters, expected outputs. Keep it brief - Copilot can help generate this quickly. | 30 min - 1 hour |
+| **Step 12** | **Add Unit Tests (Optional)** | Once the app works, add tests for counter logic. Use existing test files as templates. This can be done post-deployment. | 1 - 1.5 hours (optional) |
+
+---
+
+## Total Estimated Time (Optimized)
 
 | Phase | Steps | Time Range |
 |-------|-------|------------|
-| **Setup & Learning** | 1-4 | 3.5 - 6 hours |
-| **Core Development** | 5-16 | 8 - 15 hours |
-| **Build & Test** | 17-19 | 4 - 7 hours |
-| **Documentation** | 20 | 1 - 2 hours |
-| **Total** | 1-20 | **16.5 - 30 hours** |
+| **Setup & Learning** | 1-2 | 1.5 - 2.5 hours |
+| **Core Development** | 3-7 | 2.5 - 4.5 hours |
+| **Build & Test** | 8-9 | 2 - 3 hours |
+| **Packaging & Docs** | 10-11 | 45 min - 1.5 hours |
+| **Optional Tests** | 12 | 1 - 1.5 hours |
+| **Total (without optional)** | 1-11 | **6.75 - 11.5 hours** |
+| **Total (with optional)** | 1-12 | **7.75 - 13 hours** |
 
-With Copilot assistance and following this guide, a beginner can complete this project in approximately **2-4 working days**.
+With these optimizations and Copilot assistance, a beginner can complete this project in approximately **1-1.5 working days** (compared to 2-4 days with the original approach).
+
+### Time Reduction Summary
+
+| Approach | Estimated Time | Working Days |
+|----------|---------------|--------------|
+| **Original (20 steps)** | 16.5 - 30 hours | 2-4 days |
+| **Optimized (12 steps)** | 6.75 - 11.5 hours | 1-1.5 days |
+| **Time Saved** | ~10-18 hours | ~1-2.5 days |
 
 ---
 
@@ -101,14 +136,25 @@ sample_apps/tiny_vest_counter/
 
 ---
 
-## Example: Core Counter Logic
+## Example: Core Counter Logic with JSON Metadata (Recommended)
 
-Here's a simplified example of what your vest detection logic might look like:
+Here's a complete example using the **recommended JSON approach** (faster to implement):
 
 ```cpp
 // In vest_counter_data_processor.cpp
 
+#include "parson.h"
+#include "log.h"
+#include <sys/time.h>
+
 static uint32_t vest_count = 0;  // Persistent counter
+
+// Helper function to get timestamp in milliseconds
+static uint64_t get_timestamp_ms() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)(tv.tv_sec) * 1000 + (uint64_t)(tv.tv_usec) / 1000;
+}
 
 DataProcessorResultCode DataProcessorAnalyze(float *in_data, uint32_t in_size,
                                              char **out_data, uint32_t *out_size) {
@@ -122,18 +168,36 @@ DataProcessorResultCode DataProcessorAnalyze(float *in_data, uint32_t in_size,
         vest_count++;
     }
     
-    // Log to console
+    // Log to console (one-line output for Raspberry Pi)
     LOG_INFO("[VestCounter] vest_detected=%s, count=%u, score=%.2f",
              vest_detected ? "true" : "false", vest_count, vest_score);
     
-    // Create and return metadata (FlatBuffers or JSON)
-    // ...
+    // Create JSON metadata (simple and fast!)
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj = json_value_get_object(root);
+    json_object_set_number(obj, "timestamp", (double)get_timestamp_ms());
+    json_object_set_boolean(obj, "vest_detected", vest_detected);
+    json_object_set_number(obj, "vest_count", vest_count);
+    json_object_set_number(obj, "score", vest_score);
+    
+    // Note: Caller (SendDataSyncMeta) is responsible for freeing out_data
+    *out_data = json_serialize_to_string(root);
+    *out_size = json_serialization_size(root);
+    json_value_free(root);
+    
+    return kDataProcessorOk;
+}
+
+EdgeAppLibSendDataType DataProcessorGetDataType() { 
+    return EdgeAppLibSendDataJson;  // Use JSON format
 }
 ```
 
 ---
 
-## Example: FlatBuffers Schema
+## Example: FlatBuffers Schema (Alternative)
+
+If you prefer FlatBuffers (more efficient but requires schema compilation):
 
 ```flatbuffers
 // vest_counter.fbs
@@ -152,6 +216,8 @@ table VestCounterTop {
 
 root_type VestCounterTop;
 ```
+
+> **Note**: Using JSON saves ~1.5 hours by eliminating schema compilation and header generation steps.
 
 ---
 
