@@ -122,6 +122,7 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
     ctx.sensor_core =
         (EdgeAppLibSensorCore *)xmalloc(sizeof(EdgeAppLibSensorCore));
     if (!ctx.sensor_core || SensorCoreInit(ctx.sensor_core) != 0) {
+      EdgeAppLibLogSensorError();
       return EdgeAppCoreResultFailure;
     }
 
@@ -132,6 +133,7 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
         SensorCoreOpenStream(*ctx.sensor_core,
                              AITRIOS_SENSOR_STREAM_KEY_DEFAULT,
                              ctx.sensor_stream) != 0) {
+      EdgeAppLibLogSensorError();
       return EdgeAppCoreResultFailure;
     }
     struct EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle = {};
@@ -147,6 +149,7 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
       return EdgeAppCoreResultFailure;
     }
     if (SensorStart(*ctx.sensor_stream) != 0) {
+      EdgeAppLibLogSensorError();
       return EdgeAppCoreResultFailure;
     }
   } else {
@@ -197,6 +200,7 @@ void ProcessedFrame::ProcessInternal(EdgeAppCoreCtx &ctx,
   if (frame == 0 && shared_ctx->sensor_stream != nullptr) {
     int8_t ret = SensorGetFrame(*shared_ctx->sensor_stream, &frame, -1);
     if (ret < 0) {
+      EdgeAppLibLogSensorError();
       LOG_ERR("SensorGetFrame failed: ret=%d", ret);
       return;
     }
@@ -817,7 +821,21 @@ Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame) {
     input_tensor.shape_info.dims[0] = 1;
     input_tensor.shape_info.dims[1] = property.height;
     input_tensor.shape_info.dims[2] = property.width;
-    input_tensor.shape_info.dims[3] = 3;  // RGB
+    if (strncmp(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR,
+                sizeof(AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR)) == 0) {
+      // RGB planar
+      input_tensor.shape_info.dims[3] = 3;
+      input_tensor.format = AITRIOS_DRAW_FORMAT_RGB8_PLANAR;
+    } else if (strncmp(property.pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_RGB24,
+                       sizeof(AITRIOS_SENSOR_PIXEL_FORMAT_RGB24)) == 0) {
+      // RGB interleaved
+      input_tensor.shape_info.dims[3] = 3;
+      input_tensor.format = AITRIOS_DRAW_FORMAT_RGB8;
+    } else {
+      LOG_ERR("Unsupported pixel format: %s", property.pixel_format);
+      free(data.address);
+      return {};
+    }
     input_tensor.memory_owner = TensorMemoryOwner::Sensor;
     snprintf(input_tensor.name, sizeof(input_tensor.name), "imx500_input");
 
@@ -838,6 +856,7 @@ Tensor GetInput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame) {
       input_tensor.shape_info.dims[1] = temp.height;
       input_tensor.shape_info.dims[2] = temp.width;
       input_tensor.shape_info.dims[3] = 3;
+      input_tensor.format = AITRIOS_DRAW_FORMAT_RGB8;
       input_tensor.memory_owner = temp.memory_owner;
       snprintf(input_tensor.name, sizeof(input_tensor.name), "wasi_nn_input_%d",
                ctx.model_idx);
@@ -944,9 +963,21 @@ EdgeAppCoreResult SendInputTensor(Tensor *input_tensor) {
   EdgeAppLibImageProperty image_property = {};
   image_property.width = input_tensor->shape_info.dims[2];
   image_property.height = input_tensor->shape_info.dims[1];
-  image_property.stride_bytes = input_tensor->shape_info.dims[2] * 3;  // RGB
-  snprintf(image_property.pixel_format, sizeof(image_property.pixel_format),
-           "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
+  if (input_tensor->format == AITRIOS_DRAW_FORMAT_RGB8) {
+    snprintf(image_property.pixel_format, sizeof(image_property.pixel_format),
+             "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
+    image_property.stride_bytes = input_tensor->shape_info.dims[2] * 3;  // RGB
+  } else if (input_tensor->format == AITRIOS_DRAW_FORMAT_RGB8_PLANAR) {
+    snprintf(image_property.pixel_format, sizeof(image_property.pixel_format),
+             "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR);
+    image_property.stride_bytes =
+        input_tensor->shape_info.dims[2];  // RGB planar
+  } else {
+    LOG_WARN("Unknown input tensor format: %d, defaulting to RGB8_PLANAR",
+             input_tensor->format);
+    snprintf(image_property.pixel_format, sizeof(image_property.pixel_format),
+             "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR);
+  }
 
   EdgeAppLibSendDataResult ret = SendDataSyncImage(
       input_tensor->data, input_tensor->size,

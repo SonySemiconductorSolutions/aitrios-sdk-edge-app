@@ -77,6 +77,7 @@ EdgeAppLibSensorErrorLevel EdgeAppLibSensorGetLastErrorLevelSuccess =
 static int EdgeAppLibSensorGetLastErrorCauseCalled = 0;
 EdgeAppLibSensorErrorCause EdgeAppLibSensorGetLastErrorCauseSuccess =
     AITRIOS_SENSOR_ERROR_NONE;
+static EdgeAppLibSensorImageProperty EdgeAppLibSensorChannelImageProperty = {};
 
 typedef struct {
   void *value;
@@ -457,6 +458,13 @@ int32_t SensorCoreOpenStream(EdgeAppLibSensorCore core, const char *stream_key,
   *stream = (EdgeAppLibSensorStream)DUMMY_HANDLE;
   stream_check = *stream;
 
+  EdgeAppLibSensorChannelImageProperty.height = 1;
+  EdgeAppLibSensorChannelImageProperty.width = 5;
+  EdgeAppLibSensorChannelImageProperty.stride_bytes = 5 * 3;
+  snprintf(EdgeAppLibSensorChannelImageProperty.pixel_format,
+           AITRIOS_SENSOR_PIXEL_FORMAT_LENGTH,
+           AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
+
   EdgeAppLibSensorImageCropProperty value = {
       .left = 10, .top = 15, .width = 20, .height = 25};
   EdgeAppLib::SensorStreamSetProperty(
@@ -605,12 +613,14 @@ int32_t SensorChannelGetProperty(EdgeAppLibSensorChannel channel,
                      strlen(property_key)) == 0) {
     EdgeAppLibSensorImageProperty *image_property =
         (EdgeAppLibSensorImageProperty *)value;
-    image_property->width = 1;
-    image_property->height = 5;
-    image_property->stride_bytes = 3;  // 1 * 3
 
-    snprintf(image_property->pixel_format, sizeof(image_property->pixel_format),
-             "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
+    image_property->width = EdgeAppLibSensorChannelImageProperty.width;
+    image_property->height = EdgeAppLibSensorChannelImageProperty.height;
+    image_property->stride_bytes =
+        EdgeAppLibSensorChannelImageProperty.stride_bytes;
+
+    snprintf(image_property->pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_LENGTH,
+             "%s", EdgeAppLibSensorChannelImageProperty.pixel_format);
   }
 
   return EdgeAppLibSensorChannelGetPropertySuccess;
@@ -862,4 +872,22 @@ void resetEdgeAppLibSensorInputDataTypeEnableChannelSuccess() {
 
 EdgeAppLibSensorErrorCause EdgeAppLibLogSensorError() {
   return EdgeAppLib::SensorGetLastErrorCause();
+}
+
+void setEdgeAppLibSensorChannelImageProperty(
+    EdgeAppLibSensorImageProperty property) {
+  EdgeAppLibSensorChannelImageProperty.width = property.width;
+  EdgeAppLibSensorChannelImageProperty.height = property.height;
+  EdgeAppLibSensorChannelImageProperty.stride_bytes = property.stride_bytes;
+  snprintf(EdgeAppLibSensorChannelImageProperty.pixel_format,
+           AITRIOS_SENSOR_PIXEL_FORMAT_LENGTH, "%s", property.pixel_format);
+}
+
+void resetEdgeAppLibSensorChannelImageProperty() {
+  EdgeAppLibSensorChannelImageProperty.width = 5;
+  EdgeAppLibSensorChannelImageProperty.height = 1;
+  EdgeAppLibSensorChannelImageProperty.stride_bytes = 5 * 3;
+  snprintf(EdgeAppLibSensorChannelImageProperty.pixel_format,
+           sizeof(EdgeAppLibSensorChannelImageProperty.pixel_format), "%s",
+           AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
 }

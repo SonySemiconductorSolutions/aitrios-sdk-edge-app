@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "data_export.h"
+#include "draw.h"
 #include "log.h"
 #include "nn.h"
 #include "send_data.h"
@@ -115,6 +116,7 @@ struct Tensor {
   size_t size;
   uint64_t timestamp;
   char name[64] = {0};  ///< Optional name for the tensor
+  EdgeAppLibDrawFormat format = AITRIOS_DRAW_FORMAT_UNDEFINED;
   TensorMemoryOwner memory_owner = TensorMemoryOwner::Unknown;
 
   template <typename T>

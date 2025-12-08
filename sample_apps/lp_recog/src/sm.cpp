@@ -131,9 +131,9 @@ int onIterate() {
 
   // Draw rectangles on the input image
   if (roi[1].width != 0 && roi[1].height != 0) {
-    struct EdgeAppLibDrawBuffer buffer = {
-        input.data, input.size, AITRIOS_DRAW_FORMAT_RGB8,
-        input.shape_info.dims[2], input.shape_info.dims[1]};
+    struct EdgeAppLibDrawBuffer buffer = {input.data, input.size, input.format,
+                                          input.shape_info.dims[2],
+                                          input.shape_info.dims[1]};
     DrawRectangle(&buffer, roi[1].left, roi[1].top, roi[1].left + roi[1].width,
                   roi[1].top + roi[1].height, AITRIOS_COLOR_BLUE);
   }

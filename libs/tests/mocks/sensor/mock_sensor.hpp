@@ -117,4 +117,8 @@ void resetEdgeAppLibSensorGetLastErrorCauseCalled();
 void setEdgeAppLibSensorInputDataTypeEnableChannelFail();
 void resetEdgeAppLibSensorInputDataTypeEnableChannelSuccess();
 
+void setEdgeAppLibSensorChannelImageProperty(
+    EdgeAppLibSensorImageProperty property);
+void resetEdgeAppLibSensorChannelImageProperty();
+
 #endif /* MOCKS_MOCK_AITRIOS_SENSOR_HPP */
