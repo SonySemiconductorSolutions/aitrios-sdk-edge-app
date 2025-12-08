@@ -20,7 +20,8 @@
 #include <vector>
 
 #include "edgeapp_core.h"
-#include "mock_nn.hpp"        // Mock implementation of nn
+#include "mock_nn.hpp"  // Mock implementation of nn
+#include "mock_sensor.hpp"
 #include "send_data_types.h"  // For EdgeAppLibImageProperty
 #include "sensor.h"
 using namespace EdgeAppCore;
@@ -483,6 +484,7 @@ TEST_F(EdgeAppCoreTest, MethodChainWithPreprocessing) {
 
 TEST_F(EdgeAppCoreTest, MethodChainFullChain) {
   // Test full method chaining with compute
+  resetEdgeAppLibSensorChannelImageProperty();
   EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
   EXPECT_EQ(LoadModel(model[1], ctx_cpu, &ctx_imx500),
             EdgeAppCoreResultSuccess);
@@ -528,4 +530,42 @@ TEST_F(EdgeAppCoreTest, MethodChainErrorHandling) {
   // Should return empty/invalid result
   EXPECT_TRUE(result.empty());
   EXPECT_EQ(static_cast<EdgeAppLibSensorFrame>(result), 0);
+}
+
+TEST_F(EdgeAppCoreTest, SendInputTensorFormatIMX500) {
+  resetEdgeAppLibSensorChannelImageProperty();
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  auto frame = Process(ctx_imx500, &ctx_imx500, dummy_frame, dummy_roi[0]);
+  auto input = GetInput(ctx_imx500, frame);
+
+  // Verify input tensor format for IMX500
+  EXPECT_EQ(input.shape_info.ndim, 4);
+  EXPECT_EQ(input.shape_info.dims[3], 3);  // Channels
+  EXPECT_EQ(input.format, AITRIOS_DRAW_FORMAT_RGB8);
+
+  free(input.data);  // Free the data if it was dynamically allocated
+}
+
+TEST_F(EdgeAppCoreTest, SendInputTensorFormatIMX500Planar) {
+  resetEdgeAppLibSensorChannelImageProperty();
+  EdgeAppLibSensorImageProperty image = {};
+  image.width = 5;
+  image.height = 1;
+  image.stride_bytes = 5;
+  snprintf(image.pixel_format, sizeof(image.pixel_format), "%s",
+           AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR);
+
+  EXPECT_EQ(LoadModel(model[0], ctx_imx500, nullptr), EdgeAppCoreResultSuccess);
+  setEdgeAppLibSensorChannelImageProperty(image);
+  auto frame = Process(ctx_imx500, &ctx_imx500, dummy_frame, dummy_roi[0]);
+  auto input = GetInput(ctx_imx500, frame);
+
+  // Verify input tensor format for IMX500
+  EXPECT_EQ(input.shape_info.ndim, 4);
+  EXPECT_EQ(input.shape_info.dims[3], 3);  // Channels
+  EXPECT_EQ(input.format, AITRIOS_DRAW_FORMAT_RGB8_PLANAR);
+
+  SendInputTensor(&input);
+
+  // free(input.data);  // Free the data if it was dynamically allocated
 }

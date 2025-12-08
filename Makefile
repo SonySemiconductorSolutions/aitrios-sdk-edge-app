@@ -21,6 +21,11 @@ BINDIR = $(ROOTDIR)/bin
 BUILDDIR = $(ROOTDIR)/build
 TARGET=$(BINDIR)/$(MODULE_NAME).wasm
 WASM_OPT = /opt/binaryen/bin/wasm-opt
+WASI_SDK_PATH = /opt/wasi-sdk
+
+OPENCV_VERSION=4.6.0
+OPENCV_INSTALL_DIR=/opt/opencv-$(OPENCV_VERSION)-install/
+OPENCV_INSTALL_CMAKE_DIR=$(OPENCV_INSTALL_DIR)/install-wasi/lib/cmake/opencv4/
 
 IMAGE_NAME = app_build_env:2.0.0
 IMAGE = $(shell docker image ls -q $(IMAGE_NAME))
@@ -33,7 +38,7 @@ all: docker_build
 	  	/bin/sh -c "\
 		mkdir -p $(BUILDDIR) && \
 		cd $(BUILDDIR) && \
-		cmake -DCMAKE_TOOLCHAIN_FILE=/opt/wasi-sdk/share/cmake/wasi-sdk-pthread.cmake $(CMAKE_FLAGS) .. && make && \
+		cmake -DCMAKE_TOOLCHAIN_FILE=/opt/wasi-sdk/share/cmake/wasi-sdk-pthread.cmake -DOpenCV_DIR=$(OPENCV_INSTALL_CMAKE_DIR) $(CMAKE_FLAGS) .. && make && \
 		if [ \"$(DEBUG_AOT)\" = \"1\" ]; then \
 			echo 'DEBUG_AOT is enabled: Copying $(BUILDDIR)/$(MODULE_NAME) to $(TARGET)'; \
 			cp $(BUILDDIR)/$(MODULE_NAME) $(TARGET); \
