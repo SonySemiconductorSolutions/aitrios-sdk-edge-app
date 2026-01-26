@@ -49,7 +49,7 @@
 #include "nn.h"
 #include "receive_data.h"
 #include "send_data.h"
-#include "user_bridge_c.h"
+#include "sm_types.h"
 
 #define PORTNAME_META "metadata"
 #define PORTNAME_INPUT "input"
@@ -60,6 +60,17 @@ using namespace EdgeAppLib;
 
 namespace EdgeAppCore {
 static uint32_t model_count = 0;  // Count of loaded models
+char *state_topic = "edgeapp";
+
+char *GetConfigureErrorJsonSm(ResponseCode code, const char *message,
+                              const char *res_id) {
+  char *config_error = nullptr;
+  asprintf(
+      &config_error,
+      "{\"res_info\": {\"res_id\":\"%s\",\"code\": %d,\"detail_msg\":\"%s\"}}",
+      res_id, code, message);
+  return config_error;
+}
 
 static bool IsRealFilename(const char *filename, const char *real_filename) {
   if (strncmp(filename, real_filename, strlen(real_filename))) {
@@ -79,7 +90,7 @@ static char *FindFilenameByRealFilename(const char *dir,
                                         const char *real_filename) {
   DIR *dir_p = opendir(dir);
   if (!dir_p) {
-    LOG_ERR("Open directory failed.");
+    LOG_ERR("Open directory failed %s %s.", dir, strerror(errno));
     return nullptr;
   }
 
@@ -108,21 +119,35 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
     LOG_ERR("LoadModel: model.target is invalid.");
     return EdgeAppCoreResultInvalidParam;
   }
+
+  // Initialize context
   ctx.target = model.target;
-  ctx.temp_input.buffer = nullptr;
-  ctx.temp_input.size = 0;
-  ctx.temp_input.width = 0;
-  ctx.temp_input.height = 0;
-  ctx.temp_input.timestamp = 0;
-  ctx.temp_input.memory_owner = TensorMemoryOwner::Unknown;
+  ctx.temp_input = {};
   ctx.mean_values = model.mean_values;
   ctx.norm_values = model.norm_values;
+
+  // Helper lambdas
+  auto cleanup = [&]() {
+    if (ctx.sensor_stream) {
+      free(ctx.sensor_stream);
+      ctx.sensor_stream = nullptr;
+    }
+    if (ctx.sensor_core) {
+      free(ctx.sensor_core);
+      ctx.sensor_core = nullptr;
+    }
+    if (ctx.graph_ctx) {
+      free(ctx.graph_ctx);
+      ctx.graph_ctx = nullptr;
+    }
+  };
 
   if (model.target == edge_imx500) {
     ctx.sensor_core =
         (EdgeAppLibSensorCore *)xmalloc(sizeof(EdgeAppLibSensorCore));
     if (!ctx.sensor_core || SensorCoreInit(ctx.sensor_core) != 0) {
       EdgeAppLibLogSensorError();
+      cleanup();
       return EdgeAppCoreResultFailure;
     }
 
@@ -134,6 +159,11 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
                              AITRIOS_SENSOR_STREAM_KEY_DEFAULT,
                              ctx.sensor_stream) != 0) {
       EdgeAppLibLogSensorError();
+      cleanup();
+      void *err_json = GetConfigureErrorJsonSm(
+          ResponseCodeFailedPrecondition, "Error SensorCoreOpenStream", "");
+      uint32_t err_json_size = strlen((const char *)err_json);
+      DataExportSendState(state_topic, (void *)err_json, err_json_size);
       return EdgeAppCoreResultFailure;
     }
     struct EdgeAppLibSensorAiModelBundleIdProperty ai_model_bundle = {};
@@ -146,10 +176,14 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
             *ctx.sensor_stream, AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY,
             &ai_model_bundle, sizeof(ai_model_bundle)) < 0) {
       LOG_ERR("Error while setting desired AI model bundle ID");
+      EdgeAppLibLogSensorError();
+      cleanup();
       return EdgeAppCoreResultFailure;
     }
     if (SensorStart(*ctx.sensor_stream) != 0) {
+      SensorCoreCloseStream(*ctx.sensor_core, *ctx.sensor_stream);
       EdgeAppLibLogSensorError();
+      cleanup();
       return EdgeAppCoreResultFailure;
     }
   } else {
@@ -157,21 +191,24 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
     const char *path = EdgeAppLibReceiveDataStorePath();
     char model_path[MAX_PATH_LEN] = {0};
     char *model_file = FindFilenameByRealFilename(path, model.model_name);
-    if (model_file) {
-      if (snprintf(model_path, MAX_PATH_LEN, "%s/%s", path, model_file) >=
-          MAX_PATH_LEN) {
-        LOG_WARN("AI model file absolute path exceeds size limit");
-      }
-      free(model_file);
-    } else {
-      if (snprintf(model_path, MAX_PATH_LEN, "%s/%s", path, model.model_name) >=
-          MAX_PATH_LEN) {
-        LOG_WARN("AI model file absolute path exceeds size limit");
-      }
+    if (!model_file) {
+      LOG_ERR("Model file not found for model: %s/%s", path, model.model_name);
+      cleanup();
+      return EdgeAppCoreResultFailure;
+    }
+
+    int len = snprintf(model_path, MAX_PATH_LEN, "%s/%s", path, model_file);
+    free(model_file);
+
+    if (len < 0 || len >= MAX_PATH_LEN) {
+      LOG_ERR("AI model file path is too long: %s/%s", path, model.model_name);
+      cleanup();
+      return EdgeAppCoreResultFailure;
     }
     if (EdgeAppLib::LoadModel((const char *)model_path, &g,
                               (EdgeAppLibExecutionTarget)model.target) != 0) {
       LOG_ERR("Failed to load model: %s", model_path);
+      cleanup();
       return EdgeAppCoreResultFailure;
     }
 
@@ -183,7 +220,7 @@ EdgeAppCoreResult LoadModel(EdgeAppCoreModelInfo model, EdgeAppCoreCtx &ctx,
     if (InitContext(g, ctx.graph_ctx) != 0) {
       LOG_ERR("Failed to initialize graph execution context for model: %s",
               model.model_name);
-      free(ctx.graph_ctx);
+      cleanup();
       return EdgeAppCoreResultFailure;
     }
   }
@@ -323,6 +360,7 @@ void ProcessedFrame::ProcessInternal(EdgeAppCoreCtx &ctx,
       dst.size = src.size;
       dst.width = src.width;
       dst.height = src.height;
+      dst.stride_byte = src.stride_byte;
       roi.height = src.height;
       roi.width = src.width;
     }
@@ -424,7 +462,6 @@ void ProcessedFrame::ProcessInternal(EdgeAppCoreCtx &ctx,
                      ctx.norm_values ? ctx.norm_values->data() : nullptr,
                      ctx.norm_values ? ctx.norm_values->size() : 0) != 0) {
           LOG_ERR("Failed to set input tensor (buffer version)");
-          frame = 0;
         }
       }
       if (Compute(*(ctx.graph_ctx)) != 0) {
@@ -548,66 +585,24 @@ static Tensor GetOutputByIndexInternal(EdgeAppCoreCtx &ctx,
       }
     }
 
-    if (tensor_index == -1) {
-      // All tensors mode
-      output_tensor.data = data.address;
-      output_tensor.size = data.size;
-      output_tensor.timestamp = data.timestamp;
-      output_tensor.type = TensorDataType::TensorTypeFloat32;
-      output_tensor.shape_info.ndim = 0;
+    // All tensors mode
+    output_tensor.data = data.address;
+    output_tensor.size = data.size;
+    output_tensor.timestamp = data.timestamp;
+    output_tensor.type = TensorDataType::TensorTypeFloat32;
+    output_tensor.shape_info.ndim = 0;
 
-      for (const auto &shape : shapes) {
-        if (output_tensor.shape_info.ndim >= MAX_OUTPUT_TENSOR_NUM) {
-          LOG_WARN("Too many dimensions, truncating.");
-          break;
-        }
-        uint32_t dim = 1;
-        for (auto s : shape) {
-          dim *= s;
-        }
-        output_tensor.shape_info.dims[output_tensor.shape_info.ndim++] = dim;
+    for (const auto &shape : shapes) {
+      if (output_tensor.shape_info.ndim >= MAX_OUTPUT_TENSOR_NUM) {
+        LOG_WARN("Too many dimensions, truncating.");
+        break;
       }
-    } else {
-      // Single tensor mode
-      if (tensor_index < 0 ||
-          static_cast<size_t>(tensor_index) >= shapes.size()) {
-        LOG_ERR("Tensor index %d out of range (valid: 0-%zu)", tensor_index,
-                shapes.size() - 1);
-        return {};
+      uint32_t dim = 1;
+      for (auto s : shape) {
+        dim *= s;
       }
-
-      // Calculate offset and size for the requested tensor
-      size_t tensor_offset = 0;
-      size_t tensor_size = 1;
-
-      for (size_t i = 0; i < static_cast<size_t>(tensor_index); ++i) {
-        size_t elements = 1;
-        for (auto s : shapes[i]) {
-          elements *= s;
-        }
-        tensor_offset += elements * sizeof(float);
-      }
-
-      for (auto s : shapes[static_cast<size_t>(tensor_index)]) {
-        tensor_size *= s;
-      }
-      tensor_size *= sizeof(float);
-
-      output_tensor.data = (uint8_t *)data.address + tensor_offset;
-      output_tensor.size = tensor_size;
-      output_tensor.timestamp = data.timestamp;
-      output_tensor.type = TensorDataType::TensorTypeFloat32;
-      output_tensor.shape_info.ndim =
-          shapes[static_cast<size_t>(tensor_index)].size();
-
-      for (size_t i = 0; i < shapes[static_cast<size_t>(tensor_index)].size() &&
-                         i < MAX_TENSOR_DIMS;
-           ++i) {
-        output_tensor.shape_info.dims[i] =
-            shapes[static_cast<size_t>(tensor_index)][i];
-      }
+      output_tensor.shape_info.dims[output_tensor.shape_info.ndim++] = dim;
     }
-
   } else {
     // CPU/NPU: use graph_ctx to get output
     if (ctx.graph_ctx == nullptr) {
@@ -615,7 +610,7 @@ static Tensor GetOutputByIndexInternal(EdgeAppCoreCtx &ctx,
       return {};
     }
 
-    if (tensor_index == -1) {
+    if (tensor_index < 0) {
       // All tensors mode
       float *base =
           static_cast<float *>(malloc(MAX_OUTPUT_TENSORS_SIZE * sizeof(float)));
@@ -727,7 +722,8 @@ std::vector<Tensor> GetOutputs(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame frame,
     for (size_t tensor_index = 0; tensor_index < shapes.size();
          ++tensor_index) {
       // Single tensor mode
-      Tensor tensor = {};
+      Tensor tensor;
+      memset(&tensor, 0, sizeof(Tensor));
 
       // Calculate offset and size for the requested tensor
       size_t tensor_offset = 0;

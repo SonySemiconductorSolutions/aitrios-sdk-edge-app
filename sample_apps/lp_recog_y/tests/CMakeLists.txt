@@ -1,0 +1,97 @@
+# Copyright 2024 Sony Semiconductor Solutions Corp. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+cmake_minimum_required (VERSION 3.14)
+project(data_processor_utils)
+
+set(UNIT_TEST 1)
+add_definitions(-DMOCK_LP_RECOG)
+set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+set(SAMPLE_APP_DIR ${ROOT_DIR}/sample_apps)
+set(LIBS_DIR ${ROOT_DIR}/libs)
+set(INCLUDE_DIR ${ROOT_DIR}/include)
+set(SAMPLE_APP_TEST_DIR ${SAMPLE_APP_DIR}/tests)
+set(MOCKS_DIR ${LIBS_DIR}/tests/mocks)
+include(${ROOT_DIR}/cmake/gtest.cmake)
+
+add_library(send_data
+  ${MOCKS_DIR}/send_data/mock_send_data.cpp
+)
+target_include_directories(send_data PUBLIC
+  ${LIBS_DIR}/send_data/src/process_format
+  ${ROOT_DIR}/include
+  ${ROOT_DIR}/include/edgeapp
+  ${LIBS_DIR}/tests/mocks/send_data/process_format
+  ${LIBS_DIR}/third_party/parson
+  ${LIBS_DIR}/common/include
+)
+
+include_directories(
+  ${MOCKS_DIR}
+  ${MOCKS_DIR}/lp_recog_data_processor
+)
+
+add_subdirectory (
+  ${LIBS_DIR}/log/src
+  ${CMAKE_CURRENT_BINARY_DIR}/libs/log/src
+)
+
+add_executable(test_event_functions
+  test_sm.cpp
+  ${MOCKS_DIR}/nn/mock_edgecore.cpp
+  ${MOCKS_DIR}/sensor/mock_sensor.cpp
+  ${MOCKS_DIR}/device/mock_device.cpp
+  ${MOCKS_DIR}/draw/mock_draw.cpp
+  ${MOCKS_DIR}/sm/mock_sm_api.cpp
+  ${MOCKS_DIR}/preprocess_lib/mock_preprocess_lib.cpp
+  ${MOCKS_DIR}/sensor/testing_utils.cpp
+  ${MOCKS_DIR}/data_processor_api/mock_data_processor_api.cpp
+  ${MOCKS_DIR}/lp_recog_data_processor/mock_lp_recog_data_processor.cpp
+  ${MOCKS_DIR}/data_export/mock_data_export.cpp
+  ${MOCKS_DIR}/receive_data/mock_receive_data.cpp
+  #${SAMPLE_APP_DIR}/lp_recog_y/src/preprocess_lib.cpp
+  ${SAMPLE_APP_DIR}/lp_recog_y/src/sm.cpp
+  ${SAMPLE_APP_DIR}/utils/src/sm_utils.cpp
+  ${LIBS_DIR}/third_party/parson/parson.c
+)
+
+target_include_directories (test_event_functions PUBLIC
+  ${SAMPLE_APP_DIR}/utils/include
+  ${ROOT_DIR}/include
+  ${LIBS_DIR}/depend/edge_app
+  ${LIBS_DIR}/third_party/parson
+  ${LIBS_DIR}/third_party/flatbuffers/include
+  ${LIBS_DIR}/tests/unit/data_export/
+  ${LIBS_DIR}/common/include
+  ${LIBS_DIR}/send_data/src/data_export/include
+  ${LIBS_DIR}/receive_data/include
+  ${LIBS_DIR}/sm/include
+  ${SAMPLE_APP_DIR}/lp_recog_y/src/
+  ${MOCKS_DIR}/sensor
+  ${MOCKS_DIR}/device
+  ${MOCKS_DIR}/draw
+  ${MOCKS_DIR}/preprocess_lib
+  ${MOCKS_DIR}/nn
+  ${SAMPLE_APP_DIR}/lp_recog_y/data_processor/src
+)
+
+target_link_libraries(
+  test_event_functions
+  log
+  send_data
+  GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(test_event_functions)

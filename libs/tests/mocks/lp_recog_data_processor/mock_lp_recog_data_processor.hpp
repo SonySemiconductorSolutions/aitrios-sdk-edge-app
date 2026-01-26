@@ -17,7 +17,33 @@
 #ifndef MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
 #define MOCKS_MOCK_LP_RECOG_DATA_PROCESSOR_HPP
 
+#include <vector>
+
 #include "data_processor_api.hpp"
+#include "edgeapp_core.h"
+
+// Forward declaration for LPDataProcessorAnalyzeParam
+struct LPDataProcessorAnalyzeParam {
+  void *app_specific;
+};
+
+// Function declarations for LPD and LPR analyze - both old and new signatures
+DataProcessorResultCode LPDDataProcessorAnalyze(
+    float *in_data, uint32_t in_size,
+    LPDataProcessorAnalyzeParam *param = nullptr);
+
+DataProcessorResultCode LPDDataProcessorAnalyze(
+    const std::vector<EdgeAppCore::Tensor> &tensors,
+    LPDataProcessorAnalyzeParam *param);
+
+DataProcessorResultCode LPRDataProcessorAnalyze(float *in_data,
+                                                uint32_t in_size,
+                                                char **out_data,
+                                                uint32_t *out_size);
+
+DataProcessorResultCode LPRDataProcessorAnalyze(
+    const std::vector<EdgeAppCore::Tensor> &tensors, char **out_data,
+    uint32_t *out_size);
 
 // Mock functions for LPD and LPR data processor analyze
 void resetLPDDataProcessorAnalyzeCalled();

@@ -19,6 +19,7 @@ set(COMMON_SRC
   ${SM_SRC_DIR}/sm_configurator.cpp
   ${MOCKS_DIR}/data_export/mock_data_export.cpp
   ${MOCKS_DIR}/event_functions/mock_sm.cpp
+  ${MOCKS_DIR}/receive_data/mock_receive_data.cpp
   ${LIBS_DIR}/third_party/base64.c/base64.c
 )
 
@@ -49,6 +50,8 @@ add_test_executable(test_custom_settings)
 add_test_executable(test_codec_settings)
 add_test_executable(test_register_access)
 add_test_executable(test_register_access_array)
+add_test_executable(test_ai_model)
+add_test_executable(test_ai_models)
 
 target_compile_definitions(test_dtdl_model PUBLIC
   DTDL_OBJ_PATH="${CMAKE_CURRENT_SOURCE_DIR}/sample_implemented.json"

@@ -38,6 +38,7 @@ static int registered_send_data_callback = 0;
 
 struct EVP_client *evp_client_;
 static const char *g_placeholder_telemetry_key = "placeholder";
+struct EVP_BlobResultEvp global_send_result;
 static EVP_BLOB_IO_RESULT blob_io_cb(void *buf, size_t buflen, void *userData) {
   module_vars_t *module_vars = (module_vars_t *)userData;
 
@@ -136,6 +137,11 @@ static void DataExportSendDataDoneCallback(EVP_BLOB_CALLBACK_REASON reason,
     case EVP_BLOB_CALLBACK_REASON_DONE:
       future->result = EdgeAppLibDataExportResultSuccess;
       result = (EVP_BlobResultEvp *)vp;
+
+      global_send_result.result = result->result;
+      global_send_result.http_status = result->http_status;
+      global_send_result.error = result->error;
+
       LOG_DBG(
           "EVP_BLOB_CALLBACK_REASON_DONE result=%u "
           "http_status=%u error=%d\n",
@@ -465,9 +471,13 @@ EdgeAppLibDataExportResult DataExportAwait(EdgeAppLibDataExportFuture *future,
 
     LOG_INFO("Result of conditional wait: %d", res);
     output = EdgeAppLibDataExportResultFailure;
-    if (res == 0)
-      output = EdgeAppLibDataExportResultSuccess;
-    else if (res == ETIMEDOUT)
+    if (res == 0) {
+      if (global_send_result.result == 0 && global_send_result.error == 0) {
+        output = EdgeAppLibDataExportResultSuccess;
+      } else {
+        output = EdgeAppLibDataExportResultFailure;
+      }
+    } else if (res == ETIMEDOUT)
       output = EdgeAppLibDataExportResultTimeout;
   } else {
     output = future->result;
@@ -483,6 +493,11 @@ EdgeAppLibDataExportResult DataExportCleanup(
   pthread_mutex_lock(&future->mutex);
   future->is_cleanup_requested = true;
   DataExportCleanupOrUnlock(future);
+
+  global_send_result.result = EVP_BLOB_RESULT_SUCCESS;
+  global_send_result.http_status = 0;
+  global_send_result.error = 0;
+
   LOG_INFO("Exit Clean");
   return EdgeAppLibDataExportResultSuccess;
 }

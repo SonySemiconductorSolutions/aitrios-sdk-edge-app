@@ -121,4 +121,9 @@ void setEdgeAppLibSensorChannelImageProperty(
     EdgeAppLibSensorImageProperty property);
 void resetEdgeAppLibSensorChannelImageProperty();
 
+int wasEdgeAppLibSensorStreamSetIspFrameRateCalled();
+void setEdgeAppLibSensorStreamSetIspFrameRateFail();
+void resetEdgeAppLibSensorStreamSetIspFrameRateSuccess();
+void resetEdgeAppLibSensorStreamSetIspFrameRateCalled();
+
 #endif /* MOCKS_MOCK_AITRIOS_SENSOR_HPP */

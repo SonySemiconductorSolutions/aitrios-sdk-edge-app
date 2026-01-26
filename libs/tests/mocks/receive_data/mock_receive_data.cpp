@@ -19,22 +19,51 @@
 extern "C" {
 #endif
 
+EdgeAppLibReceiveDataResult initialize_result =
+    EdgeAppLibReceiveDataResultSuccess;
+EdgeAppLibReceiveDataResult uninitialize_result =
+    EdgeAppLibReceiveDataResultSuccess;
+EdgeAppLibReceiveDataResult receive_data_result =
+    EdgeAppLibReceiveDataResultSuccess;
+
+void setReceiveDataInitializeResult(EdgeAppLibReceiveDataResult result) {
+  initialize_result = result;
+}
+
+void resetReceiveDataInitializeResult() {
+  initialize_result = EdgeAppLibReceiveDataResultSuccess;
+}
+
+void setReceiveDataUninitializeResult(EdgeAppLibReceiveDataResult result) {
+  uninitialize_result = result;
+}
+
+void resetReceiveDataUninitializeResult() {
+  uninitialize_result = EdgeAppLibReceiveDataResultSuccess;
+}
+
+void setReceiveDataResult(EdgeAppLibReceiveDataResult result) {
+  receive_data_result = result;
+}
+
+void resetReceiveDataResult() {
+  receive_data_result = EdgeAppLibReceiveDataResultSuccess;
+}
+
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataInitialize(void *evp_client) {
-  return EdgeAppLibReceiveDataResultSuccess;
+  return initialize_result;
 }
 
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataUnInitialize() {
-  return EdgeAppLibReceiveDataResultSuccess;
+  return uninitialize_result;
 }
 
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
     EdgeAppLibReceiveDataInfo *info, int timeout_ms) {
-  return EdgeAppLibReceiveDataResultSuccess;
+  return receive_data_result;
 }
 
-const char *EdgeAppLibReceiveDataStorePath() {
-  return "/evp_data/instances/node/default_workspace";
-}
+const char *EdgeAppLibReceiveDataStorePath() { return "/tmp/edge_model_test"; }
 
 #ifdef __cplusplus
 }

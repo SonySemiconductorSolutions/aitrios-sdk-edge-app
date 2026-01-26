@@ -185,7 +185,6 @@ def validate_switch_dnn_custom_settings(data: dict, id_suffix: str) -> None:
     assert data["custom_settings"]["res_info"]["res_id"] == f"switch_dnn_custom_settings{id_suffix}"
     assert data["common_settings"]["number_of_inference_per_message"] == 2
 
-
 def change_lp_recog_custom_settings(data: dict, id_suffix: str) -> None:
     data["req_info"]["req_id"] = f"lp_recog_custom_settings{id_suffix}"
     # Add lp_recog specific settings - it uses ai_models_imx500 and ai_models_cpu
@@ -199,6 +198,24 @@ def change_lp_recog_custom_settings(data: dict, id_suffix: str) -> None:
 def validate_lp_recog_custom_settings(data: dict, id_suffix: str) -> None:
     assert data["res_info"]["res_id"] == f"lp_recog_custom_settings{id_suffix}"
     assert data["custom_settings"]["res_info"]["res_id"] == f"lp_recog_custom_settings{id_suffix}"
+    if "ai_models_imx500" in data["custom_settings"]:
+        assert data["custom_settings"]["ai_models_imx500"]["lp_detection"]["parameters"]["max_detections"] == 10
+    if "ai_models_cpu" in data["custom_settings"]:
+        assert data["custom_settings"]["ai_models_cpu"]["lp_recognition"]["parameters"]["threshold"] == 0.8
+
+def change_lp_recog_y_custom_settings(data: dict, id_suffix: str) -> None:
+    data["req_info"]["req_id"] = f"lp_recog_y_custom_settings{id_suffix}"
+    # Add lp_recog_y specific settings - it uses ai_models_imx500 and ai_models_cpu
+    if "ai_models_imx500" in data["custom_settings"]:
+        data["custom_settings"]["ai_models_imx500"]["lp_detection"]["parameters"]["max_detections"] = 10
+    if "ai_models_cpu" in data["custom_settings"]:
+        data["custom_settings"]["ai_models_cpu"]["lp_recognition"]["parameters"]["threshold"] = 0.8
+    send_data(data)
+    time.sleep(INTEGRATION_TEST_INTERVAL_SECONDS)
+
+def validate_lp_recog_y_custom_settings(data: dict, id_suffix: str) -> None:
+    assert data["res_info"]["res_id"] == f"lp_recog_y_custom_settings{id_suffix}"
+    assert data["custom_settings"]["res_info"]["res_id"] == f"lp_recog_y_custom_settings{id_suffix}"
     if "ai_models_imx500" in data["custom_settings"]:
         assert data["custom_settings"]["ai_models_imx500"]["lp_detection"]["parameters"]["max_detections"] == 10
     if "ai_models_cpu" in data["custom_settings"]:
@@ -324,6 +341,7 @@ CUSTOM_SETTINGS_PER_APP = {
     "apitest": change_apitest_custom_settings,
     "switch_dnn": change_switch_dnn_custom_settings,
     "lp_recog": change_lp_recog_custom_settings,  # lp_recog is similar to detection
+    "lp_recog_y": change_lp_recog_y_custom_settings,
     "ssl": change_ssl_custom_settings,
 }
 
@@ -338,6 +356,7 @@ VALIDATE_CUSTOM_SETTINGS_PER_APP = {
     "apitest": validate_apitest_custom_settings,
     "switch_dnn": validate_switch_dnn_custom_settings,
     "lp_recog": validate_lp_recog_custom_settings,  # lp_recog is similar to detection
+    "lp_recog_y": validate_lp_recog_y_custom_settings,
     "ssl": validate_ssl_custom_settings,
 }
 

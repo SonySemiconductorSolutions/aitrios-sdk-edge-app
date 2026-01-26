@@ -73,7 +73,6 @@ int AiModel::Verify(JSON_Object *obj) {
 }
 
 int AiModel::Apply(JSON_Object *obj) {
-  int32_t result = 0;
   LOG_INFO("AiModel::Apply enters");
 
   name = json_object_has_value(obj, NAME) ? json_object_get_string(obj, NAME)
@@ -88,12 +87,13 @@ int AiModel::Apply(JSON_Object *obj) {
                                           : nullptr;
 
   if (!name || !target || !url_path || !hash) {
-    result = -1;
     LOG_ERR("Some property missing");
     DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
     dtdl->GetResInfo()->SetDetailMsg(
         "Some AI model property missing. Please set valid values for name, "
         "target, url_path, and hash.");
+    dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
+    return -1;
   }
 
   json_object_set_string(json_obj, NAME, name);
@@ -113,16 +113,47 @@ int AiModel::Apply(JSON_Object *obj) {
   info.urllen = strlen(url_path);
   info.hash = strdup(hash);
   EdgeAppLibReceiveDataResult ret = EdgeAppLibReceiveData(&info, 5000);
+  DtdlModel *dtdl = StateMachineContext::GetInstance(nullptr)->GetDtdlModel();
   if (ret != EdgeAppLibReceiveDataResultSuccess) {
-    LOG_ERR("EdgeAppLibReceiveDatafailed with EdgeAppLibReceiveDataResult: %d",
+    LOG_ERR("EdgeAppLibReceiveData failed with EdgeAppLibReceiveDataResult: %d",
             ret);
+    switch (ret) {
+      case EdgeAppLibReceiveDataResultTimeout:
+        dtdl->GetResInfo()->SetDetailMsg("ReceiveDataAwait timeout.");
+        dtdl->GetResInfo()->SetCode(CODE_DEADLINE_EXCEEDED);
+        break;
+      case EdgeAppLibReceiveDataResultUninitialized:
+        dtdl->GetResInfo()->SetDetailMsg(
+            "EVP client or workspace is not initialized.");
+        dtdl->GetResInfo()->SetCode(CODE_FAILED_PRECONDITION);
+        break;
+      case EdgeAppLibReceiveDataResultDenied:
+        dtdl->GetResInfo()->SetDetailMsg("EVP_BLOB_CALLBACK denied.");
+        dtdl->GetResInfo()->SetCode(CODE_CANCELLED);
+        break;
+      case EdgeAppLibReceiveDataResultDataTooLarge:
+        dtdl->GetResInfo()->SetDetailMsg("map_set or malloc failed.");
+        dtdl->GetResInfo()->SetCode(CODE_RESOURCE_EXHAUSTED);
+        break;
+      case EdgeAppLibReceiveDataResultInvalidParam:
+        dtdl->GetResInfo()->SetDetailMsg(
+            "Invalid parameters for EdgeAppLibReceiveData.");
+        dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
+        break;
+      default:
+        dtdl->GetResInfo()->SetDetailMsg(
+            "EVP_blobOperation AI Model Download failed.");
+        dtdl->GetResInfo()->SetCode(CODE_INTERNAL);
+    }
     return -1;
   }
+  dtdl->GetResInfo()->SetDetailMsg("");
+  dtdl->GetResInfo()->SetCode(CODE_OK);
 
   free(info.url);
   free(info.hash);
   LOG_INFO("AiModel::Apply exits");
-  return result;
+  return 0;
 }
 
 void AiModel::StoreValue(const char *name, const char *target,

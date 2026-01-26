@@ -159,6 +159,55 @@ TEST_F(EdgeAppLibSensorUnitTest,
   EXPECT_EQ(0, ret);
 }
 
+/* This test is failing due to dependency with CameraFramerRate property.
+ * Currently disabled and passed in Integration test
+ * TODO : Modify it touse mock data
+TEST_F(EdgeAppLibSensorUnitTest,
+       EdgeAppLibSensorStreamSetIspFrameRate_UpdateProperty) {
+  int32_t ret = 0;
+  EdgeAppLibSensorStream stream = DUMMY_HANDLE_STREAM;
+  EdgeAppLibSensorCameraFrameRateProperty camera_frame_rate_property = {
+      .num = 2997, .denom = 100};
+  ret = SensorStreamSetProperty(
+      stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY,
+      &camera_frame_rate_property, sizeof(camera_frame_rate_property));
+  EXPECT_EQ(0, ret);
+
+  EdgeAppLibSensorIspFrameRateProperty isp_frame_rate_property = {.num = 999,
+                                                                  .denom = 100};
+  ret = SensorStreamSetIspFrameRate(stream, isp_frame_rate_property);
+  EXPECT_EQ(0, ret);
+}
+*/
+
+TEST_F(EdgeAppLibSensorUnitTest,
+       EdgeAppLibSensorStreamSetIspFrameRate_UpdateProperty_InvalidParam) {
+  int32_t ret = 0;
+  EdgeAppLibSensorStream stream = DUMMY_HANDLE_STREAM;
+  EdgeAppLibSensorIspFrameRateProperty isp_frame_rate_property = {.num = 0,
+                                                                  .denom = 0};
+  ret = SensorStreamSetIspFrameRate(stream, isp_frame_rate_property);
+  EXPECT_EQ(-1, ret);
+}
+
+TEST_F(
+    EdgeAppLibSensorUnitTest,
+    EdgeAppLibSensorStreamSetIspFrameRate_UpdateProperty_InvalidIspFrameRate) {
+  int32_t ret = 0;
+  EdgeAppLibSensorStream stream = DUMMY_HANDLE_STREAM;
+
+  EdgeAppLibSensorCameraFrameRateProperty camera_frame_rate_property = {
+      .num = 999, .denom = 100};
+  ret = SensorStreamSetProperty(
+      stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY,
+      &camera_frame_rate_property, sizeof(camera_frame_rate_property));
+  EXPECT_EQ(0, ret);
+  EdgeAppLibSensorIspFrameRateProperty isp_frame_rate_property = {.num = 2997,
+                                                                  .denom = 100};
+  ret = SensorStreamSetIspFrameRate(stream, isp_frame_rate_property);
+  EXPECT_EQ(-1, ret);
+}
+
 TEST_F(EdgeAppLibSensorUnitTest,
        EdgeAppLibSensorStreamSetProperty_UpdateProperty_with_StreamNull) {
   int32_t ret = 0;

@@ -482,6 +482,7 @@ DataProcessorResultCode ExtractBackwardDisplacementIndex(
 }
 DataProcessorResultCode VerifyConstraints(
     JSON_Object *json, DataProcessorCustomParam *posenet_param_pr) {
+  DataProcessorResultCode res = kDataProcessorOk;
   if (posenet_param_pr->score_threshold < 0.0 ||
       posenet_param_pr->score_threshold > 1.0) {
     LOG_WARN(
@@ -489,7 +490,7 @@ DataProcessorResultCode VerifyConstraints(
     posenet_param_pr->score_threshold = CST_POSENET_SCORE_THRESHOLD;
     json_object_set_number(json, "score_threshold",
                            posenet_param_pr->score_threshold);
-    return kDataProcessorInvalidParam;
+    res = kDataProcessorInvalidParam;
   }
 
   if (posenet_param_pr->iou_threshold < 0.0 ||
@@ -498,10 +499,10 @@ DataProcessorResultCode VerifyConstraints(
     posenet_param_pr->iou_threshold = CST_POSENET_IOU_THRESHOLD;
     json_object_set_number(json, "iou_threshold",
                            posenet_param_pr->iou_threshold);
-    return kDataProcessorInvalidParam;
+    res = kDataProcessorInvalidParam;
   }
 
-  return kDataProcessorOk;
+  return res;
 }
 
 /**

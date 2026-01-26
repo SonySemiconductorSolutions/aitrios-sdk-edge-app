@@ -26,5 +26,9 @@ int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
   EdgeAppLibDrawRectangleCalled = 1;
   return EdgeAppLibDrawRectangleReturn;
 }
+int32_t ResizeRectangle(const struct EdgeAppLibDrawBuffer *src,
+                        struct EdgeAppLibDrawBuffer *dst) {
+  return 0;
+}
 int wasEdgeAppLibDrawRectangleCalled() { return EdgeAppLibDrawRectangleCalled; }
 void resetEdgeAppLibDrawRectangle() { EdgeAppLibDrawRectangleCalled = 0; }

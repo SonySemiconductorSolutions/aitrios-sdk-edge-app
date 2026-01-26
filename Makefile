@@ -38,7 +38,7 @@ all: docker_build
 	  	/bin/sh -c "\
 		mkdir -p $(BUILDDIR) && \
 		cd $(BUILDDIR) && \
-		cmake -DCMAKE_TOOLCHAIN_FILE=/opt/wasi-sdk/share/cmake/wasi-sdk-pthread.cmake -DOpenCV_DIR=$(OPENCV_INSTALL_CMAKE_DIR) $(CMAKE_FLAGS) .. && make && \
+		cmake -DCMAKE_TOOLCHAIN_FILE=$(WASI_SDK_PATH)/share/cmake/wasi-sdk-pthread.cmake -DOpenCV_DIR=$(OPENCV_INSTALL_CMAKE_DIR) $(CMAKE_FLAGS) .. && make && \
 		if [ \"$(DEBUG_AOT)\" = \"1\" ]; then \
 			echo 'DEBUG_AOT is enabled: Copying $(BUILDDIR)/$(MODULE_NAME) to $(TARGET)'; \
 			cp $(BUILDDIR)/$(MODULE_NAME) $(TARGET); \

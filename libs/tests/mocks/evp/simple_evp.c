@@ -16,6 +16,7 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
+#include <libgen.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -63,7 +64,15 @@ typedef struct {
 
 static RingBuffer operations;
 static EVP evp;
+static void make_parent_dirs(const char *path) {
+  char tmp[512];
+  snprintf(tmp, sizeof(tmp), "%s", path);
 
+  char *dir = dirname(tmp);
+  char cmd[1024];
+  snprintf(cmd, sizeof(cmd), "mkdir -p %s", dir);
+  system(cmd);
+}
 static void *entrypoint(void *args) {
   int server_fd, new_socket;
   struct sockaddr_in address;
@@ -232,6 +241,16 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
   if ((op == EVP_BLOB_OP_GET) &&
       ((type == EVP_BLOB_TYPE_EVP_EXT) || (type == EVP_BLOB_TYPE_EVP))) {
     return EVP_NOTSUP;
+  }
+
+  if (op == EVP_BLOB_OP_GET) {
+    LOG_INFO("EVP_blobOperation: GET blob operation %s", localStore->filename);
+    make_parent_dirs(localStore->filename);
+    FILE *fp = fopen(localStore->filename, "w");
+    if (fp == NULL) {
+      LOG_ERR("EVP_blobOperation: cannot open file %s", localStore->filename);
+      return EVP_ERROR;
+    }
   }
 
   struct EVP_BlobResultEvp vp = {EVP_BLOB_RESULT_SUCCESS, 201, 0};
