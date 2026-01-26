@@ -49,6 +49,7 @@ These functionalities ensure developers have comprehensive control over sensor d
 | `SensorGetLastErrorLevel`       | Gets the last error level               |
 | `SensorGetLastErrorCause`       | Gets the cause of the last error        |
 | `SensorGetLastErrorString`      | Gets error description                  |
+| `SensorStreamSetIspFrameRate`   | Sets the ISP FrameRate on Raspberry Pi  |
 
 ### Usage Example
 

@@ -378,6 +378,7 @@ TEST_F(EdgeAppLibSensorUnitTest,
           SetArgPointee<1>(AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_INPUT_IMAGE),
           Return(0)));
   ret = SensorChannelGetRawData(channel, &raw_data);
+  free(raw_data.address);  // this is the restriction of FileIO mock
   ASSERT_EQ(ret, 0);
 }
 

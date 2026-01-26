@@ -107,12 +107,6 @@ int FrameRate::Apply(JSON_Object *obj) {
     dtdl->GetResInfo()->SetCode(CODE_INVALID_ARGUMENT);
     /* LCOV_EXCL_STOP */
   }
-  // Temporary set fixed ISP framerate because of no clear spec
-  aux_framerate.num = 999;
-  aux_framerate.denom = 100;
-  // Don't care about the result of ISP framerate setting
-  SensorStreamSetProperty(stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
-                          &aux_framerate, sizeof(aux_framerate));
 
   return result;
 }

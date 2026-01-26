@@ -25,4 +25,4 @@ int wasEdgeAppLibSendDataSyncMetaCalled();
 void setSendDataImage(EdgeAppLibSendDataResult result);
 void resetSendDataImageSuccess();
 int wasEdgeAppLibSendDataSyncImageCalled();
-#endif  // MOCKS_MOCK_PROCSS_FORMAT_HPP
+#endif  // MOCKS_MOCK_SEND_DATA_HPP

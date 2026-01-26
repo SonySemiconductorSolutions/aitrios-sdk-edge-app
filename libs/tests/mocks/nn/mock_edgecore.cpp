@@ -179,10 +179,9 @@ Tensor GetOutput(EdgeAppCoreCtx &ctx, EdgeAppLibSensorFrame, uint32_t) {
         return g_mock_outputs[i].output_tensor;
       }
     }
-  } else {
-    LOG_WARN("Mock GetOutput: Simulated error, returning empty tensor");
-    return g_mock_tensor;  // Return empty tensor
   }
+  LOG_WARN("Mock GetOutput: Simulated error, returning empty tensor");
+  return g_mock_tensor;  // Return empty tensor
 }
 
 // New function for GetOutputs (returns vector)
@@ -269,5 +268,12 @@ EdgeAppCoreResult SendInputTensor(Tensor *) {
   EdgeAppCoreSendInputTensorCalled = 1;
   return send_it_result;
 }
+
+void ProcessedFrame::ProcessInternal(EdgeAppCoreCtx &ctx,
+                                     EdgeAppCoreCtx *shared_ctx,
+                                     EdgeAppLibSensorFrame frame,
+                                     EdgeAppLibSensorImageCropProperty &roi) {}
+
+ProcessedFrame ProcessedFrame::compute() { return std::move(*this); }
 
 }  // namespace EdgeAppCore

@@ -14,21 +14,21 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include "draw/mock_draw.hpp"
+#ifndef MOCK_AITRIOS_PREPROCESS_LIB_H
+#define MOCK_AITRIOS_PREPROCESS_LIB_H
 
-#include "draw.h"
-static int32_t EdgeAppLibDrawRectangleReturn = 0;
-static int EdgeAppLibDrawRectangleCalled = 0;
+#include "edgeapp_core.h"
 
-int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
-                      uint32_t top, uint32_t right, uint32_t bottom,
-                      struct EdgeAppLibColor color) {
-  EdgeAppLibDrawRectangleCalled = 1;
-  return EdgeAppLibDrawRectangleReturn;
-}
-int32_t ResizeRectangle(const struct EdgeAppLibDrawBuffer *src,
-                        struct EdgeAppLibDrawBuffer *dst) {
-  return 0;
-}
-int wasEdgeAppLibDrawRectangleCalled() { return EdgeAppLibDrawRectangleCalled; }
-void resetEdgeAppLibDrawRectangle() { EdgeAppLibDrawRectangleCalled = 0; }
+namespace PreprocessLib {
+
+EdgeAppCoreResult normalizePreprocess(const void *input_data,
+                                      EdgeAppLibImageProperty input_property,
+                                      void **output_data,
+                                      EdgeAppLibImageProperty *output_property);
+EdgeAppCoreResult grayscalePreprocess(const void *input_data,
+                                      EdgeAppLibImageProperty input_property,
+                                      EdgeAppCore::Tensor *output_tensor);
+
+}  // namespace PreprocessLib
+
+#endif /* MOCK_AITRIOS_PREPROCESS_LIB_H */

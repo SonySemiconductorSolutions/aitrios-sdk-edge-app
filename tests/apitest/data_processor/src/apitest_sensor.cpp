@@ -604,6 +604,36 @@ int32_t RunApiTestScenarioProperty() {
     if (res_sensor != 0) {
       LOG_WARN("ApiTest failed %d\n", res_sensor);
       CLEANUP_RELEASEFRAME
+      return -STREAM_SET_PROPERTY - PARAM_ALL - RETUN_ERR + res_sensor;
+    }
+  }
+
+  // API SensorStreamSetIspFrameRate stream, ispFrameRates error ret :-1
+  EdgeAppLibSensorIspFrameRateProperty frameRatesErr[] = {{99, 0}, {0, 0}};
+  for (int i = 0; i < sizeof(frameRatesErr) / sizeof(frameRatesErr[0]); i++) {
+#if MOCK_APITEST
+    setEdgeAppLibSensorStreamSetIspFrameRateFail();
+#endif  // MOCK_APITEST
+    res_sensor = SensorStreamSetIspFrameRate(stream, frameRatesErr[i]);
+#if MOCK_APITEST
+    resetEdgeAppLibSensorStreamSetIspFrameRateSuccess();
+#endif  // MOCK_APITEST
+    if (res_sensor != -1) {
+      LOG_WARN("ApiTest failed %d\n", res_sensor);
+      CLEANUP_RELEASEFRAME
+      return -STREAM_SET_PROPERTY - PARAM_ALL - RETUN_ERR + res_sensor;
+    }
+  }
+
+  // API SensorStreamSetIspFrameRate stream, ispFrameRates ret :0
+  EdgeAppLibSensorIspFrameRateProperty frameRates[] = {
+      {99, 100},   {499, 100},  {999, 100},  {1248, 100},
+      {1498, 100}, {1998, 100}, {2497, 100}, {2997, 100}};
+  for (int i = 0; i < sizeof(frameRates) / sizeof(frameRates[0]); i++) {
+    res_sensor = SensorStreamSetIspFrameRate(stream, frameRates[i]);
+    if (res_sensor != 0) {
+      LOG_WARN("ApiTest failed %d\n", res_sensor);
+      CLEANUP_RELEASEFRAME
       return -STREAM_SET_PROPERTY - PARAM_ALL - RETUN_NRM + res_sensor;
     }
   }

@@ -228,6 +228,56 @@ int32_t SensorChannelGetProperty(EdgeAppLibSensorChannel channel,
   LOG_TRACE("senscord_channel_get_property %s %d", property_key, result);
   return result;
 }
+
+/**
+ * Sensor Wrapper implementation API (to call senscord_stream_set_isp_frame_rate
+ * internally).
+ */
+int32_t SensorStreamSetIspFrameRate(
+    EdgeAppLibSensorStream stream,
+    const EdgeAppLibSensorIspFrameRateProperty ispFrameRate) {
+  LOG_TRACE("EdgeAppLibSensorStreamSetIspFrameRate start");
+
+  if (ispFrameRate.num == 0 || ispFrameRate.denom == 0) {
+    LOG_ERR("Invalid values for num and denom in IspFrameRate");
+    return -1;
+  }
+
+  /* Check IspFrameRate is < CameraFrameRate of sensor */
+  EdgeAppLibSensorCameraFrameRateProperty frameRate = {.num = 0, .denom = 0};
+  int32_t result = SensorStreamGetProperty(
+      stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &frameRate,
+      sizeof(frameRate));
+
+  if (result != 0) {
+    LOG_ERR(
+        "Unable to fetch camera frame rate property for validation. Error: %d",
+        result);
+    LOG_ERR("IspFrameRate property failed to set");
+    return -1;
+  }
+  if ((frameRate.num == 0 || frameRate.denom == 0) ||
+      ((ispFrameRate.num / ispFrameRate.denom) >
+       (frameRate.num / frameRate.denom))) {
+    LOG_ERR(
+        "IspFrameRate should be <= CameraFrameRate."
+        "IspFrameRate property failed to set."
+        "frameRate.num=%d, frameRate.denom=%d"
+        "IspFrameRate.num=%d, IspFrameRate.denom=%d",
+        frameRate.num, frameRate.denom, ispFrameRate.num, ispFrameRate.denom);
+    return -1;
+  }
+
+  result = SensorStreamSetProperty(stream,
+                                   AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
+                                   &ispFrameRate, sizeof(ispFrameRate));
+  if (result != 0) {
+    LOG_ERR(
+        "IspFrameRate property failed to set. Please use valid values for num "
+        "and denom");
+  }
+  return result;
+}
 #ifdef __cplusplus
 }
 #endif

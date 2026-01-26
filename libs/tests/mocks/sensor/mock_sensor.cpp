@@ -77,6 +77,8 @@ EdgeAppLibSensorErrorLevel EdgeAppLibSensorGetLastErrorLevelSuccess =
 static int EdgeAppLibSensorGetLastErrorCauseCalled = 0;
 EdgeAppLibSensorErrorCause EdgeAppLibSensorGetLastErrorCauseSuccess =
     AITRIOS_SENSOR_ERROR_NONE;
+static int EdgeAppLibSensorStreamSetIspFrameRateCalled = 0;
+static int EdgeAppLibSensorStreamSetIspFrameRateSuccess = 0;
 static EdgeAppLibSensorImageProperty EdgeAppLibSensorChannelImageProperty = {};
 
 typedef struct {
@@ -475,6 +477,12 @@ int32_t SensorCoreOpenStream(EdgeAppLibSensorCore core, const char *stream_key,
       *stream, AITRIOS_SENSOR_INPUT_DATA_TYPE_PROPERTY_KEY, &enabled,
       sizeof(EdgeAppLibSensorInputDataTypeProperty));
 
+  EdgeAppLibSensorCameraFrameRateProperty frameRate = {.num = 2997,
+                                                       .denom = 100};
+  EdgeAppLib::SensorStreamSetProperty(
+      *stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &frameRate,
+      sizeof(frameRate));
+
   EdgeAppLibSensorInfoStringProperty sensor_name = {0};
   sensor_name.category = AITRIOS_SENSOR_INFO_STRING_SENSOR_NAME;
 
@@ -621,6 +629,28 @@ int32_t SensorChannelGetProperty(EdgeAppLibSensorChannel channel,
 
     snprintf(image_property->pixel_format, AITRIOS_SENSOR_PIXEL_FORMAT_LENGTH,
              "%s", EdgeAppLibSensorChannelImageProperty.pixel_format);
+  } else if (strncmp(property_key, AITRIOS_SENSOR_IMAGE_PROPERTY_KEY,
+                     strlen(property_key)) == 0) {
+    EdgeAppLibSensorImageProperty *image_property =
+        (EdgeAppLibSensorImageProperty *)value;
+    image_property->width = 416;
+    image_property->height = 320;
+    image_property->stride_bytes = 416 * 3;  // 1 * 3
+
+    snprintf(image_property->pixel_format, sizeof(image_property->pixel_format),
+             "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
+  } else if (strncmp(property_key, AITRIOS_SENSOR_TENSOR_SHAPES_PROPERTY_KEY,
+                     strlen(property_key)) == 0) {
+    EdgeAppLibSensorTensorShapesProperty *tensor_shapes_property =
+        (EdgeAppLibSensorTensorShapesProperty *)value;
+    tensor_shapes_property->tensor_count = 3;
+    tensor_shapes_property->shapes_array[0] = 2;
+    tensor_shapes_property->shapes_array[1] = 200;
+    tensor_shapes_property->shapes_array[2] = 4;
+    tensor_shapes_property->shapes_array[3] = 1;
+    tensor_shapes_property->shapes_array[4] = 200;
+    tensor_shapes_property->shapes_array[5] = 1;
+    tensor_shapes_property->shapes_array[6] = 200;
   }
 
   return EdgeAppLibSensorChannelGetPropertySuccess;
@@ -642,6 +672,57 @@ int32_t SensorGetLastErrorString(enum EdgeAppLibSensorStatusParam param,
   // TODO: fill in the buffer and specify its length
   EdgeAppLibSensorGetLastErrorStringCalled = 1;
   return EdgeAppLibSensorGetLastErrorStringSuccess;
+}
+int32_t SensorStreamSetIspFrameRate(
+    EdgeAppLibSensorStream stream,
+    const EdgeAppLibSensorIspFrameRateProperty ispFrameRate) {
+  LOG_TRACE("Mock EdgeAppLibSensorStreamSetIspFrameRate start");
+  EdgeAppLibSensorStreamSetIspFrameRateCalled = 1;
+
+  if (EdgeAppLibSensorStreamSetIspFrameRateSuccess != 0) {
+    return EdgeAppLibSensorStreamSetIspFrameRateSuccess;
+  }
+
+  if (ispFrameRate.num == 0 || ispFrameRate.denom == 0) {
+    LOG_ERR("Invalid values for num and denom in IspFrameRate");
+    return -1;
+  }
+
+  /* Check IspFrameRate is < CameraFrameRate of sensor */
+  EdgeAppLibSensorCameraFrameRateProperty frameRate = {.num = 0, .denom = 0};
+  int32_t result = SensorStreamGetProperty(
+      stream, AITRIOS_SENSOR_CAMERA_FRAME_RATE_PROPERTY_KEY, &frameRate,
+      sizeof(frameRate));
+  if (result != 0) {
+    LOG_ERR(
+        "Unable to fetch camera frame rate property for validation. Error: %d",
+        result);
+    LOG_ERR("IspFrameRate property failed to set");
+    return -1;
+  }
+  if ((frameRate.num == 0 || frameRate.denom == 0) ||
+      ((ispFrameRate.num / ispFrameRate.denom) >
+       (frameRate.num / frameRate.denom))) {
+    LOG_ERR(
+        "IspFrameRate should be <= CameraFrameRate."
+        "IspFrameRate property failed to set.");
+    return -1;
+  }
+
+  // Store the property in the property map
+  MapValue _value;
+  std::string _key(AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY);
+  if (property_map.find(_key) != property_map.end()) {
+    _value = property_map[_key];
+  } else {
+    _value.value = malloc(sizeof(EdgeAppLibSensorIspFrameRateProperty));
+    _value.value_size = sizeof(EdgeAppLibSensorIspFrameRateProperty);
+  }
+  memcpy(_value.value, &ispFrameRate,
+         sizeof(EdgeAppLibSensorIspFrameRateProperty));
+  property_map[_key] = _value;
+
+  return EdgeAppLibSensorStreamSetIspFrameRateSuccess;
 }
 int32_t SensorInputDataTypeEnableChannel(
     EdgeAppLibSensorInputDataTypeProperty *property, uint32_t channel_id,
@@ -890,4 +971,17 @@ void resetEdgeAppLibSensorChannelImageProperty() {
   snprintf(EdgeAppLibSensorChannelImageProperty.pixel_format,
            sizeof(EdgeAppLibSensorChannelImageProperty.pixel_format), "%s",
            AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
+}
+
+int wasEdgeAppLibSensorStreamSetIspFrameRateCalled() {
+  return EdgeAppLibSensorStreamSetIspFrameRateCalled;
+}
+void setEdgeAppLibSensorStreamSetIspFrameRateFail() {
+  EdgeAppLibSensorStreamSetIspFrameRateSuccess = -1;
+}
+void resetEdgeAppLibSensorStreamSetIspFrameRateSuccess() {
+  EdgeAppLibSensorStreamSetIspFrameRateSuccess = 0;
+}
+void resetEdgeAppLibSensorStreamSetIspFrameRateCalled() {
+  EdgeAppLibSensorStreamSetIspFrameRateCalled = 0;
 }

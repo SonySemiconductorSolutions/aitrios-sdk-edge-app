@@ -47,6 +47,8 @@ struct EdgeAppLibReceiveDataFuture {
 extern "C" {
 #endif
 
+#define MAX_AI_MODEL_DOWNLOAD_RETRY 2
+
 /*
  * Concurrent calls with the same evp_client_ are not safe,
  * To avoid this, the EdgeAppLibReceiveData should not
@@ -188,7 +190,7 @@ static EdgeAppLibReceiveDataFuture *Download_Blob(
       EVP_getWorkspaceDirectory(evp_client_, EVP_WORKSPACE_TYPE_DEFAULT);
   if (workspace == nullptr) {
     LOG_ERR("Failed to get workspace directory");
-    future->result = EdgeAppLibReceiveDataResultFailure;
+    future->result = EdgeAppLibReceiveDataResultUninitialized;
     return future;
   }
   char *suffix = GetSuffixFromUrl((const char *)(info->url));
@@ -220,7 +222,7 @@ static EdgeAppLibReceiveDataFuture *Download_Blob(
     LOG_ERR("map_set failed");
     free(module_vars->download);
     free(module_vars->filename);
-    future->result = EdgeAppLibReceiveDataResultDenied;
+    future->result = EdgeAppLibReceiveDataResultDataTooLarge;
     return future;
   }
 
@@ -240,6 +242,38 @@ static EdgeAppLibReceiveDataFuture *Download_Blob(
   }
 
   return future;
+}
+
+static int HashCheckAndRetry(EdgeAppLibReceiveDataInfo *info) {
+  static int retry = 0;
+  char full_path[MAX_PATH_LEN];
+
+  if (info == nullptr) {
+    retry = 0;
+    return retry;
+  } else {
+    retry++;
+  }
+  const char *workspace =
+      EVP_getWorkspaceDirectory(evp_client_, EVP_WORKSPACE_TYPE_DEFAULT);
+  if (workspace == nullptr) {
+    return retry;
+  }
+  char *suffix = GetSuffixFromUrl((const char *)(info->url));
+  if (suffix) {
+    snprintf(full_path, MAX_PATH_LEN, "%s/%s%s", workspace, info->filename,
+             suffix);
+    ReleaseSuffixString(suffix);
+  } else {
+    snprintf(full_path, MAX_PATH_LEN, "%s/%s", workspace, info->filename);
+  }
+  if (IsFileHashCorrect(info->hash, full_path)) {
+    LOG_INFO("Downloaded model file verified.");
+    retry = 0;
+  } else {
+    LOG_ERR("Hash verification did not pass, retry %d.", retry);
+  }
+  return retry;
 }
 
 EdgeAppLibReceiveDataResult EdgeAppLibReceiveDataInitialize(void *evp_client) {
@@ -277,21 +311,31 @@ EdgeAppLibReceiveDataResult EdgeAppLibReceiveData(
   if (future == nullptr) { /* LCOV_EXCL_BR_LINE: null check */
     LOG_ERR("Download_Blob failed to initialize future"); /* LCOV_EXCL_LINE:
                                                              null check */
-    goto error; /* LCOV_EXCL_LINE: null check */
-  }
-  if (result != EdgeAppLibReceiveDataResultFailure &&
-      result != EdgeAppLibReceiveDataResultDenied) {
+    result = EdgeAppLibReceiveDataResultDataTooLarge;
+  } else if (result != EdgeAppLibReceiveDataResultFailure &&
+             result != EdgeAppLibReceiveDataResultDataTooLarge &&
+             result != EdgeAppLibReceiveDataResultDenied) {
     result = ReceiveDataAwait(future, timeout_ms);
   } else {
     LOG_ERR("Download_Blob failed with EdgeAppLibReceiveDataResult: %d",
             future->result);
     free(future);
-    goto error;
   }
-  return result;
 
-error:
-  return EdgeAppLibReceiveDataResultFailure;
+  if (result == EdgeAppLibReceiveDataResultSuccess) {
+    int retry = HashCheckAndRetry(info);
+    if (retry > MAX_AI_MODEL_DOWNLOAD_RETRY) {
+      result = EdgeAppLibReceiveDataResultFailure;
+      HashCheckAndRetry(nullptr);
+    } else if (retry > 0) {
+      result = EdgeAppLibReceiveData(info, timeout_ms);
+    }
+  } else {
+    LOG_ERR("Skip hash check because other downloading error happened.");
+    HashCheckAndRetry(nullptr);
+  }
+
+  return result;
 }
 
 const char *EdgeAppLibReceiveDataStorePath() {

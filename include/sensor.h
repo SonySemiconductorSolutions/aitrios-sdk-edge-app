@@ -345,6 +345,25 @@ struct EdgeAppLibSensorCameraFrameRateProperty {
  * @details String of key to set/get property
  */
 #define AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY "isp_frame_rate_property"
+/**
+ * @struct EdgeAppLibSensorIspFrameRateProperty
+ * @brief Value of AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY
+ * @details Frame rate of ISP. Should be <= CameraFrameRate
+   @verbatim
+   e.g.)
+   +-------------+------+-------+
+   | frame rate  | num  | denom |
+   +-------------+------+-------+
+   |  0.99 [fps] |  99  |  100  |
+   +-------------+------+-------+
+   | 29.97 [fps] | 2997 |  100  |
+   +-------------+------+-------+
+   @endverbatim
+ */
+struct EdgeAppLibSensorIspFrameRateProperty {
+  uint32_t num;
+  uint32_t denom;
+};
 
 /* == CameraImageSizeProperty == */
 /**
@@ -1304,6 +1323,17 @@ int32_t SensorStreamGetProperty(EdgeAppLibSensorStream stream,
 int32_t SensorStreamSetProperty(EdgeAppLibSensorStream stream,
                                 const char *property_key, const void *value,
                                 size_t value_size);
+
+/**
+ * @brief Set IspFrameRate to EdgeAppLibSensor stream
+ * @param[in] stream Handle of stream to set property
+ * @param[in] ispFrameRate EdgeAppLibSensorIspFrameRate property object
+ * @return Zero for success or negative value for failure
+ * @details IspFrameRate should be less than CameraFrameRate
+ */
+int32_t SensorStreamSetIspFrameRate(
+    EdgeAppLibSensorStream stream,
+    const EdgeAppLibSensorIspFrameRateProperty ispFrameRate);
 
 /**
  * @brief Get channel that is specified by Channel ID

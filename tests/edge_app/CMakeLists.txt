@@ -27,6 +27,7 @@ if(EVP_MOCK EQUAL 1)
 endif()
 
 add_compile_definitions(MOCK_INTEGRATION_TEST)
+option(MOCK_INTEGRATION_TEST "mock integration tests is enabled" ON)
 
 #  TODO: split in per application part
 if(APPS_SELECTION STREQUAL "classification")
@@ -43,6 +44,9 @@ elseif(APPS_SELECTION STREQUAL "passthrough")
   add_compile_definitions(MOCK_PASSTHROUGH)
 elseif(APPS_SELECTION STREQUAL "lp_recog")
   message(STATUS "lp_recog detected")
+  add_compile_definitions(MOCK_LP_RECOG)
+elseif(APPS_SELECTION STREQUAL "lp_recog_y")
+  message(STATUS "lp_recog_y detected")
   add_compile_definitions(MOCK_LP_RECOG)
 elseif(APPS_SELECTION STREQUAL "apitest")
   message(STATUS "apitest detected")

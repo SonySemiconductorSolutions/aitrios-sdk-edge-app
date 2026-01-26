@@ -207,6 +207,7 @@ int onStart() {
     if (EdgeAppCore::LoadModel(models[i], *ctx_list[i], shared_list[i]) !=
         EdgeAppCoreResultSuccess) {
       LOG_ERR("Failed to load model %d.", i);
+      return -1;
     } else {
       LOG_INFO("Successfully loaded model %d: %s", i, models[i].model_name);
     }
@@ -217,6 +218,27 @@ int onStart() {
         ctx_list[i]->graph_ctx, ctx_list[i]->target);
   }
   s_stream = *ctx_imx500.sensor_stream;
+
+  EdgeAppLibSensorIspFrameRateProperty ispFrameRate = {.num = 999,
+                                                       .denom = 100};
+  int result = SensorStreamSetIspFrameRate(s_stream, ispFrameRate);
+  if (result == 0) {
+    LOG_DBG("IspFramerate property set");
+  } else {
+    LOG_ERR("Failed to set IspFrameRate err=%d", result);
+  }
+
+  ispFrameRate = {.num = 0, .denom = 0};
+  result = SensorStreamGetProperty(s_stream,
+                                   AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
+                                   &ispFrameRate, sizeof(ispFrameRate));
+  if (result == 0) {
+    LOG_INFO("Get IspFramerate property num=%d denom=%d", ispFrameRate.num,
+             ispFrameRate.denom);
+  } else {
+    LOG_ERR("Failed to get IspFrameRate err=%d", result);
+  }
+
   return 0;
 }
 

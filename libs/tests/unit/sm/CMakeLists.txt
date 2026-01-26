@@ -32,6 +32,7 @@ include_directories(
   ${LIBS_DIR}/receive_data/include
   ${LIBS_DIR}/common/include
   ${LIBS_DIR}/depend/edge_app
+  ${LIBS_DIR}/tests/mocks/receive_data
   ${SM_ROOT_DIR}/include
   ${SM_SRC_DIR}
   ${SM_SRC_DIR}/dtdl_model

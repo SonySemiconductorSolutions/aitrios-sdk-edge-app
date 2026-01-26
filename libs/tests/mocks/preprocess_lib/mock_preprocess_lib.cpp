@@ -14,21 +14,20 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include "draw/mock_draw.hpp"
+#include "preprocess_lib/mock_preprocess_lib.hpp"
 
-#include "draw.h"
-static int32_t EdgeAppLibDrawRectangleReturn = 0;
-static int EdgeAppLibDrawRectangleCalled = 0;
+namespace PreprocessLib {
 
-int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
-                      uint32_t top, uint32_t right, uint32_t bottom,
-                      struct EdgeAppLibColor color) {
-  EdgeAppLibDrawRectangleCalled = 1;
-  return EdgeAppLibDrawRectangleReturn;
+EdgeAppCoreResult normalizePreprocess(
+    const void *input_data, EdgeAppLibImageProperty input_property,
+    void **output_data, EdgeAppLibImageProperty *output_property) {
+  return EdgeAppCoreResultSuccess;
 }
-int32_t ResizeRectangle(const struct EdgeAppLibDrawBuffer *src,
-                        struct EdgeAppLibDrawBuffer *dst) {
-  return 0;
+
+EdgeAppCoreResult grayscalePreprocess(const void *input_data,
+                                      EdgeAppLibImageProperty input_property,
+                                      EdgeAppCore::Tensor *output_tensor) {
+  return EdgeAppCoreResultSuccess;
 }
-int wasEdgeAppLibDrawRectangleCalled() { return EdgeAppLibDrawRectangleCalled; }
-void resetEdgeAppLibDrawRectangle() { EdgeAppLibDrawRectangleCalled = 0; }
+
+}  // namespace PreprocessLib

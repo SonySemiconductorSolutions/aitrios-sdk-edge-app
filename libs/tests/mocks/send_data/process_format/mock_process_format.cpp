@@ -23,7 +23,6 @@
 
 static ProcessFormatResult ProcessFormatMetaSuccess = kProcessFormatResultOk;
 static const char *s_model_id = "1000";
-static uint8_t s_jpeg_buffer[100];
 
 void setProcessFormatMetaFail(ProcessFormatResult result) {
   ProcessFormatMetaSuccess = result;
@@ -78,7 +77,7 @@ ProcessFormatResult ProcessFormatInput(MemoryRef data, uint32_t datalen,
   // Simulate behavior based on codec_number
   if (codec_number == kProcessFormatImageTypeRaw) {
     // RAW: Pass the data directly
-    *jpeg_buffer = s_jpeg_buffer;
+    *jpeg_buffer = malloc(datalen);
     if (!*jpeg_buffer) {
       printf("ProcessFormatInput: Memory allocation failed for RAW data.\n");
       return kProcessFormatResultOther;
@@ -89,9 +88,9 @@ ProcessFormatResult ProcessFormatInput(MemoryRef data, uint32_t datalen,
   } else if (codec_number == kProcessFormatImageTypeJpeg) {
     // JPEG: Simulate JPEG encoding
     const int encoded_size = datalen / 2;  // Assume encoded JPEG is smaller
-    *jpeg_buffer = s_jpeg_buffer;
+    *jpeg_buffer = malloc(encoded_size);
     if (!*jpeg_buffer) {
-      printf("ProcessFormatInput: Memory allocation failed for RAW data.\n");
+      printf("ProcessFormatInput: Memory allocation failed for JPEG data.\n");
       return kProcessFormatResultOther;
     }
 

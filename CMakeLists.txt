@@ -28,6 +28,7 @@ set(APPS_LIST
   "perfbench"
   "apitest"
   "lp_recog"
+  "lp_recog_y"
   "ssl"
 )
 

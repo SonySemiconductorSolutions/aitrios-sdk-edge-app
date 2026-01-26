@@ -25,6 +25,7 @@
 #include "send_data_private.h"
 #include "sm_api.hpp"
 #define PORTNAME_META "metadata"
+#define PORTNAME_INPUT "input"
 
 namespace EdgeAppLib {
 #ifdef __cplusplus
@@ -53,16 +54,19 @@ EdgeAppLibSendDataResult SendDataSyncImage(
    */
   if ((datalen > 0) &&
       (datalen < image_property->stride_bytes * image_property->height)) {
-    LOG_WARN(
+    LOG_DBG(
         "Data length is less than the size of the image. "
         "Processing the data as raw data.");
     EdgeAppLibDataExportFuture *future =
         DataExportSendData((char *)PORTNAME_META, EdgeAppLibDataExportRaw, data,
                            datalen, timestamp, current, division);
-    DataExportAwait(future, timeout_ms);
+    EdgeAppLibDataExportResult send_ret = DataExportAwait(future, timeout_ms);
     DataExportCleanup(future);
 
-    return EdgeAppLibSendDataResultSuccess;
+    if (send_ret == EdgeAppLibDataExportResultSuccess)
+      return EdgeAppLibSendDataResultSuccess;
+    else
+      return EdgeAppLibSendDataResultFailure;
   }
 
   LOG_DBG(
@@ -70,6 +74,8 @@ EdgeAppLibSendDataResult SendDataSyncImage(
       "Processing the data as an image.");
   JSON_Object *json_object = getCodecSettings();
   int codec_number = json_object_get_number(json_object, "format");
+
+  LOG_WARN("Codec number from settings: %d", codec_number);
 
   void *codec_buffer = NULL;
   int32_t codec_size = 0;
@@ -91,12 +97,15 @@ EdgeAppLibSendDataResult SendDataSyncImage(
   }
 
   EdgeAppLibDataExportFuture *future = DataExportSendData(
-      (char *)PORTNAME_META, EdgeAppLibDataExportRaw, codec_buffer, codec_size,
+      (char *)PORTNAME_INPUT, EdgeAppLibDataExportRaw, codec_buffer, codec_size,
       timestamp, current, division);
-  DataExportAwait(future, timeout_ms);
+  EdgeAppLibDataExportResult send_ret = DataExportAwait(future, timeout_ms);
   DataExportCleanup(future);
 
-  return EdgeAppLibSendDataResultSuccess;
+  if (send_ret == EdgeAppLibDataExportResultSuccess)
+    return EdgeAppLibSendDataResultSuccess;
+  else
+    return EdgeAppLibSendDataResultFailure;
 }
 
 EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
@@ -140,11 +149,15 @@ EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
     EdgeAppLibDataExportFuture *future =
         DataExportSendData((char *)PORTNAME_META, EdgeAppLibDataExportMetadata,
                            json_buffer, strlen(json_buffer), timestamp);
-    DataExportAwait(future, timeout_ms);
+    EdgeAppLibDataExportResult send_ret = DataExportAwait(future, timeout_ms);
     DataExportCleanup(future);
     free(json_buffer);
     pthread_mutex_unlock(&inf_mutex);
-    return EdgeAppLibSendDataResultSuccess;
+
+    if (send_ret == EdgeAppLibDataExportResultSuccess)
+      return EdgeAppLibSendDataResultSuccess;
+    else
+      return EdgeAppLibSendDataResultFailure;
   }
   // Append one inference to Output Tensor
   JSON_Value *output_tensor_value = json_parse_string((char *)json_buffer);
@@ -167,6 +180,7 @@ EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
     return EdgeAppLibSendDataResultEnqueued;
   } else {
     // Send Data
+    EdgeAppLibSendDataResult send_ret = EdgeAppLibSendDataResultSuccess;
     pthread_mutex_lock(&inf_mutex);
     for (int i = 0; i < MAX_NUMBER_OF_INFERENCE_QUEUE; ++i) {
       if (output_tensor_vec[i].key == nullptr) break;
@@ -185,7 +199,11 @@ EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
       EdgeAppLibDataExportFuture *future = DataExportSendData(
           (char *)PORTNAME_META, EdgeAppLibDataExportMetadata, send_buffer,
           strlen(send_buffer), samllest_timestamp);
-      DataExportAwait(future, timeout_ms);
+      EdgeAppLibDataExportResult ret = DataExportAwait(future, timeout_ms);
+
+      if (ret != EdgeAppLibDataExportResultSuccess) {
+        send_ret = EdgeAppLibSendDataResultFailure;
+      }
       DataExportCleanup(future);
       json_free_serialized_string((char *)send_buffer);
       json_value_free(output_tensor_vec[i].value);
@@ -194,7 +212,7 @@ EdgeAppLibSendDataResult SendDataSyncMeta(void *data, int datalen,
     pthread_mutex_unlock(&inf_mutex);
 
     inf_cnt = 1;
-    return EdgeAppLibSendDataResultSuccess;
+    return send_ret;
   }
 }
 
