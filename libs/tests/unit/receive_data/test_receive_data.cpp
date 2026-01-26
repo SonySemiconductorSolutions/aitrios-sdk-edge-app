@@ -36,6 +36,9 @@
 #define CUSTOM_SETTINGS "custom_settings"
 #define DOWNLOAD_FILENAME "download_filename"
 #define DOWNLOAD_FILENAME_WITH_SUFFIX "download_filename.suffix"
+#define DOWNLOAD_FILENAME_0 "download_filename_0"
+#define DOWNLOAD_FILENAME_1 "download_filename_1"
+#define DOWNLOAD_FILENAME_2 "download_filename_2"
 #define DOWNLOAD_URL "download_file_url"
 #define DOWNLOAD_URL_WITH_SUFFIX "download_file_url.suffix"
 #define TEMP_DIR_1 "./tmp1"
@@ -74,22 +77,73 @@ class ReceiveDataTest : public ::testing::Test {
 TEST_F(ReceiveDataTest, SyncSuccess) {
   Mock_SetAsyncMode(false);
   setEvpBlobCallbackReason(EVP_BLOB_CALLBACK_REASON_DONE);
+  info.hash = strdup(TEMP_FILE_HASH);
+  const char *workspace =
+      EVP_getWorkspaceDirectory(evp_client, EVP_WORKSPACE_TYPE_DEFAULT);
+  ASSERT_NE(workspace, nullptr);
+  mkdir(workspace, 0755);
+  char filepath[256];
+  snprintf(filepath, sizeof(filepath), "%s/%s", workspace, DOWNLOAD_FILENAME_0);
+  FILE *f = fopen(filepath, "w");
+  ASSERT_NE(f, nullptr);
+  fprintf(f, TEMP_FILE_CONTENT);
+  fclose(f);
+  free(info.filename);
+  info.filename = strdup(DOWNLOAD_FILENAME_0);
+  info.filenamelen = strlen(DOWNLOAD_FILENAME_0);
   EXPECT_EQ(EdgeAppLibReceiveData(&info, 500),
             EdgeAppLibReceiveDataResultSuccess);
+  free(info.hash);
+  info.hash = nullptr;
+  unlink(filepath);
 }
 
 TEST_F(ReceiveDataTest, AsyncSuccess) {
   Mock_SetAsyncMode(true);
   setEvpBlobCallbackReason(EVP_BLOB_CALLBACK_REASON_DONE);
+  info.hash = strdup(TEMP_FILE_HASH);
+  const char *workspace =
+      EVP_getWorkspaceDirectory(evp_client, EVP_WORKSPACE_TYPE_DEFAULT);
+  ASSERT_NE(workspace, nullptr);
+  mkdir(workspace, 0755);
+  char filepath[256];
+  snprintf(filepath, sizeof(filepath), "%s/%s", workspace, DOWNLOAD_FILENAME_1);
+  FILE *f = fopen(filepath, "w");
+  ASSERT_NE(f, nullptr);
+  fprintf(f, TEMP_FILE_CONTENT);
+  fclose(f);
+  free(info.filename);
+  info.filename = strdup(DOWNLOAD_FILENAME_1);
+  info.filenamelen = strlen(DOWNLOAD_FILENAME_1);
   EXPECT_EQ(EdgeAppLibReceiveData(&info, 1000),
             EdgeAppLibReceiveDataResultSuccess);
+  free(info.hash);
+  info.hash = nullptr;
+  unlink(filepath);
 }
 
 TEST_F(ReceiveDataTest, AsyncSuccessNotimeout) {
   Mock_SetAsyncMode(true);
   setEvpBlobCallbackReason(EVP_BLOB_CALLBACK_REASON_DONE);
+  info.hash = strdup(TEMP_FILE_HASH);
+  const char *workspace =
+      EVP_getWorkspaceDirectory(evp_client, EVP_WORKSPACE_TYPE_DEFAULT);
+  ASSERT_NE(workspace, nullptr);
+  mkdir(workspace, 0755);
+  char filepath[256];
+  snprintf(filepath, sizeof(filepath), "%s/%s", workspace, DOWNLOAD_FILENAME_2);
+  FILE *f = fopen(filepath, "w");
+  ASSERT_NE(f, nullptr);
+  fprintf(f, TEMP_FILE_CONTENT);
+  fclose(f);
+  free(info.filename);
+  info.filename = strdup(DOWNLOAD_FILENAME_2);
+  info.filenamelen = strlen(DOWNLOAD_FILENAME_2);
   EXPECT_EQ(EdgeAppLibReceiveData(&info, -1),
             EdgeAppLibReceiveDataResultSuccess);
+  free(info.hash);
+  info.hash = nullptr;
+  unlink(filepath);
 }
 
 TEST_F(ReceiveDataTest, NullWorkspace) {
@@ -97,7 +151,7 @@ TEST_F(ReceiveDataTest, NullWorkspace) {
   Mock_SetNullWorkspace(true);
   setEvpBlobCallbackReason(EVP_BLOB_CALLBACK_REASON_DONE);
   EXPECT_EQ(EdgeAppLibReceiveData(&info, 1000),
-            EdgeAppLibReceiveDataResultFailure);
+            EdgeAppLibReceiveDataResultUninitialized);
 }
 
 TEST_F(ReceiveDataTest, MapSetFailure) {
@@ -110,7 +164,7 @@ TEST_F(ReceiveDataTest, MapSetFailure) {
     map_set((void *)key, nullptr);
   }
   EXPECT_EQ(EdgeAppLibReceiveData(&info, 1000),
-            EdgeAppLibReceiveDataResultFailure);
+            EdgeAppLibReceiveDataResultDataTooLarge);
   key = 0;
   for (int i = 0; i < MAX_FUTURES_QUEUE; ++i) {
     key += 4;

@@ -271,3 +271,50 @@ TEST_F(SendDataTest,
 
   setNumOfInfPerMsg(1);
 }
+
+TEST_F(SendDataTest, SendDataSyncImage_SuccessRGB) {
+  uint8_t in_data[12] = {0xa1, 0xa3, 0xa5, 0xa7, 0xa9, 0xab,
+                         0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1};
+  uint32_t in_size = sizeof(in_data);
+  uint64_t time_stamp = 10000;
+  int timeout_ms = -1;  // wait forever.
+  EdgeAppLibImageProperty image_property;
+  image_property.width = 2;
+  image_property.height = 2;
+  image_property.stride_bytes = 2 * 3;
+  snprintf(image_property.pixel_format, sizeof(image_property.pixel_format),
+           "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB24);
+
+  EdgeAppLibSendDataResult result = SendDataSyncImage(
+      in_data, in_size, &image_property, time_stamp, timeout_ms);
+  ASSERT_EQ(result, EdgeAppLibSendDataResultSuccess);
+}
+
+TEST_F(SendDataTest, SendDataSyncImage_SuccessPlanarRGB) {
+  uint8_t in_data[12] = {0xa1, 0xa3, 0xa5, 0xa7, 0xa9, 0xab,
+                         0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1};
+  uint32_t in_size = sizeof(in_data);
+  uint64_t time_stamp = 10000;
+  int timeout_ms = -1;  // wait forever.
+  EdgeAppLibImageProperty image_property;
+  image_property.width = 2;
+  image_property.height = 2;
+  image_property.stride_bytes = 2;
+  snprintf(image_property.pixel_format, sizeof(image_property.pixel_format),
+           "%s", AITRIOS_SENSOR_PIXEL_FORMAT_RGB8_PLANAR);
+
+  EdgeAppLibSendDataResult result = SendDataSyncImage(
+      in_data, in_size, &image_property, time_stamp, timeout_ms);
+  ASSERT_EQ(result, EdgeAppLibSendDataResultSuccess);
+}
+
+TEST_F(SendDataTest, SendDataSyncImage_InvalidParam) {
+  uint8_t in_data[5] = {0xa1, 0xa3, 0xa5, 0xa7, 0xa9};
+  uint32_t in_size = sizeof(in_data);
+  uint64_t time_stamp = 10000;
+  int timeout_ms = -1;  // wait forever.
+
+  EdgeAppLibSendDataResult result =
+      SendDataSyncImage(in_data, in_size, nullptr, time_stamp, timeout_ms);
+  ASSERT_EQ(result, EdgeAppLibSendDataResultInvalidParam);
+}

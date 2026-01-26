@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ****************************************************************************/
+#include "receive_data_private.h"
 
-#include "draw/mock_draw.hpp"
+#ifndef MOCKS_MOCK_RECEIVE_DATA_HPP
+#define MOCKS_MOCK_RECEIVE_DATA_HPP
 
-#include "draw.h"
-static int32_t EdgeAppLibDrawRectangleReturn = 0;
-static int EdgeAppLibDrawRectangleCalled = 0;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int32_t DrawRectangle(struct EdgeAppLibDrawBuffer *buffer, uint32_t left,
-                      uint32_t top, uint32_t right, uint32_t bottom,
-                      struct EdgeAppLibColor color) {
-  EdgeAppLibDrawRectangleCalled = 1;
-  return EdgeAppLibDrawRectangleReturn;
+void setReceiveDataInitializeResult(EdgeAppLibReceiveDataResult result);
+void resetReceiveDataInitializeResult();
+void setReceiveDataUninitializeResult(EdgeAppLibReceiveDataResult result);
+void resetReceiveDataUninitializeResult();
+void setReceiveDataResult(EdgeAppLibReceiveDataResult result);
+void resetReceiveDataResult();
+
+#ifdef __cplusplus
 }
-int32_t ResizeRectangle(const struct EdgeAppLibDrawBuffer *src,
-                        struct EdgeAppLibDrawBuffer *dst) {
-  return 0;
-}
-int wasEdgeAppLibDrawRectangleCalled() { return EdgeAppLibDrawRectangleCalled; }
-void resetEdgeAppLibDrawRectangle() { EdgeAppLibDrawRectangleCalled = 0; }
+#endif
+
+#endif  // MOCKS_MOCK_RECEIVE_DATA_HPP

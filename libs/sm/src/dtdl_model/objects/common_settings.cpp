@@ -147,9 +147,17 @@ int CommonSettings::Apply(JSON_Object *obj) {
     json_object_remove(obj, CODEC_SETTINGS);
     json_object_remove(obj, NUMBER_OF_INFERENCE_PER_MESSAGE);
     json_object_remove(obj, AI_MODELS);
-  } else if (json_object_has_value(obj, NUMBER_OF_INFERENCE_PER_MESSAGE))
+  } else if (json_object_has_value(obj, NUMBER_OF_INFERENCE_PER_MESSAGE)) {
+    uint32_t inference_per_message = GetInferencePerMessage(obj);
+    if (inference_per_message <= 0) {
+      DtdlModel *dtdl = context->GetDtdlModel();
+      dtdl->GetResInfo()->SetDetailMsg(
+          "The value of number_of_inference_per_message is blow minimun.");
+      dtdl->GetResInfo()->SetCode(CODE_OUT_OF_RANGE);
+      return -1;
+    }
     SetInferencePerMessage(GetInferencePerMessage(obj));
-
+  }
   if (json_object_has_value(obj, AI_MODELS)) {
     JSON_Array *array = json_object_dotget_array(obj, AI_MODELS);
     if (array) {

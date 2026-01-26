@@ -19,11 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Forward declarations for types used in lp_recog
-struct LPDataProcessorAnalyzeParam {
-  void *app_specific;
-};
-
 // Global variables used by lp_recog
 bool LPRDataProcessorAnalyzeReturnValidData = true;
 char lpd_imx500_model_id[128];
@@ -45,7 +40,6 @@ DataProcessorResultCode LPDDataProcessorAnalyze(
 
   return LPDDataProcessorAnalyzeReturn;
 }
-
 DataProcessorResultCode LPRDataProcessorAnalyze(float *in_data,
                                                 uint32_t in_size,
                                                 char **out_data,
@@ -69,6 +63,19 @@ DataProcessorResultCode LPRDataProcessorAnalyze(float *in_data,
   }
 
   return LPRDataProcessorAnalyzeReturn;
+}
+
+// New signature with tensor vector
+DataProcessorResultCode LPDDataProcessorAnalyze(
+    const std::vector<EdgeAppCore::Tensor> &tensors,
+    LPDataProcessorAnalyzeParam *param) {
+  LPDDataProcessorAnalyzeCalled++;
+
+  // Mock implementation - just return success
+  (void)tensors;
+  (void)param;
+
+  return LPDDataProcessorAnalyzeReturn;
 }
 
 bool is_valid_japanese_number_plate(const char *plate_data) {
@@ -95,6 +102,35 @@ void resetLPDDataProcessorAnalyzeSuccess() {
 
 void resetLPRDataProcessorAnalyzeCalled() { LPRDataProcessorAnalyzeCalled = 0; }
 int wasLPRDataProcessorAnalyzeCalled() { return LPRDataProcessorAnalyzeCalled; }
+// Need to use the mock functions from mock_lp_recog_data_processor
+extern void resetLPRDataProcessorAnalyzeCalled();
+extern int wasLPRDataProcessorAnalyzeCalled();
+extern bool LPRDataProcessorAnalyzeReturnValidData;
+
+DataProcessorResultCode LPRDataProcessorAnalyze(
+    const std::vector<EdgeAppCore::Tensor> &tensors, char **out_data,
+    uint32_t *out_size) {
+  // Track the call using the same counter as the float* version
+  LPRDataProcessorAnalyzeCalled++;
+
+  // Create a simple mock response
+  if (out_data && out_size) {
+    const char *mock_response;
+    if (LPRDataProcessorAnalyzeReturnValidData) {
+      mock_response =
+          "Mock 589, ra 52-04";  // Valid Japanese number plate format
+    } else {
+      mock_response =
+          "Invalid?Plate--123";  // Invalid format (contains ? and --)
+    }
+
+    *out_data = (char *)malloc(strlen(mock_response) + 1);
+    strcpy(*out_data, mock_response);
+    *out_size = strlen(mock_response) + 1;
+  }
+
+  return kDataProcessorOk;
+}
 void setLPRDataProcessorAnalyzeFail() {
   LPRDataProcessorAnalyzeReturn = kDataProcessorInvalidParam;
 }

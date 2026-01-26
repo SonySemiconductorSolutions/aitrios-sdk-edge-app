@@ -41,13 +41,14 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 | [passthrough]    | Outputs Input tensors and Output tensors obtained from Edge Devices without any processing.|
 | [classification] | Outputs encoded inference results into FlatBuffers after post-processing for classification task on IMX500.|
 | [detection]      | Outputs encoded inference results into FlatBuffers after post-processing for objectdetection task on IMX500.|
-| [posenet] | Outputs encoded inference results into FlatBuffers after post-processing for posenet task on IMX500.|
+| [posenet]        | Outputs encoded inference results into FlatBuffers after post-processing for posenet task on IMX500.|
 | [segmentation]   | Outputs encoded inference results into FlatBuffers after post-processing for segmentation task on IMX500.|
 | [switch_dnn]     | Sample application for switching between multiple DNNs on IMX500.|
 | [draw]           | Sample application for drawing bounding box on input tensor from IMX500.|
 | [perfbench]      | Sample Application for measuring performance with Debug Code.|
-| [lp_recog] | Detects license plates on IMX500 and recognizes license plate characters on CPU(TFLite). |
-| [ssl]      | Demonstrates SSL/TLS communication for secure data exchange with both SSL client and server functionality. |
+| [lp_recog]       | Detects license plates on IMX500 and recognizes license plate characters on CPU(TFLite). |
+| [lp_recog_y]     | Detects license plates on IMX500 and recognizes license plate characters on CPU(TFLite) for Y model. |
+| [ssl]            | Demonstrates SSL/TLS communication for secure data exchange with both SSL client and server functionality. |
 
 [passthrough]: sample_apps/passthrough
 [classification]: sample_apps/classification
@@ -58,6 +59,7 @@ make CMAKE_FLAGS="-DAPPS_SELECTION=${NAME_OF_APP}"
 [draw]: sample_apps/draw
 [perfbench]: sample_apps/perfbench
 [lp_recog]: sample_apps/lp_recog
+[lp_recog_y]: sample_apps/lp_recog_y
 [ssl]: sample_apps/ssl
 
 ---

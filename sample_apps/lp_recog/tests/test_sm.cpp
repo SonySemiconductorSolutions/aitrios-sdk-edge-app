@@ -65,44 +65,43 @@ TEST_F(EvenFunctionsTest, OnCreateSuccess) {
 //   onDestroy();
 // }
 
-// // OnConfigure is empty, so we cannot test it directly.
-// TEST_F(EvenFunctionsTest, OnConfigureSuccess) {
-//   char topic[] = "mock";
-//   void *value = strdup(topic);
-//   int valuesize = 10;
+// OnConfigure is empty, so we cannot test it directly.
+TEST_F(EvenFunctionsTest, OnConfigureSuccess) {
+  char topic[] = "mock";
+  void *value = strdup(topic);
+  int valuesize = 10;
 
-//   int res = onConfigure(topic, value, valuesize);
-//   EXPECT_EQ(res, 0);
-//   EXPECT_EQ(wasDataProcessorConfigureCalled(), 1);
-//   EXPECT_EQ(wasEdgeAppLibDataExportSendStateCalled(), 1);
-// }
+  int res = onConfigure(topic, value, valuesize);
+  EXPECT_EQ(res, 0);
+  EXPECT_EQ(wasDataProcessorConfigureCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendStateCalled(), 1);
+}
 
-// TEST_F(EvenFunctionsTest, OnConfigureValueNull) {
-//   char topic[] = "mock";
-//   void *value = NULL;
-//   int valuesize = 10;
+TEST_F(EvenFunctionsTest, OnConfigureValueNull) {
+  char topic[] = "mock";
+  void *value = NULL;
+  int valuesize = 10;
 
-//   int res = onConfigure(topic, value, valuesize);
-//   EXPECT_EQ(res, -1);
-// }
+  int res = onConfigure(topic, value, valuesize);
+  EXPECT_EQ(res, -1);
+}
 
-// TEST_F(EvenFunctionsTest, OnConfigureDataProcessorConfigureFail) {
-//   char topic[] = "mock";
-//   void *value = strdup(topic);
-//   int valuesize = 10;
-//   setDataProcessorConfigureFail();
-//   int res = onConfigure(topic, value, valuesize);
-//   EXPECT_EQ(res, 0);
-//   EXPECT_EQ(wasDataProcessorConfigureCalled(), 1);
-//   EXPECT_EQ(wasEdgeAppLibDataExportSendStateCalled(), 1);
-// }
+TEST_F(EvenFunctionsTest, OnConfigureDataProcessorConfigureFail) {
+  char topic[] = "mock";
+  void *value = strdup(topic);
+  int valuesize = 10;
+  setDataProcessorConfigureFail();
+  int res = onConfigure(topic, value, valuesize);
+  EXPECT_EQ(res, 0);
+  EXPECT_EQ(wasDataProcessorConfigureCalled(), 1);
+  EXPECT_EQ(wasEdgeAppLibDataExportSendStateCalled(), 1);
+}
 
 TEST_F(EvenFunctionsTest, OnStartLoadModelError) {
   onCreate();
   setLoadModelResult(EdgeAppCoreResultFailure);
   int res = onStart();
-  // lp_recog doesn't check load model result directly, returns 0
-  EXPECT_EQ(res, 0);
+  EXPECT_EQ(res, -1);
   onDestroy();
   setLoadModelResult(EdgeAppCoreResultSuccess);
 }
@@ -169,14 +168,14 @@ TEST_F(EvenFunctionsTest, OnIterateProcessError) {
 //   }, ".*");
 // }
 
-// OnStop is empty so we cannot test it directly.
-//  TEST_F(EvenFunctionsTest, OnStopSuccess) {
-//    onCreate();
-//    int res = onStop();
-//    EXPECT_EQ(res, 0);
-//    EXPECT_EQ(wasEdgeAppLibSensorStopCalled(), 1);
-//    onDestroy();
-//  }
+TEST_F(EvenFunctionsTest, OnStopSuccess) {
+  onCreate();
+  onStart();
+  int res = onStop();
+  EXPECT_EQ(res, 0);
+  EXPECT_EQ(wasEdgeAppCoreUnloadModelCalled(), 1);
+  onDestroy();
+}
 
 // TEST_F(EvenFunctionsTest, OnStopStopError) {
 //   onCreate();
@@ -221,5 +220,4 @@ TEST_F(EvenFunctionsTest, OnDestroySuccess) {
   reset_mock_outputs();
   int res = onDestroy();
   EXPECT_EQ(res, 0);
-  EXPECT_EQ(wasEdgeAppCoreUnloadModelCalled(), 1);
 }

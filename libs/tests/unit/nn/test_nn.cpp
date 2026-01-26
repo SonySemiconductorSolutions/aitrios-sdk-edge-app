@@ -41,6 +41,16 @@ TEST_F(EdgeApplibNNTest, LoadModelSuccess) {
   EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
 }
 
+TEST_F(EdgeApplibNNTest, LoadModelInvalidArgument) {
+  auto result = LoadModel(nullptr, &g, EDGEAPP_TARGET_CPU);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_INVALID_ARGUMENT);
+}
+
+TEST_F(EdgeApplibNNTest, LoadModelInvalidArgument2) {
+  auto result = LoadModel("dummy_model.onnx", nullptr, EDGEAPP_TARGET_CPU);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_INVALID_ARGUMENT);
+}
+
 TEST_F(EdgeApplibNNTest, InitContextSuccess) {
   LoadModel("dummy_model.onnx", &g, EDGEAPP_TARGET_CPU);
   auto result = InitContext(g, &ctx);
@@ -56,6 +66,17 @@ TEST_F(EdgeApplibNNTest, SetInputSuccess) {
   const size_t norm_size = 3;
   auto result = SetInput(ctx, input_data, dims, mean_values, mean_size,
                          norm_values, norm_size);
+  EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
+}
+
+TEST_F(EdgeApplibNNTest, SetInputFromTensorSuccess) {
+  LoadModel("dummy_model.onnx", &g, EDGEAPP_TARGET_CPU);
+  InitContext(g, &ctx);
+  const float mean_values[] = {0.0f, 0.0f, 0.0f};
+  const size_t mean_size = 3;
+  const float norm_values[] = {1.0f, 1.0f, 1.0f};
+  const size_t norm_size = 3;
+  auto result = SetInputFromTensor(ctx, input_data, &dims, TensorTypeUInt8);
   EXPECT_EQ(result, EDGEAPP_LIB_NN_SUCCESS);
 }
 
