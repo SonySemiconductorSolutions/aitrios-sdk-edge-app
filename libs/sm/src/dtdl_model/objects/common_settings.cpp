@@ -150,9 +150,11 @@ int CommonSettings::Apply(JSON_Object *obj) {
   } else if (json_object_has_value(obj, NUMBER_OF_INFERENCE_PER_MESSAGE)) {
     uint32_t inference_per_message = GetInferencePerMessage(obj);
     if (inference_per_message <= 0) {
+      LOG_ERR("Error: Invalid value for number_of_inference_per_message: %d",
+              inference_per_message);
       DtdlModel *dtdl = context->GetDtdlModel();
       dtdl->GetResInfo()->SetDetailMsg(
-          "The value of number_of_inference_per_message is blow minimun.");
+          "The value of number_of_inference_per_message is below minimum.");
       dtdl->GetResInfo()->SetCode(CODE_OUT_OF_RANGE);
       return -1;
     }

@@ -75,6 +75,8 @@ target_include_directories (test_event_functions PUBLIC
   ${LIBS_DIR}/sm/include
   ${MOCKS_DIR}/sensor
   ${MOCKS_DIR}/device
+  ${SAMPLE_APP_DIR}/detection/data_processor/src
+  ${SAMPLE_APP_DIR}/detection/include/schemas
 )
 
 target_link_libraries(

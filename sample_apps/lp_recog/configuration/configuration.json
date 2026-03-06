@@ -110,6 +110,10 @@
             },
             "metadata_settings": {
                 "format": 0
+            },
+            "isp_frame_rate": {
+                "num": 999,
+                "denom": 100
             }
         }
     }

@@ -20,6 +20,7 @@
 
 #include "data_export.h"
 #include "data_processor_api.hpp"
+#include "detection_utils.hpp"
 #include "log.h"
 #include "sensor.h"
 #include "sm_utils.hpp"
@@ -29,12 +30,14 @@
 
 #define DATA_EXPORT_AWAIT_TIMEOUT -1
 #define SENSOR_GET_FRAME_TIMEOUT 5000
+#define MAX_INITIAL_RETRY_COUNT 10
 using namespace EdgeAppLib;
 
 EdgeAppLibSensorCore s_core = 0;
 EdgeAppLibSensorStream s_stream = 0;
 char *state_topic = NULL;
 int32_t res_release_frame = -1;
+bool initial_frames = false;
 
 char *GetConfigureErrorJsonSm(ResponseCode code, const char *message,
                               const char *res_id) {
@@ -258,10 +261,36 @@ int onIterate() {
 
   EdgeAppLibSensorFrame frame;
   int32_t ret = -1;
-  if ((ret = SensorGetFrame(s_stream, &frame, SENSOR_GET_FRAME_TIMEOUT)) < 0) {
-    LOG_ERR("SensorGetFrame : ret=%d", ret);
-    PrintSensorError();
-    return SensorGetLastErrorCause() == AITRIOS_SENSOR_ERROR_TIMEOUT ? 0 : -1;
+
+  /* Retry loop for transient SensorGetFrame failures on initial frames after
+     startup. GetFrames are more likely to fail immediately after stream start
+     due to delay in loading AI model, so we implement a retry mechanism with a
+     timeout for the initial frames to improve robustness.
+  */
+  if (initial_frames) {
+    initial_frames = false;
+    for (int32_t i = 0; i < MAX_INITIAL_RETRY_COUNT; i++) {
+      if ((ret = SensorGetFrame(s_stream, &frame, SENSOR_GET_FRAME_TIMEOUT)) <
+          0) {
+        LOG_ERR("SensorGetFrame : ret=%d", ret);
+        PrintSensorError();
+        if (SensorGetLastErrorCause() == AITRIOS_SENSOR_ERROR_TIMEOUT) {
+          LOG_WARN("SensorGetFrame failed. Retrying... (%d/%d)", i + 1,
+                   MAX_INITIAL_RETRY_COUNT);
+          continue;  // Retry on timeout
+        } else {
+          return -1;
+        }
+      }
+      break;  // Success
+    }
+  } else {
+    if ((ret = SensorGetFrame(s_stream, &frame, SENSOR_GET_FRAME_TIMEOUT)) <
+        0) {
+      LOG_ERR("SensorGetFrame : ret=%d", ret);
+      PrintSensorError();
+      return SensorGetLastErrorCause() == AITRIOS_SENSOR_ERROR_TIMEOUT ? 0 : -1;
+    }
   }
 
   EdgeAppLibDataExportFuture *future = nullptr;
@@ -273,8 +302,18 @@ int onIterate() {
   }
 
   if (future) {
-    DataExportAwait(future, DATA_EXPORT_AWAIT_TIMEOUT);
+    EdgeAppLibDataExportResult result =
+        DataExportAwait(future, DATA_EXPORT_AWAIT_TIMEOUT);
     DataExportCleanup(future);
+    if (result != EdgeAppLibDataExportResultSuccess) {
+      void *data_json = NULL;
+      uint32_t data_json_size = 0;
+      const char *error_msg = "Error DataExportSendData.";
+      LOG_ERR("%s : result=%d", error_msg, result);
+      data_json = GetConfigureErrorJsonSm(ResponseCodeUnknown, error_msg, "");
+      data_json_size = strlen((const char *)data_json);
+      DataExportSendState(state_topic, (void *)data_json, data_json_size);
+    }
   }
 
   if (!metadataEnabled) {
@@ -310,6 +349,41 @@ int onStart() {
     PrintSensorError();
     return -1;
   }
+
+  /* ISP Frame Rate, the rate at which ISP outputs frames is set to 30FPS by
+     default on Raspberry Pi. This results in Invalid frames. So Set ISP Frame
+     Rate to lower value as specified in configuration */
+  EdgeAppLibSensorIspFrameRateProperty ispFrameRate = get_isp_frame_rate();
+
+  int result = SensorStreamSetIspFrameRate(s_stream, ispFrameRate);
+  if (result == 0) {
+    LOG_DBG("IspFramerate property set");
+  } else {
+    LOG_ERR("Failed to set IspFrameRate err=%d", result);
+  }
+
+  /* Restart stream to reflect ISP frame rate setting */
+  result = EdgeAppLib::SensorStop(s_stream);
+  if (result == 0) {
+    result = EdgeAppLib::SensorStart(s_stream);
+    if (result != 0) {
+      LOG_ERR("Failed to start stream for restart %d", result);
+    }
+  } else {
+    LOG_ERR("Failed to stop stream for restart %d", result);
+  }
+
+  ispFrameRate = {.num = 0, .denom = 0};
+  result = SensorStreamGetProperty(s_stream,
+                                   AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
+                                   &ispFrameRate, sizeof(ispFrameRate));
+  if (result == 0) {
+    LOG_INFO("Get IspFramerate property num=%d denom=%d", ispFrameRate.num,
+             ispFrameRate.denom);
+  } else {
+    LOG_ERR("Failed to get IspFrameRate err=%d", result);
+  }
+
   struct EdgeAppLibSensorImageCropProperty crop = {0};
   if ((ret = SensorStreamGetProperty(s_stream,
                                      AITRIOS_SENSOR_IMAGE_CROP_PROPERTY_KEY,
@@ -320,6 +394,8 @@ int onStart() {
   }
   LOG_INFO("Crop: [x=%d, y=%d, w=%d, h=%d]", crop.left, crop.top, crop.width,
            crop.height);
+
+  initial_frames = true;  // Set flag to enable retry logic for initial frames
   return 0;
 }
 

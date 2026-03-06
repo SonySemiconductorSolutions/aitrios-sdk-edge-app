@@ -35,6 +35,8 @@
 #define DEFAULT_THRESHOLD_IMX500 (0.3)
 #define DEFAULT_MAX_DETECTIONS_IMX500 (200)
 #define DEFAULT_THRESHOLD_CPU (0.5)
+#define DEFAULT_ISP_NUM (999)
+#define DEFAULT_ISP_DENOM (100)
 
 // Constants for license plate recognition processing
 const size_t xmin_index = 1;
@@ -170,5 +172,7 @@ LPContent assign_kanji(LPContent lp,
 LPContent assign_hiragana(LPContent lp, const std::vector<int> &categories_int);
 LPContent assign_numbers(LPContent lp, const std::vector<int> &categories_int,
                          bool is_first_line);
+
+EdgeAppLibSensorIspFrameRateProperty get_isp_frame_rate();
 
 #endif  // LP_RECOG_UTILS_HPP

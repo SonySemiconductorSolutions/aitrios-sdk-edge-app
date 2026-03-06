@@ -881,6 +881,9 @@ EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx) {
   if (ctx.target == edge_imx500) {
     pending_sensor_shutdown = true;
     pending_ctx = &ctx;
+
+    // Decrease model count
+    model_count--;
   }
   // For CPU/NPU models, free the temporary input buffer only if we own it
   if (ctx.temp_input.buffer != nullptr && ctx.target != edge_imx500) {
@@ -895,10 +898,10 @@ EdgeAppCoreResult UnloadModel(EdgeAppCoreCtx &ctx) {
   if (ctx.graph_ctx != nullptr) {
     free(ctx.graph_ctx);
     ctx.graph_ctx = nullptr;
-  }
 
-  // Decrease model count
-  model_count--;
+    // Decrease model count
+    model_count--;
+  }
 
   // If this was the last model, stop the sensor
   if (model_count == 0) {

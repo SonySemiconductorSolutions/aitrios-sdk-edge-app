@@ -266,7 +266,7 @@ TEST_F(EdgeAppCoreTest, GetOutputsSuccessIMX500) {
   EXPECT_STREQ(bundle_id.ai_model_bundle_id, model[0].model_name);
   auto frame = Process(ctx_imx500, &ctx_imx500, dummy_frame, dummy_roi[0]);
   auto outputs = GetOutputs(ctx_imx500, frame, 4);
-  EXPECT_EQ(outputs.size(), 3);
+  EXPECT_EQ(outputs.size(), 4);
 }
 
 TEST_F(EdgeAppCoreTest, NNLoadAPIFail) {

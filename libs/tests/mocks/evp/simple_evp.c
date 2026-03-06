@@ -251,6 +251,7 @@ EVP_RESULT EVP_blobOperation(struct EVP_client *h, EVP_BLOB_TYPE type,
       LOG_ERR("EVP_blobOperation: cannot open file %s", localStore->filename);
       return EVP_ERROR;
     }
+    fclose(fp);
   }
 
   struct EVP_BlobResultEvp vp = {EVP_BLOB_RESULT_SUCCESS, 201, 0};

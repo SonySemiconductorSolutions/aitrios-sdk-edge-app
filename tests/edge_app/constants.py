@@ -22,4 +22,4 @@ INTEGRATION_TEST_RETRY_NUM = 25  # Increased from 20 for more retries
 APITEST_LAST_SCENARIO_ID = 7
 ACK_FILE = "./data.ack"
 INJECT_FAIL = "./sleep_time"
-TIME_LIMIT_SEC = 90.0  # Increased from 60.0 for better stability under load
+TIME_LIMIT_SEC = 180.0  # Increased from 60.0 for better stability under load

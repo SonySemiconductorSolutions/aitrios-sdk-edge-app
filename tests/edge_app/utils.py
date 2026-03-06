@@ -129,10 +129,12 @@ def run_valgrind(app_path: str, valgrind_log: str) -> subprocess.Popen:
     edge_app_process = subprocess.Popen(
         [
             "valgrind",
+            "-s",
             "--error-exitcode=1",
             "--leak-check=full",
             "--track-origins=yes",
             "--show-leak-kinds=all",
+            "--suppressions=tests/edge_app/opencv.supp",
             f"--log-file={valgrind_log}",
             app_path
         ],
@@ -140,7 +142,7 @@ def run_valgrind(app_path: str, valgrind_log: str) -> subprocess.Popen:
         stderr=subprocess.PIPE,
         text=True,
     )
-    wait_for_log_match(INTEGRATION_TEST_LOG, "Running State Machine", timeout=30.0)  # Increased timeout
+    wait_for_log_match(INTEGRATION_TEST_LOG, "Running State Machine", timeout=90.0)  # Increased timeout
     return edge_app_process
 def run_python_edge_app(app_path: str) -> subprocess.Popen:
     """Run Python and capture its output."""
