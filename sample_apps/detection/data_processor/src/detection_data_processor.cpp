@@ -49,6 +49,9 @@ DataProcessorCustomParam detection_param = {
     DEFAULT_INPUT_TENSOR_HEIGHT, DEFAULT_BBOX_ORDER, DEFAULT_BBOX_NORMALIZED,
     DEFAULT_CLASS_SCORE_ORDER};
 
+EdgeAppLibSensorIspFrameRateProperty ispFrameRate = {DEFAULT_ISP_NUM,
+                                                     DEFAULT_ISP_DENOM};
+
 static DataProcessorResultCode (*extractors[])(JSON_Object *,
                                                DataProcessorCustomParam *) = {
     ExtractThreshold,     ExtractInputHeight, ExtractInputWidth,
@@ -168,6 +171,12 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
                                        &metadata_format)) != kDataProcessorOk)
       res = act;
   }
+
+  // Get ISP frame rate setting
+  JSON_Object *object_isp_frame_rate =
+      json_object_get_object(object, "isp_frame_rate");
+  ispFrameRate.num = json_object_get_number(object_isp_frame_rate, "num");
+  ispFrameRate.denom = json_object_get_number(object_isp_frame_rate, "denom");
 
   if (res != kDataProcessorOk)
     *out_config_json = json_serialize_to_string(value);
@@ -297,3 +306,7 @@ DataProcessorResultCode DataProcessorAnalyze(float *in_data, uint32_t in_size,
 }
 
 EdgeAppLibSendDataType DataProcessorGetDataType() { return metadata_format; }
+
+EdgeAppLibSensorIspFrameRateProperty get_isp_frame_rate() {
+  return ispFrameRate;
+}

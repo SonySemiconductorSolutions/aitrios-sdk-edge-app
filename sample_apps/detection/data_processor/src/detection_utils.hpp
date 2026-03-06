@@ -28,6 +28,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "objectdetection_generated.h"
 #include "parson.h"
+#include "sensor.h"
 
 /* -------------------------------------------------------- */
 /* define                                                   */
@@ -47,6 +48,8 @@
 #define CLASS_IDS_SIZE (10)
 #define BBOX_ORDER_SIZE (5)
 #define CLS_SCORE_SIZE (10)
+#define DEFAULT_ISP_NUM (999)
+#define DEFAULT_ISP_DENOM (100)
 
 typedef struct {
   uint16_t max_detections;
@@ -149,5 +152,7 @@ DataProcessorResultCode ExtractClassOrder(
 
 DataProcessorResultCode ExtractMetadataSettings(
     JSON_Object *json, EdgeAppLibSendDataType *out_format);
+
+EdgeAppLibSensorIspFrameRateProperty get_isp_frame_rate();
 
 #endif  // DETECTION_UTILS_H

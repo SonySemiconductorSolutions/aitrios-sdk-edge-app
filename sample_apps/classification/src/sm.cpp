@@ -247,8 +247,18 @@ int onIterate() {
   }
 
   if (future) {
-    DataExportAwait(future, DATA_EXPORT_AWAIT_TIMEOUT);
+    EdgeAppLibDataExportResult result =
+        DataExportAwait(future, DATA_EXPORT_AWAIT_TIMEOUT);
     DataExportCleanup(future);
+    if (result != EdgeAppLibDataExportResultSuccess) {
+      void *data_json = NULL;
+      uint32_t data_json_size = 0;
+      const char *error_msg = "Error DataExportSendData.";
+      LOG_ERR("%s : result=%d", error_msg, result);
+      data_json = GetConfigureErrorJsonSm(ResponseCodeUnknown, error_msg, "");
+      data_json_size = strlen((const char *)data_json);
+      DataExportSendState(state_topic, (void *)data_json, data_json_size);
+    }
   }
 
   if ((ret = SensorReleaseFrame(s_stream, frame)) < 0) {

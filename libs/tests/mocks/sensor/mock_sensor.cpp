@@ -185,6 +185,8 @@ char *load_jsonc_file(const char *filepath) {
   "0.2, 0.4, 0.6, 0.0, "   \
   "0.2, 0.4, 0.6, 0.0, "   \
   "4.0, 1.0, 2.0, 3.0, 0.0]]"
+#elif defined(MOCK_LP_RECOG_Y)
+char *MOCK_DATA = NULL;
 #elif defined(MOCK_BARCODE)
 #define MOCK_DATA                                                              \
   "[[0.1, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.25, 0.35, "     \
@@ -339,7 +341,8 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
     map_channel_data[channel] = raw_data_cpy;
     EsfMemoryManagerHandle handle = (EsfMemoryManagerHandle)DUMMY_HANDLE;
     size_t size = 0;
-#if defined(MOCK_PASSTHROUGH) || defined(MOCK_BARCODE) || defined(MOCK_LP_RECOG)
+#if defined(MOCK_PASSTHROUGH) || defined(MOCK_BARCODE) || \
+    defined(MOCK_LP_RECOG) || defined(MOCK_LP_RECOG_Y)
     setEsfMemoryManagerPreadFail();
 #endif
     if (EsfMemoryManagerPread(handle, (void *)raw_data->address, raw_data->size,
@@ -367,6 +370,10 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
     return EdgeAppLibSensorChannelGetRawDataSuccess;
   }
   if (channel_id == (uint64_t)AITRIOS_SENSOR_CHANNEL_ID_INFERENCE_OUTPUT) {
+#if defined(MOCK_LP_RECOG_Y)
+    MOCK_DATA = load_jsonc_file(
+        "./sample_apps/lp_recog_y/test_data/mock_lprecog_y.jsonc");
+#endif
     JSON_Value *output_tensor_val = json_parse_string(MOCK_DATA);
 
     std::string _key(AITRIOS_SENSOR_AI_MODEL_BUNDLE_ID_PROPERTY_KEY);
@@ -433,8 +440,8 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
       raw_data->size = tensor_size;
       printf("posenet MOCK_DATA size: %d\n", tensor_size);
     }
-    raw_data->type = strdup("float");
-    raw_data->timestamp = 10;
+    raw_data->type = strdup("meta_data");
+    raw_data->timestamp = 1770027918025556640;
 
     struct EdgeAppLibSensorRawData *raw_data_cpy =
         (struct EdgeAppLibSensorRawData *)malloc(sizeof(*raw_data));
@@ -443,6 +450,12 @@ int32_t SensorChannelGetRawData(EdgeAppLibSensorChannel channel,
 
     json_free_serialized_string((char *)output_tensor);
     json_value_free(output_tensor_val);
+#if defined(MOCK_LP_RECOG_Y)
+    if (MOCK_DATA) {
+      free(MOCK_DATA);
+      MOCK_DATA = NULL;
+    }
+#endif
 
     return EdgeAppLibSensorChannelGetRawDataSuccess;
   }
@@ -643,14 +656,15 @@ int32_t SensorChannelGetProperty(EdgeAppLibSensorChannel channel,
                      strlen(property_key)) == 0) {
     EdgeAppLibSensorTensorShapesProperty *tensor_shapes_property =
         (EdgeAppLibSensorTensorShapesProperty *)value;
-    tensor_shapes_property->tensor_count = 3;
-    tensor_shapes_property->shapes_array[0] = 2;
-    tensor_shapes_property->shapes_array[1] = 200;
-    tensor_shapes_property->shapes_array[2] = 4;
-    tensor_shapes_property->shapes_array[3] = 1;
-    tensor_shapes_property->shapes_array[4] = 200;
+    tensor_shapes_property->tensor_count = 4;
+    tensor_shapes_property->shapes_array[0] = 1;
+    tensor_shapes_property->shapes_array[1] = 1;
+    tensor_shapes_property->shapes_array[2] = 1;
+    tensor_shapes_property->shapes_array[3] = 4;
+    tensor_shapes_property->shapes_array[4] = 1;
     tensor_shapes_property->shapes_array[5] = 1;
-    tensor_shapes_property->shapes_array[6] = 200;
+    tensor_shapes_property->shapes_array[6] = 1;
+    tensor_shapes_property->shapes_array[7] = 1;
   }
 
   return EdgeAppLibSensorChannelGetPropertySuccess;

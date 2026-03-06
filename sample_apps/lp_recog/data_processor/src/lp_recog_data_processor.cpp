@@ -50,6 +50,9 @@ DataProcessorCustomParam_LPD detection_param = {
     DEFAULT_INPUT_TENSOR_WIDTH_IMX500, DEFAULT_INPUT_TENSOR_HEIGHT_IMX500,
     true};
 
+EdgeAppLibSensorIspFrameRateProperty ispFrameRate = {DEFAULT_ISP_NUM,
+                                                     DEFAULT_ISP_DENOM};
+
 static DataProcessorResultCode (*extractors[])(
     JSON_Object *, DataProcessorCustomParam_LPD *) = {
     ExtractThresholdIMX500,  ExtractInputHeightIMX500,
@@ -156,6 +159,12 @@ DataProcessorResultCode DataProcessorConfigure(char *config_json,
   metadata_format =
       EdgeAppLibSendDataType(json_object_get_number(object_format, "format"));
 
+  // Get ISP frame rate setting
+  JSON_Object *object_isp_frame_rate =
+      json_object_get_object(object, "isp_frame_rate");
+  ispFrameRate.num = json_object_get_number(object_isp_frame_rate, "num");
+  ispFrameRate.denom = json_object_get_number(object_isp_frame_rate, "denom");
+
   if (res != kDataProcessorOk)
     *out_config_json = json_serialize_to_string(value);
 
@@ -189,8 +198,12 @@ DataProcessorResultCode LPDDataProcessorAnalyze(
   Detections *detections =
       CreateLPDetections(in_data, in_size, analyze_params, tensor);
 
-  if (detections == NULL || detections->detection_data == NULL) {
+  if (detections == nullptr || detections->detection_data == nullptr) {
     LOG_ERR("Error while allocating memory for detections.");
+    if (!detections) {
+      free(detections);
+      detections = nullptr;
+    }
     return kDataProcessorMemoryError;
   }
 
@@ -308,3 +321,7 @@ DataProcessorResultCode LPRDataProcessorAnalyze(float *in_data,
 }
 
 EdgeAppLibSendDataType DataProcessorGetDataType() { return metadata_format; }
+
+EdgeAppLibSensorIspFrameRateProperty get_isp_frame_rate() {
+  return ispFrameRate;
+}

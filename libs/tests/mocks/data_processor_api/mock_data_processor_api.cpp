@@ -107,3 +107,8 @@ void resetDataProcessorJsonFormatSuccess() {
   DataProcessorJsonFormatReturn = kDataProcessorOk;
 }
 void resetDataProcessorJsonFormatCalled() { DataProcessorJsonFormatCalled = 0; }
+
+EdgeAppLibSensorIspFrameRateProperty get_isp_frame_rate() {
+  EdgeAppLibSensorIspFrameRateProperty ispFrameRate = {999, 100};
+  return ispFrameRate;
+}

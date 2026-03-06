@@ -33,8 +33,7 @@ class DTDLStateChecker:
         print(f"{json.dumps(last_line_dict)}\n")
         assert not last_line_dict["res_info"]["res_id"]
         if os.path.exists(ACK_FILE):
-           os.remove(ACK_FILE)
-
+            os.remove(ACK_FILE)
 
     def get_state(self) -> dict:
         # File update check with time limit loop
@@ -45,7 +44,7 @@ class DTDLStateChecker:
         print(f"{jsondiff.diff(self.prev, act)}\n")
         self.prev = act
         if os.path.exists(ACK_FILE):
-           os.remove(ACK_FILE)
+            os.remove(ACK_FILE)
         return act
 
     def get_DTDL_LOG_last_update_info(self):

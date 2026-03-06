@@ -219,13 +219,26 @@ int onStart() {
   }
   s_stream = *ctx_imx500.sensor_stream;
 
-  EdgeAppLibSensorIspFrameRateProperty ispFrameRate = {.num = 999,
-                                                       .denom = 100};
+  EdgeAppLibSensorIspFrameRateProperty ispFrameRate = get_isp_frame_rate();
+
   int result = SensorStreamSetIspFrameRate(s_stream, ispFrameRate);
   if (result == 0) {
     LOG_DBG("IspFramerate property set");
   } else {
     LOG_ERR("Failed to set IspFrameRate err=%d", result);
+  }
+
+  /*
+   Restarting stream to reflect ISP frame rate setting
+  */
+  result = EdgeAppLib::SensorStop(s_stream);
+  if (result == 0) {
+    result = EdgeAppLib::SensorStart(s_stream);
+    if (result != 0) {
+      LOG_ERR("Failed to start stream for restart %d", result);
+    }
+  } else {
+    LOG_ERR("Failed to stop stream for restart %d", result);
   }
 
   ispFrameRate = {.num = 0, .denom = 0};

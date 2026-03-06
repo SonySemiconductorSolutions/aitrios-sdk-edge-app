@@ -1,0 +1,54 @@
+{
+   cv_system
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_system.cpp
+   fun:call_init
+   fun:__libc_start_main@@GLIBC_2.34
+   fun:(below main)
+}
+{
+   cv_logger
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   ...
+   fun:_GLOBAL__sub_I_logger.cpp
+   fun:call_init
+   fun:__libc_start_main@@GLIBC_2.34
+   fun:(below main)
+}
+{
+   cv_mat
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZN2cvL25getDefaultAllocatorMatRefEv
+   fun:_ZN2cv3Mat6createEiPKii
+   fun:_ZN2cv3Mat6createENS_5Size_IiEEi
+   fun:_ZN2cv6resizeERKNS_11_InputArrayERKNS_12_OutputArrayENS_5Size_IiEEddi
+   fun:_ZN13PreprocessLib19grayscalePreprocessEPKv23EdgeAppLibImagePropertyPN11EdgeAppCore6TensorE
+   fun:_ZN11EdgeAppCore14ProcessedFrame15ProcessInternalER14EdgeAppCoreCtxPS1_mR33EdgeAppLibSensorImageCropProperty
+   fun:_ZN11EdgeAppCore14ProcessedFrame7computeEv
+   fun:onIterate
+   fun:_ZN13RunningThread17ThreadLoopIterateEv
+   fun:_ZN13RunningThread16ThreadEntrypointEPv
+   fun:start_thread
+}
+{
+   cv_resize
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   ...
+   fun:_ZN2cv13parallel_for_ERKNS_5RangeERKNS_16ParallelLoopBodyEd
+   fun:_ZN2cvL14resizeGeneric_INS_13HResizeLinearIhisLi2048ENS_21HResizeLinearVecU8_X4EEENS_13VResizeLinearIhisNS_11FixedPtCastIihLi22EEENS_22VResizeLinearVec_32s8uEEEEEvRKNS_3MatERS9_PKiPKvSE_SG_iii
+   fun:_ZN2cv3hal6resizeEiPKhmiiPhmiiddi
+   fun:_ZN2cv6resizeERKNS_11_InputArrayERKNS_12_OutputArrayENS_5Size_IiEEddi
+   fun:_ZN13PreprocessLib19grayscalePreprocessEPKv23EdgeAppLibImagePropertyPN11EdgeAppCore6TensorE
+   fun:_ZN11EdgeAppCore14ProcessedFrame15ProcessInternalER14EdgeAppCoreCtxPS1_mR33EdgeAppLibSensorImageCropProperty
+   fun:_ZN11EdgeAppCore14ProcessedFrame7computeEv
+   fun:onIterate
+   ...
+}

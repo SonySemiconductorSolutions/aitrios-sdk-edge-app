@@ -18,6 +18,7 @@
 #define MOCKS_MOCK_DATA_PROCESSOR_API_HPP
 
 #include "data_processor_api.hpp"
+#include "sensor.h"
 
 int wasDataProcessorConfigureCalled();
 void setDataProcessorConfigureFail();

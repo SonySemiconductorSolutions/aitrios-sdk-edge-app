@@ -1261,6 +1261,26 @@
                                             }
                                         ]
                                     }
+                                },
+                                {
+                                    "name": "isp_frame_rate",
+                                    "displayName": "ISP Frame Rate",
+                                    "description": "The frame rate at which the ISP outputs images.",
+                                    "schema": {
+                                        "@type": "Object",
+                                        "fields": [
+                                            {
+                                                "name": "num",
+                                                "displayName": "Numerator",
+                                                "schema": "integer"
+                                            },
+                                            {
+                                                "name": "denom",
+                                                "displayName": "Denomerator",
+                                                "schema": "integer"
+                                            }
+                                        ]
+                                    }
                                 }
                             ]
                         }
