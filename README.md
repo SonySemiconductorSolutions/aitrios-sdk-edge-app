@@ -11,7 +11,7 @@ This repository provides SDKs and libraries to simplify the development of Edge 
 ## Features
 - Easy development support with Python.
 - Convert C/C++ code to WASM, enabling it to run on various Edge devices.
-- Send AI inference results to a Local Console.
+- Send AI inference results to a Local server.
 - Supports event-driven development, allowing developers to define handlers for each event.
 
 ## Getting Started
@@ -20,10 +20,6 @@ This repository provides SDKs and libraries to simplify the development of Edge 
 This project requires external libraries such as **FlatBuffers**, **Parson**, **Base64** and **Pybind11** you need to ensure that all submodules are initialized and updated. Use the following command: 
 `git submodule update --init --recursive`
 
-### Install Local Console
-This Edge Application SDK is designed to connect to a Local Console. You need to set up the Local Console environment in advance by following the instructions here:
-To avoid compatibility issues, please ensure you use version v4.0.18-sss.
-[Local Console](https://github.com/SonySemiconductorSolutions/local-console/tree/v4.0.18-sss)
 
 ### Sample Application for C/C++
 

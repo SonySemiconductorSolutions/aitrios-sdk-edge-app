@@ -28,6 +28,7 @@ The EdgeAppLib Sensor API provides functions for controlling sensor streams and 
 - **Stream and Channel Properties**:
   - Get or set stream properties via `SensorStreamGetProperty` and `SensorStreamSetProperty`.
   - Configure channel properties using `SensorChannelGetProperty`.
+  - Set framerate at which ISP processess sensor data using `SensorStreamSetIspFrameRate`.
 
 These functionalities ensure developers have comprehensive control over sensor data streams.
 
@@ -49,7 +50,7 @@ These functionalities ensure developers have comprehensive control over sensor d
 | `SensorGetLastErrorLevel`       | Gets the last error level               |
 | `SensorGetLastErrorCause`       | Gets the cause of the last error        |
 | `SensorGetLastErrorString`      | Gets error description                  |
-| `SensorStreamSetIspFrameRate`   | Sets the ISP FrameRate on Raspberry Pi  |
+| `SensorStreamSetIspFrameRate`   | Sets the ISP FrameRate (typically used on Raspberry Pi)  |
 
 ### Usage Example
 
@@ -93,6 +94,186 @@ if ((ret = SensorCoreCloseStream(core, stream)) < 0) return ret;
 if ((ret = SensorCoreExit(core)) < 0) return ret;
 
 ```
+
+---
+
+### API for setting IspFrameRate
+
+#### SensorStreamSetIspFrameRate Description
+Sets the ISP (Image Signal Processor) frame rate for the sensor stream. This API allows you to control the frame rate at which the ISP processes images, which must be less than or equal to the camera frame rate.
+
+This API is typically used on platform like Raspberry Pi, where camera frame rate configurations are limited and user wants to adjust the rate at which frames are processed by ISP.
+
+#### Function Signature
+```cpp
+int32_t SensorStreamSetIspFrameRate(
+    EdgeAppLibSensorStream stream,
+    const EdgeAppLibSensorIspFrameRateProperty ispFrameRate);
+```
+
+#### Parameters
+
+| Parameter | Type | Direction | Description |
+|-----------|------|-----------|-------------|
+| `stream` | `EdgeAppLibSensorStream` | in | Handle of the sensor stream to configure |
+| `ispFrameRate` | `EdgeAppLibSensorIspFrameRateProperty` | in | ISP frame rate property containing numerator and denominator values |
+
+#### EdgeAppLibSensorIspFrameRateProperty Structure
+
+```cpp
+struct EdgeAppLibSensorIspFrameRateProperty {
+  uint32_t num;    // Numerator of the frame rate
+  uint32_t denom;  // Denominator of the frame rate
+};
+```
+
+The frame rate is calculated as: **Frame Rate (fps) = num / denom**
+
+#### Frame Rate Examples
+
+| Frame Rate | num | denom |
+|------------|-----|-------|
+| 9.99 fps   | 999 | 100   |
+| 29.97 fps  | 2997| 100   |
+| 30 fps     | 30  | 1     |
+
+
+#### Return Values
+
+| Value | Description |
+|-------|-------------|
+| `0` | Success |
+| Negative value | Failure (see error conditions below) |
+
+#### Error Conditions
+
+The function returns an error (`-1`) in the following cases:
+- `num` or `denom` is 0
+- ISP frame rate exceeds camera frame rate
+- Unable to fetch camera frame rate property for validation
+- Failed to set the ISP frame rate property
+
+#### Remarks
+
+1. **Frame Rate Constraint**: The ISP frame rate must be less than or equal to the camera frame rate. The function validates this constraint internally by querying the current camera frame rate.
+
+2. **Non-zero Values**: Both `num` and `denom` must be non-zero positive values.
+
+3. **Platform Specific**: This API is particularly useful on Raspberry Pi platforms where ISP frame rate configuration is supported.
+
+4. **Validation**: The function performs automatic validation against the camera's current frame rate setting before applying the ISP frame rate.
+
+5. **Usage Constraint**: This API has to be called before the stream is started. If the stream is already started, then user need to restart the stream by calling Stop/Start Stream for the ISP Framerate to be updated.
+
+#### Usage Example
+
+```cpp
+using EdgeAppLib;
+
+EdgeAppLibSensorCore core = 0;
+EdgeAppLibSensorStream stream = 0;
+int32_t ret = -1;
+
+// Initialize core and open stream
+if ((ret = SensorCoreInit(&core)) < 0) return ret;
+const char *stream_key = "your_stream_key";
+if ((ret = SensorCoreOpenStream(core, stream_key, &stream)) < 0) return ret;
+
+// Configure ISP frame rate to 30 fps
+EdgeAppLibSensorIspFrameRateProperty ispFrameRate;
+ispFrameRate.num = 30;
+ispFrameRate.denom = 1;
+
+ret = SensorStreamSetIspFrameRate(stream, ispFrameRate);
+if (ret < 0) {
+    // Handle error - ISP frame rate might exceed camera frame rate
+    // or other validation failed
+    LOG_ERR("Failed to set ISP frame rate: %d", ret);
+    return ret;
+}
+
+// Start streaming with the configured ISP frame rate
+if ((ret = SensorStart(stream)) < 0) return ret;
+
+// ... process frames ...
+
+// Clean up
+SensorStop(stream);
+SensorCoreCloseStream(core, stream);
+SensorCoreExit(core);
+```
+Refer to sample_app/detection for implementation details.
+
+#### Alternative Usage Example with CPU Model Load
+When EdgeAppCore API is used to Load CPU Model, stream is started automatically within LoadModel API. However,if SensorStreamSetIspFrameRate API called during streaming, stream must be restart for the value to take effect. Hence we need to restart the stream after SensorStreamSetIspFrameRate API is called.  
+
+```cpp
+using EdgeAppLib;
+
+EdgeAppLibSensorCore s_core = 0;
+EdgeAppLibSensorStream s_stream = 0;
+
+EdgeAppCoreCtx ctx_imx500;
+EdgeAppCoreCtx ctx_cpu;
+EdgeAppCoreCtx *ctx_list[2] = {&ctx_imx500, &ctx_cpu};
+EdgeAppCoreCtx *shared_list[2] = {nullptr, &ctx_imx500};
+
+for (int i = 0; i < model_count; ++i) {
+    if (EdgeAppCore::LoadModel(models[i], *ctx_list[i], shared_list[i]) !=
+        EdgeAppCoreResultSuccess) {
+      LOG_ERR("Failed to load model %d.", i);
+      return -1;
+    } else {
+      LOG_INFO("Successfully loaded model %d: %s", i, models[i].model_name);
+    }
+    LOG_DBG(
+        "Model ctx %d: sensor_core=%p, sensor_stream=%p, "
+        "graph_ctx=%p, target=%d",
+        i, ctx_list[i]->sensor_core, ctx_list[i]->sensor_stream,
+        ctx_list[i]->graph_ctx, ctx_list[i]->target);
+}
+  s_stream = *ctx_imx500.sensor_stream;
+
+// Configure ISP frame rate to 9.99 fps 
+EdgeAppLibSensorIspFrameRateProperty ispFrameRate;
+ispFrameRate.num = 999;
+ispFrameRate.denom = 100;
+
+int result = SensorStreamSetIspFrameRate(s_stream, ispFrameRate);
+if (result == 0) {
+  LOG_DBG("IspFramerate property set");
+} else {
+  LOG_ERR("Failed to set IspFrameRate err=%d", result);
+}
+
+/*
+ Restarting stream to reflect ISP frame rate setting
+*/
+result = SensorStop(s_stream);
+if (result == 0) {
+  result = SensorStart(s_stream);
+  if (result != 0) {
+    LOG_ERR("Failed to start stream for restart %d", result);
+  }
+} else {
+   LOG_ERR("Failed to stop stream for restart %d", result);
+}
+
+ispFrameRate = {.num = 0, .denom = 0};
+result = SensorStreamGetProperty(s_stream,
+                                   AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
+                                   &ispFrameRate, sizeof(ispFrameRate));
+if (result == 0) {
+  LOG_INFO("Get IspFramerate property num=%d denom=%d", ispFrameRate.num,
+           ispFrameRate.denom);
+} else {
+  LOG_ERR("Failed to get IspFrameRate err=%d", result);
+}
+
+```
+Refer to sample_app/lp_recog for implementation details.
+
+---
 
 ## API for Exporting the data
 

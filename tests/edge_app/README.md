@@ -82,26 +82,5 @@ You can as well use the options `detection` or `segmentation` for the `APPS_SELE
 
 ### How-to run
 
-Once you built the WASM you can run it using the local-console.
-
-1. First start the agent, with the following command you will only get the WASM logs:
-
-```sh
-local-console start |& grep wasm: --line-buffered | sed 's/.*std\(out\|err\)://'
-```
-
-2. You can deploy using `local-console deploy` command from the [rearch](../../../../rearch) folder.
-
-It can happen that there's a timeout error when deploying. Please try more than 1 time to make the deploy or increase
-the timeout threshold by using the `--timeout` option. For example if you want to increase the timeout to 50 seconds you can
-write the following `local-console deploy -t 50`.
-If you already had a previous deployment in the agent before starting you'll need to redeploy it or remove it
-by sending and empty deployment `local-console deploy -e` or by reasing all the data from the previous deployment in the folder **`~/.config/wedge`**.
-
-3. After that you can send the DTDL model configuration.
-
-Run the following command from **`./rearch`**,
-
-```sh
-local-console config instance edge_app edge_app "$(cat libs/tests/unit/sm/dtdl_model/sample_implemented.json)"
-```
+Once you built the WASM you can run it using the **edgeapp_cli**.
+Refer to [edgeapp_cli/README.md ](../../tools/edgeapp_cli/README.md) for instructions on how to deploy and run application.
