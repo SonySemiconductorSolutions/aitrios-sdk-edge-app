@@ -344,45 +344,32 @@ int onStop() {
 int onStart() {
   LOG_TRACE("Inside onStart.");
   int32_t ret = -1;
-  if ((ret = SensorStart(s_stream)) < 0) {
-    LOG_ERR("SensorStart : ret=%d", ret);
-    PrintSensorError();
-    return -1;
-  }
 
   /* ISP Frame Rate, the rate at which ISP outputs frames is set to 30FPS by
      default on Raspberry Pi. This results in Invalid frames. So Set ISP Frame
      Rate to lower value as specified in configuration */
   EdgeAppLibSensorIspFrameRateProperty ispFrameRate = get_isp_frame_rate();
 
-  int result = SensorStreamSetIspFrameRate(s_stream, ispFrameRate);
-  if (result == 0) {
-    LOG_DBG("IspFramerate property set");
+  if ((ret = SensorStreamSetIspFrameRate(s_stream, ispFrameRate)) < 0) {
+    LOG_ERR("Failed to set IspFrameRate err=%d", ret);
   } else {
-    LOG_ERR("Failed to set IspFrameRate err=%d", result);
+    LOG_INFO("IspFramerate property set");
   }
 
-  /* Restart stream to reflect ISP frame rate setting */
-  result = EdgeAppLib::SensorStop(s_stream);
-  if (result == 0) {
-    result = EdgeAppLib::SensorStart(s_stream);
-    if (result != 0) {
-      LOG_ERR("Failed to start stream for restart %d", result);
-    }
-  } else {
-    LOG_ERR("Failed to stop stream for restart %d", result);
+  if ((ret = SensorStart(s_stream)) < 0) {
+    LOG_ERR("SensorStart : ret=%d", ret);
+    PrintSensorError();
+    return -1;
   }
 
   ispFrameRate = {.num = 0, .denom = 0};
-  result = SensorStreamGetProperty(s_stream,
-                                   AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY,
-                                   &ispFrameRate, sizeof(ispFrameRate));
-  if (result == 0) {
-    LOG_INFO("Get IspFramerate property num=%d denom=%d", ispFrameRate.num,
-             ispFrameRate.denom);
-  } else {
-    LOG_ERR("Failed to get IspFrameRate err=%d", result);
+  if ((ret = SensorStreamGetProperty(
+           s_stream, AITRIOS_SENSOR_ISP_FRAME_RATE_PROPERTY_KEY, &ispFrameRate,
+           sizeof(ispFrameRate))) != 0) {
+    LOG_ERR("Failed to get IspFrameRate err=%d", ret);
   }
+  LOG_INFO("Get IspFramerate property num=%d denom=%d", ispFrameRate.num,
+           ispFrameRate.denom);
 
   struct EdgeAppLibSensorImageCropProperty crop = {0};
   if ((ret = SensorStreamGetProperty(s_stream,

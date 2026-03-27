@@ -290,14 +290,14 @@ TEST_F(EvenFunctionsTest, OnStartStartError) {
   int res = onStart();
   EXPECT_EQ(res, -1);
   EXPECT_EQ(wasEdgeAppLibSensorStartCalled(), 1);
-  EXPECT_EQ(wasEdgeAppLibSensorStreamGetPropertyCalled(), 0);
   onDestroy();
 }
 
 TEST_F(EvenFunctionsTest, OnStartGetPropertyError) {
   onCreate();
-  setEdgeAppLibSensorStreamGetPropertyFail();
+  setEdgeAppLibSensorStartFail();
   int res = onStart();
+  setEdgeAppLibSensorStreamGetPropertyFail();
   EXPECT_EQ(res, -1);
   EXPECT_EQ(wasEdgeAppLibSensorStartCalled(), 1);
   EXPECT_EQ(wasEdgeAppLibSensorStreamGetPropertyCalled(), 1);

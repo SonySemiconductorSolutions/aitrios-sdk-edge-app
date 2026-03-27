@@ -526,12 +526,6 @@ We provide two debugging methods: one for running and debugging Wasm locally on 
 
 
 === "Remote (With Deployment)"
-    === "Local Console"  
-
-        You need to set up the Local Console environment in advance by following the instructions here:  
-        To avoid compatibility issues, please ensure you use version v4.0.18-sss.
-        [Local Console](https://github.com/SonySemiconductorSolutions/local-console/tree/v4.0.18-sss)
-
     === "Console"  
 
         You need to package the "**Edge Application**" to import it to "**Console for AITRIOS**".

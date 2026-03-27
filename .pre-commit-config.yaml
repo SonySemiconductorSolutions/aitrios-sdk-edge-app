@@ -7,7 +7,7 @@ repos:
       language: script
       entry: tools/check_license.sh
       files: (.*\.(c|cpp|h|hpp|fbs|sh|py)|Dockerfile|cmake|txt|Makefile)$
-      exclude: "sample_apps/classification/python/imx500_classification_local_console_demo.py|sample_apps/detection/python/imx500_object_detection_local_console_demo.py"
+      exclude: ""
     - id: clang-format
       name: clang-format
       description: Format files with ClangFormat.

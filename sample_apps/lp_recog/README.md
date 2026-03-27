@@ -36,7 +36,7 @@ The following models have been verified:
 ## AI Model Deployment
 
 ### IMX500 Model (License Plate Detection)
-- Deploy the license plate detection model to IMX500 using **AITRIOS Console** or **Local Console**.
+- Deploy the license plate detection model to IMX500 using **AITRIOS Console** or **edgeapp_cli**.
 - The model is referenced by `ai_model_bundle_id` (network_id) in the configuration.
 - Supports wasi-nn runtime on IMX500 hardware.
 
