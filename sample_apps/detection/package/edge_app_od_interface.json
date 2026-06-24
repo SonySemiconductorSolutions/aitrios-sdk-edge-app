@@ -1,6 +1,6 @@
 {
     "@context": "dtmi:dtdl:context;3",
-    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:detection;9",
+    "@id": "dtmi:com:sony_semicon:aitrios:sss:edge:app:sample:detection;10",
     "@type": "Interface",
     "displayName": "Edge App Example",
     "contents": [
